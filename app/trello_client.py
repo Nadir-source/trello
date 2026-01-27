@@ -89,3 +89,35 @@ def move_card_to_list(card_id: str, list_id: str):
 def get_card_by_id(card_id: str):
     return _get(f"/cards/{card_id}", params={"fields": "name,desc,idList"})
 
+# ---------------------------------------------------------
+# Compatibility layer: keep old code working (dashboard, etc.)
+# ---------------------------------------------------------
+class Trello:
+    def __init__(self):
+        self.board_id = resolve_board_id()
+
+    # expose list helpers
+    def get_lists(self):
+        return get_lists(self.board_id)
+
+    def get_list_id_by_name(self, name: str):
+        return get_list_id_by_name(self.board_id, name)
+
+    def get_cards_by_list_name(self, list_name: str):
+        list_id = get_list_id_by_name(self.board_id, list_name)
+        return get_cards_by_list_id(list_id)
+
+    def get_cards_by_list_id(self, list_id: str):
+        return get_cards_by_list_id(list_id)
+
+    def get_card(self, card_id: str):
+        return get_card_by_id(card_id)
+
+    def create_card(self, list_name: str, title: str, desc: str):
+        list_id = get_list_id_by_name(self.board_id, list_name)
+        return create_card(list_id, title, desc)
+
+    def move_card(self, card_id: str, list_name: str):
+        list_id = get_list_id_by_name(self.board_id, list_name)
+        return move_card_to_list(card_id, list_id)
+
