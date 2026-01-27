@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Véhicules</h2>
+<div class="box">
+  <div class="muted">Création réservée à Admin (toi).</div>
+  <form method="post" action="/vehicles/create">
+    <div class="grid">
+      <div><input name="plate" placeholder="Immat"></div>
+      <div><input name="brand" placeholder="Marque"></div>
+      <div><input name="model" placeholder="Modèle"></div>
+      <div><input name="year" placeholder="Année"></div>
+      <div><input name="color" placeholder="Couleur"></div>
+      <div><input name="km" placeholder="KM"></div>
+    </div>
+    <button>Ajouter véhicule</button>
+  </form>
+</div>
+
+<div class="box">
+  {% for v in vehicles %}
+    <div class="card">
+      <b>{{v.title}}</b>
+      <div class="muted">status: {{v.status}} | km: {{v.km}}</div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

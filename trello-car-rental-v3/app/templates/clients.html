@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Clients</h2>
+<div class="box">
+  <form method="post" action="/clients/create">
+    <div class="grid">
+      <div><input name="full_name" placeholder="Nom complet"></div>
+      <div><input name="phone" placeholder="Téléphone"></div>
+      <div><input name="doc_id" placeholder="CNI/Passeport"></div>
+      <div><input name="driver_license" placeholder="Permis"></div>
+    </div>
+    <textarea name="address" placeholder="Adresse"></textarea>
+    <button>Ajouter client</button>
+  </form>
+</div>
+
+<div class="box">
+  {% for c in clients %}
+    <div class="card">
+      <b>{{c.title}}</b>
+      <div class="muted">{{c.phone}} | {{c.doc_id}}</div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Réservations (Trello)</h2>
+
+<h3>Créer une demande</h3>
+<form method="post" action="/bookings/create">
+  <input name="title" placeholder="Titre (ex: Location Clio 10-12 Jan)" />
+  <input name="client" placeholder="Client (nom/tel)" />
+  <input name="vehicle" placeholder="Véhicule (immat/modèle)" />
+  <input name="start" placeholder="Date début (YYYY-MM-DD)" />
+  <input name="end" placeholder="Date fin (YYYY-MM-DD)" />
+  <input name="ppd" placeholder="Prix/jour" />
+  <input name="deposit" placeholder="Dépôt" />
+  <input name="paid" placeholder="Payé" />
+  <textarea name="notes" placeholder="Notes"></textarea>
+  <button>Créer</button>
+</form>
+
+<hr>
+
+<div class="col">
+  <h3>📥 Demandes</h3>
+  {% for c in demandes %}
+    <div class="card">
+      <b>{{c.name}}</b><br>
+      <small>{{c.id}}</small><br><br>
+      <form method="post" action="/bookings/to_reserved/{{c.id}}">
+        <button>➡️ Confirmer (move to RESERVED)</button>
+      </form>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="col">
+  <h3>📅 Réservations</h3>
+  {% for c in reserved %}
+    <div class="card">
+      <b>{{c.name}}</b><br>
+      <a href="/bookings/pdf/{{c.id}}">📄 PDF</a><br><br>
+      <form method="post" action="/bookings/to_closed/{{c.id}}">
+        <button>✅ Terminer (move to CLOSED)</button>
+      </form>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="col">
+  <h3>✅ Terminées</h3>
+  {% for c in closed %}
+    <div class="card">
+      <b>{{c.name}}</b><br>
+      <a href="/bookings/pdf/{{c.id}}">📄 PDF</a>
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

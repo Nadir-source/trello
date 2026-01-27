@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Dashboard</h2>
+<ul>
+  <li>Demandes: {{stats.demandes}}</li>
+  <li>Réservations: {{stats.reserved}}</li>
+  <li>Terminées: {{stats.closed}}</li>
+  <li>Factures ouvertes: {{stats.invoices_open}}</li>
+  <li>Factures payées: {{stats.invoices_paid}}</li>
+</ul>
+{% endblock %}

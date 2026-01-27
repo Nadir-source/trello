@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Réservations</h2>
+
+<div class="box">
+  <h3>Créer une demande</h3>
+  <form method="post" action="/bookings/create">
+    <input name="title" placeholder="Titre (ex: Location Clio 10-12)" />
+    <div class="grid">
+      <div>
+        <label>Client</label>
+        <select name="client_card_id">
+          <option value="">-- choisir --</option>
+          {% for c in clients %}
+            <option value="{{c.id}}">{{c.name}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Véhicule</label>
+        <select name="vehicle_card_id">
+          <option value="">-- choisir --</option>
+          {% for v in vehicles %}
+            <option value="{{v.id}}">{{v.name}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div><input name="start_date" placeholder="Début (YYYY-MM-DD)"></div>
+      <div><input name="end_date" placeholder="Fin (YYYY-MM-DD)"></div>
+      <div><input name="price_per_day" placeholder="Prix/jour"></div>
+      <div><input name="deposit" placeholder="Dépôt"></div>
+      <div><input name="paid_amount" placeholder="Déjà payé"></div>
+      <div>
+        <label>Méthode</label>
+        <select name="payment_method">
+          <option value="cash">Cash</option>
+          <option value="transfer">Virement</option>
+          <option value="card">Carte</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div><input name="pickup_place" placeholder="Lieu remise"></div>
+      <div><input name="return_place" placeholder="Lieu retour"></div>
+    </div>
+
+    <div class="row">
+      <label><input type="checkbox" name="extra_driver"> Chauffeur</label>
+      <label><input type="checkbox" name="extra_gps"> GPS</label>
+      <label><input type="checkbox" name="extra_child_seat"> Siège bébé</label>
+    </div>
+
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <button>Créer demande</button>
+  </form>
+</div>
+
+<div class="grid3">
+  <div class="box">
+    <h3>📥 Demandes</h3>
+    {% for c in demandes %}
+      <div class="card">
+        <b>{{c.name}}</b>
+        <div class="row">
+          <form method="post" action="/bookings/move/{{c.id}}/reserved"><button>➡️ Réserver</button></form>
+          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button>❌ Annuler</button></form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="box">
+    <h3>📅 Réservées</h3>
+    {% for c in reserved %}
+      <div class="card">
+        <b>{{c.name}}</b>
+        <div class="row">
+          <a href="/bookings/contract.pdf/{{c.id}}">📄 Contrat PDF</a>
+        </div>
+        <div class="row">
+          <form method="post" action="/bookings/move/{{c.id}}/ongoing"><button>🔑 Remise</button></form>
+          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button>❌ Annuler</button></form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="box">
+    <h3>🔑 En cours</h3>
+    {% for c in ongoing %}
+      <div class="card">
+        <b>{{c.name}}</b>
+        <div class="row">
+          <a href="/bookings/contract.pdf/{{c.id}}">📄 Contrat PDF</a>
+        </div>
+        <div class="row">
+          <form method="post" action="/bookings/move/{{c.id}}/done"><button>✅ Retour</button></form>
+          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button>❌ Annuler</button></form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="box">
+  <h3>✅ Terminées</h3>
+  {% for c in done %}
+    <div class="card">
+      <b>{{c.name}}</b> — <a href="/bookings/contract.pdf/{{c.id}}">📄 PDF</a>
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Finance (Admin)</h2>
+
+<div class="box">
+  <b>Totaux</b>
+  <div class="muted">Payé: {{totals.paid}} | Ouvert: {{totals.open}} | Dépenses: {{totals.expenses}} | Profit estimé: {{totals.profit_est}}</div>
+  <div class="row">
+    <a href="/finance/month_report.pdf">📄 Rapport Fin de Mois PDF</a>
+  </div>
+</div>
+
+<div class="box">
+  <h3>Créer dépense</h3>
+  <form method="post" action="/finance/expense/create">
+    <div class="grid">
+      <div><input name="date" placeholder="Date (YYYY-MM-DD)"></div>
+      <div>
+        <select name="category">
+          <option value="fuel">Carburant</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="wash">Lavage</option>
+          <option value="fine">Amende</option>
+          <option value="other">Autre</option>
+        </select>
+      </div>
+      <div><input name="amount" placeholder="Montant"></div>
+    </div>
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <button>Ajouter dépense</button>
+  </form>
+</div>
+
+<div class="grid">
+  <div class="box">
+    <h3>Factures ouvertes</h3>
+    {% for c in inv_open %}
+      <div class="card"><b>{{c.name}}</b></div>
+    {% endfor %}
+  </div>
+  <div class="box">
+    <h3>Factures payées</h3>
+    {% for c in inv_paid %}
+      <div class="card"><b>{{c.name}}</b></div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="box">
+  <h3>Dépenses</h3>
+  {% for c in expenses %}
+    <div class="card"><b>{{c.name}}</b></div>
+  {% endfor %}
+</div>
+
+<div class="box">
+  <h3>Créer une facture (depuis une réservation)</h3>
+  <div class="muted">Depuis l’admin, tu peux “marquer payé” une réservation en créant une invoice.</div>
+  <div class="muted">Pour le moment, utilise l’URL: /bookings puis bouton contrat + workflow, ensuite tu peux créer l’invoice via l’endpoint.</div>
+  <div class="muted">(Je peux ajouter un écran dédié invoice par réservation si tu veux.)</div>
+</div>
+{% endblock %}
