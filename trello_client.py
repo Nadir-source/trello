@@ -1,11 +1,27 @@
+import os
 import requests
-from config import TRELLO_KEY, TRELLO_TOKEN, BOARD_ID
 
-API = "https://api.trello.com/1"
+# ---- ENV ----
+TRELLO_KEY = os.getenv("TRELLO_KEY") or os.getenv("TRELLO_API_KEY")
+TRELLO_TOKEN = os.getenv("TRELLO_TOKEN")
+
+# Board: tu peux passer BOARD_ID ou TRELLO_BOARD_ID
+BOARD_REF = os.getenv("BOARD_ID") or os.getenv("TRELLO_BOARD_ID")
+
+# List names (tu peux overrider via env)
+LIST_DEMANDES = os.getenv("LIST_NAME_FILTER", "📥 DEMANDES")
+LIST_RESERVED = os.getenv("RESERVED_LIST_NAME", "📅 RÉSERVÉES")
+LIST_DONE     = os.getenv("TRELLO_CLOSED_LIST_NAME", "✅ TERMINÉES")
+LIST_ONGOING  = os.getenv("LIST_ONGOING", "🔑 EN COURS")
+LIST_CANCEL   = os.getenv("LIST_CANCELLED", "❌ ANNULÉES")
+
+BASE = "https://api.trello.com/1"
+
 
 def _check():
-    if not (TRELLO_KEY and TRELLO_TOKEN and BOARD_ID):
-        raise RuntimeError("Missing Trello config: TRELLO_KEY / TRELLO_TOKEN / BOARD_ID")
+    if not TRELLO_KEY or not TRELLO_TOKEN:
+        raise RuntimeError("Missing TRELLO_KEY/TRELLO_TOKEN env vars")
+
 
 def _params(extra=None):
     p = {"key": TRELLO_KEY, "token": TRELLO_TOKEN}
@@ -13,49 +29,90 @@ def _params(extra=None):
         p.update(extra)
     return p
 
-def board_lists():
+
+def _get(path, params=None):
     _check()
-    r = requests.get(f"{API}/boards/{BOARD_ID}/lists", params=_params({"fields": "name"}), timeout=30)
+    r = requests.get(BASE + path, params=_params(params))
     r.raise_for_status()
     return r.json()
 
-def list_id_by_name(name: str) -> str:
-    for lst in board_lists():
-        if (lst.get("name") or "").strip() == name.strip():
-            return lst["id"]
-    raise RuntimeError(f"List not found on board: {name}")
 
-def list_cards(list_name: str):
-    lid = list_id_by_name(list_name)
-    r = requests.get(f"{API}/lists/{lid}/cards",
-                     params=_params({"fields": "name,desc,idList,closed,dateLastActivity"}),
-                     timeout=30)
+def _post(path, data=None):
+    _check()
+    r = requests.post(BASE + path, params=_params(), data=data or {})
     r.raise_for_status()
     return r.json()
 
-def get_card(card_id: str):
-    r = requests.get(f"{API}/cards/{card_id}",
-                     params=_params({"fields": "name,desc,idList,closed,dateLastActivity"}),
-                     timeout=30)
+
+def _put(path, data=None):
+    _check()
+    r = requests.put(BASE + path, params=_params(), data=data or {})
     r.raise_for_status()
     return r.json()
 
-def create_card(list_name: str, name: str, desc: str = ""):
-    lid = list_id_by_name(list_name)
-    r = requests.post(f"{API}/cards", params=_params({"idList": lid, "name": name, "desc": desc}), timeout=30)
-    r.raise_for_status()
-    return r.json()
 
-def update_card(card_id: str, name: str = None, desc: str = None):
-    data = {}
-    if name is not None: data["name"] = name
-    if desc is not None: data["desc"] = desc
-    r = requests.put(f"{API}/cards/{card_id}", params=_params(data), timeout=30)
-    r.raise_for_status()
-    return r.json()
+def resolve_board_id():
+    """
+    BOARD_REF peut être:
+    - un id board (8+ chars)
+    - une URL trello (https://trello.com/b/XXXX/...)
+    - ou vide => erreur
+    """
+    if not BOARD_REF:
+        raise RuntimeError("Missing BOARD_ID / TRELLO_BOARD_ID env var")
 
-def move_card(card_id: str, target_list_name: str):
-    lid = list_id_by_name(target_list_name)
-    r = requests.put(f"{API}/cards/{card_id}", params=_params({"idList": lid}), timeout=30)
-    r.raise_for_status()
-    return r.json()
+    ref = BOARD_REF.strip()
+
+    # URL => /b/{shortLink}/...
+    if "trello.com" in ref and "/b/" in ref:
+        try:
+            short = ref.split("/b/")[1].split("/")[0]
+            b = _get(f"/boards/{short}")
+            return b["id"]
+        except Exception:
+            pass
+
+    # assume direct id or shortLink
+    b = _get(f"/boards/{ref}")
+    return b["id"]
+
+
+def get_lists(board_id: str):
+    return _get(f"/boards/{board_id}/lists", params={"fields": "name"})
+
+
+def get_list_id_by_name(board_id: str, list_name: str):
+    lists = get_lists(board_id)
+    for l in lists:
+        if l.get("name") == list_name:
+            return l["id"]
+    raise RuntimeError(f'List "{list_name}" not found on board')
+
+
+def get_cards_by_list_id(list_id: str):
+    # fields min pour ton UI
+    return _get(f"/lists/{list_id}/cards", params={"fields": "name,desc,idList"})
+
+
+def create_card(list_id: str, title: str, desc: str):
+    return _post("/cards", data={"idList": list_id, "name": title, "desc": desc})
+
+
+def move_card_to_list(card_id: str, list_id: str):
+    return _put(f"/cards/{card_id}", data={"idList": list_id})
+
+
+def get_card_by_id(card_id: str):
+    return _get(f"/cards/{card_id}", params={"fields": "name,desc,idList"})
+
+
+def ensure_default_lists(board_id: str):
+    """
+    Optionnel: crée les listes si elles n’existent pas.
+    """
+    existing = {l["name"] for l in get_lists(board_id)}
+    wanted = [LIST_DEMANDES, LIST_RESERVED, LIST_ONGOING, LIST_DONE, LIST_CANCEL]
+    for name in wanted:
+        if name and name not in existing:
+            _post("/lists", data={"idBoard": board_id, "name": name})
+

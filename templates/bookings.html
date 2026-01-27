@@ -42,7 +42,8 @@
 
 <hr>
 
-<div class="grid">
+<div class="grid" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+  <!-- DEMANDES -->
   <div class="panel">
     <h3>📥 Demandes</h3>
     {% for c in demandes %}
@@ -52,7 +53,11 @@
 
         <div class="row" style="margin-top:10px">
           <form method="post" action="/bookings/move/{{ c.id }}/reserved">
-            <button class="btn ok" type="submit">➡️ Confirmer</button>
+            <button class="btn ok" type="submit">➡️ Réserver</button>
+          </form>
+
+          <form method="post" action="/bookings/move/{{ c.id }}/cancel">
+            <button class="btn bad" type="submit">❌ Annuler</button>
           </form>
         </div>
       </div>
@@ -61,6 +66,7 @@
     {% endfor %}
   </div>
 
+  <!-- RESERVED -->
   <div class="panel">
     <h3>📅 Réservées</h3>
     {% for c in reserved %}
@@ -71,8 +77,12 @@
         <div class="row" style="margin-top:10px">
           <a class="btn warn" href="/bookings/contract.pdf/{{ c.id }}">📄 Contrat FR+AR</a>
 
-          <form method="post" action="/bookings/move/{{ c.id }}/done">
-            <button class="btn ok" type="submit">✅ Terminer</button>
+          <form method="post" action="/bookings/move/{{ c.id }}/ongoing">
+            <button class="btn primary" type="submit">🔑 En cours</button>
+          </form>
+
+          <form method="post" action="/bookings/move/{{ c.id }}/cancel">
+            <button class="btn bad" type="submit">❌ Annuler</button>
           </form>
         </div>
       </div>
@@ -81,6 +91,32 @@
     {% endfor %}
   </div>
 
+  <!-- ONGOING -->
+  <div class="panel">
+    <h3>🔑 En cours</h3>
+    {% for c in ongoing %}
+      <div class="card">
+        <div><b>{{ c.name }}</b></div>
+        <div class="small">ID: {{ c.id }}</div>
+
+        <div class="row" style="margin-top:10px">
+          <a class="btn warn" href="/bookings/contract.pdf/{{ c.id }}">📄 Contrat FR+AR</a>
+
+          <form method="post" action="/bookings/move/{{ c.id }}/done">
+            <button class="btn ok" type="submit">✅ Terminer</button>
+          </form>
+
+          <form method="post" action="/bookings/move/{{ c.id }}/cancel">
+            <button class="btn bad" type="submit">❌ Annuler</button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <div class="small">Aucune location en cours.</div>
+    {% endfor %}
+  </div>
+
+  <!-- DONE -->
   <div class="panel">
     <h3>✅ Terminées</h3>
     {% for c in closed %}
@@ -94,6 +130,25 @@
       </div>
     {% else %}
       <div class="small">Aucune réservation terminée.</div>
+    {% endfor %}
+  </div>
+
+  <!-- CANCELLED -->
+  <div class="panel">
+    <h3>❌ Annulées</h3>
+    {% for c in cancelled %}
+      <div class="card">
+        <div><b>{{ c.name }}</b></div>
+        <div class="small">ID: {{ c.id }}</div>
+
+        <div class="row" style="margin-top:10px">
+          <form method="post" action="/bookings/move/{{ c.id }}/demandes">
+            <button class="btn" type="submit">↩️ Remettre en demande</button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <div class="small">Aucune annulée.</div>
     {% endfor %}
   </div>
 </div>
