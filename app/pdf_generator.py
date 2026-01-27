@@ -384,3 +384,33 @@ def build_contract_pdf_fr_ar(data: dict) -> bytes:
 
     return buf.getvalue()
 
+def build_month_report_pdf(report_data: dict) -> bytes:
+    """
+    Temporary month report PDF generator (placeholder).
+    Keeps the app running. We'll replace it with the real monthly report (Step D).
+    """
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    buf = BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    w, h = A4
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(40, h - 60, "Rapport mensuel (placeholder)")
+
+    c.setFont("Helvetica", 11)
+    c.drawString(40, h - 90, "Le générateur du rapport mensuel sera finalisé (étape D).")
+
+    # Print a few totals if present
+    y = h - 130
+    for k in ["month", "year", "total_income", "total_expenses", "net"]:
+        if k in report_data:
+            c.drawString(40, y, f"{k}: {report_data.get(k)}")
+            y -= 18
+
+    c.showPage()
+    c.save()
+    return buf.getvalue()
+
