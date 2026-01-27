@@ -8,13 +8,42 @@
   <!-- Global CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
-  <div class="container">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo"></div>
+        <span>{{ title or "Zohir Location Auto" }}</span>
+      </div>
+
+      <nav class="nav">
+        <a href="/dashboard" class="{% if request.path.startswith('/dashboard') %}active{% endif %}">Dashboard</a>
+        <a href="/bookings" class="{% if request.path.startswith('/bookings') %}active{% endif %}">Réservations</a>
+        <a href="/clients" class="{% if request.path.startswith('/clients') %}active{% endif %}">Clients</a>
+        <a href="/vehicles" class="{% if request.path.startswith('/vehicles') %}active{% endif %}">Véhicules</a>
+        <a href="/finance" class="{% if request.path.startswith('/finance') %}active{% endif %}">Finance</a>
+        <a href="/logout">Logout</a>
+      </nav>
+
+      <div class="user-chip">
+        <span class="dot"></span>
+        <span class="small">Connecté</span>
+        <b>{{ session.get('name','agent') }}</b>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page container -->
+  <main class="container">
     {% if title %}
       <div class="small" style="margin: 6px 0 14px 0;">{{ title }}</div>
     {% endif %}
     {% block content %}{% endblock %}
-  </div>
+  </main>
+
 </body>
 </html>
 
