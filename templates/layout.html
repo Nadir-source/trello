@@ -1,24 +1,20 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <title>Trello Car Rental</title>
-  <style>
-    body{font-family:Arial;margin:20px}
-    .top a{margin-right:10px}
-    .card{border:1px solid #ddd;border-radius:8px;padding:10px;margin:8px 0}
-    .col{width:32%;display:inline-block;vertical-align:top}
-    input,textarea{width:100%;padding:8px;margin:4px 0}
-    button{padding:8px 12px}
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Zohir Location Auto" }}</title>
+
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="top">
-    <a href="/dashboard">Dashboard</a>
-    <a href="/bookings">Réservations</a>
-    <a href="/admin/logout">Logout</a>
+  <div class="container">
+    {% if title %}
+      <div class="small" style="margin: 6px 0 14px 0;">{{ title }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
   </div>
-  <hr>
-  {% block content %}{% endblock %}
 </body>
 </html>
+
