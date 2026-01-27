@@ -3,6 +3,24 @@ from app.config import TRELLO_KEY, TRELLO_TOKEN, BOARD_REF
 
 API = "https://api.trello.com/1"
 
+# --- compatibility helper ---
+def get_card_by_id(card_id: str):
+    """
+    Alias helper used by bookings.py.
+    Tries to reuse existing get_card() if present, otherwise calls Trello API directly.
+    """
+    # If your file already has get_card(card_id), reuse it
+    if "get_card" in globals():
+        return globals()["get_card"](card_id)
+
+    # Fallback: direct call if you have a trello_get helper
+    if "trello_get" in globals():
+        return globals()["trello_get"](f"/cards/{card_id}")
+
+    # Last fallback: raise clear error
+    raise RuntimeError("No get_card() or trello_get() found in trello_client.py")
+
+
 def _check():
     if not (TRELLO_KEY and TRELLO_TOKEN and BOARD_REF):
         raise RuntimeError("Missing Trello env: TRELLO_KEY/TRELLO_TOKEN/BOARD_ID")
