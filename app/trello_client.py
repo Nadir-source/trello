@@ -92,25 +92,38 @@ def get_card_by_id(card_id: str):
 # ---------------------------------------------------------
 # Compatibility layer: keep old code working (dashboard, etc.)
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# Compatibility layer: keep old code working (dashboard, clients, etc.)
+# ---------------------------------------------------------
 class Trello:
     def __init__(self):
         self.board_id = resolve_board_id()
 
-    # expose list helpers
+    # -------- Lists --------
     def get_lists(self):
         return get_lists(self.board_id)
 
     def get_list_id_by_name(self, name: str):
         return get_list_id_by_name(self.board_id, name)
 
-    def get_cards_by_list_name(self, list_name: str):
+    # old name expected by some files
+    def list_cards(self, list_name: str):
+        """Return cards for a list by its name (old API)."""
         list_id = get_list_id_by_name(self.board_id, list_name)
         return get_cards_by_list_id(list_id)
 
-    def get_cards_by_list_id(self, list_id: str):
-        return get_cards_by_list_id(list_id)
+    # aliases (just in case different modules use different names)
+    def get_cards_by_list_name(self, list_name: str):
+        return self.list_cards(list_name)
 
+    def cards(self, list_name: str):
+        return self.list_cards(list_name)
+
+    # -------- Cards --------
     def get_card(self, card_id: str):
+        return get_card_by_id(card_id)
+
+    def get_card_by_id(self, card_id: str):
         return get_card_by_id(card_id)
 
     def create_card(self, list_name: str, title: str, desc: str):
@@ -120,4 +133,8 @@ class Trello:
     def move_card(self, card_id: str, list_name: str):
         list_id = get_list_id_by_name(self.board_id, list_name)
         return move_card_to_list(card_id, list_id)
+
+    # old naming
+    def move(self, card_id: str, list_name: str):
+        return self.move_card(card_id, list_name)
 
