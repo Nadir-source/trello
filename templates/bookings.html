@@ -22,9 +22,10 @@
   <h3>📥 Demandes</h3>
   {% for c in demandes %}
     <div class="card">
-      <b>{{c.name}}</b><br>
-      <small>{{c.id}}</small><br><br>
-      <form method="post" action="/bookings/to_reserved/{{c.id}}">
+      <b>{{ c.name }}</b><br>
+      <small>ID: {{ c.id }}</small><br><br>
+
+      <form method="post" action="/bookings/to_reserved/{{ c.id }}">
         <button>➡️ Confirmer (move to RESERVED)</button>
       </form>
     </div>
@@ -35,9 +36,22 @@
   <h3>📅 Réservations</h3>
   {% for c in reserved %}
     <div class="card">
-      <b>{{c.name}}</b><br>
-      <a href="/bookings/pdf/{{c.id}}">📄 PDF</a><br><br>
-      <form method="post" action="/bookings/to_closed/{{c.id}}">
+      <b>{{ c.name }}</b><br>
+
+      <!-- NOUVEAU : contrat FR + AR -->
+      <a href="/bookings/{{ c.id }}/contract" class="btn">
+        📄 Contrat FR + AR
+      </a>
+      <br>
+
+      <!-- Ancien PDF si tu veux le garder -->
+      <a href="/bookings/pdf/{{ c.id }}" class="btn">
+        📄 PDF simple
+      </a>
+
+      <br><br>
+
+      <form method="post" action="/bookings/to_closed/{{ c.id }}">
         <button>✅ Terminer (move to CLOSED)</button>
       </form>
     </div>
@@ -48,10 +62,20 @@
   <h3>✅ Terminées</h3>
   {% for c in closed %}
     <div class="card">
-      <b>{{c.name}}</b><br>
-      <a href="/bookings/pdf/{{c.id}}">📄 PDF</a>
+      <b>{{ c.name }}</b><br>
+
+      <!-- Contrat FR + AR aussi disponible après clôture -->
+      <a href="/bookings/{{ c.id }}/contract" class="btn">
+        📄 Contrat FR + AR
+      </a>
+      <br>
+
+      <a href="/bookings/pdf/{{ c.id }}" class="btn">
+        📄 PDF simple
+      </a>
     </div>
   {% endfor %}
 </div>
 
 {% endblock %}
+

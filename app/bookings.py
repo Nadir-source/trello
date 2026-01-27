@@ -5,6 +5,12 @@ from app.trello_client import Trello
 from app.trello_schema import parse_payload, dump_payload, audit_add
 from app.pdf_generator import build_contract_pdf
 from app import config as C
+from flask import Blueprint, render_template, request, redirect, url_for, send_file
+from io import BytesIO
+
+from app.pdf_generator import build_contract_pdf_fr_ar
+from app.trello_client import get_card_by_id   # ou ta fonction équivalente
+
 
 bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
 
@@ -162,3 +168,54 @@ def mark_invoice_paid(booking_card_id):
     audit_add(booking, name, "booking_paid_update", {"paid_amount": paid_amount, "total": total})
     t.update_card(booking_card_id, desc=dump_payload(booking))
     return redirect(url_for("finance.index"))
+
+
+@bookings_bp.route("/bookings/<card_id>/contract")
+def booking_contract(card_id):
+    # 1️⃣ Récupérer la carte Trello
+    card = get_card_by_id(card_id)
+
+    if not card:
+        return "Réservation introuvable", 404
+
+    # 2️⃣ Construire les données pour le contrat
+    data = {
+        "booking_ref": card.get("idShort") or card.get("id"),
+
+        # Client
+        "client_name": card.get("client_name"),
+        "client_id": card.get("client_id"),          # CNI ou Passeport
+        "client_phone": card.get("client_phone"),
+        "client_address": card.get("client_address"),
+
+        # Véhicule
+        "vehicle_name": card.get("vehicle_name"),
+        "vehicle_plate": card.get("vehicle_plate"),
+
+        # Dates
+        "start_date": card.get("start_date"),
+        "end_date": card.get("end_date"),
+        "days": card.get("days"),
+
+        # Finance
+        "price_per_day": card.get("price_per_day"),
+        "deposit": card.get("deposit"),
+        "advance": card.get("advance"),
+        "total": card.get("total"),
+
+        # Lieux
+        "pickup_place": card.get("pickup_place"),
+        "return_place": card.get("return_place"),
+    }
+
+    # 3️⃣ Générer le PDF
+    pdf_bytes = build_contract_pdf_fr_ar(data)
+
+    # 4️⃣ Retourner le PDF
+    return send_file(
+        BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"contrat_{data['booking_ref']}.pdf"
+    )
+
