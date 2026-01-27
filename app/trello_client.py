@@ -1,29 +1,23 @@
+import os
 import requests
-from app.config import TRELLO_KEY, TRELLO_TOKEN, BOARD_REF
 
-API = "https://api.trello.com/1"
+TRELLO_KEY = os.getenv("TRELLO_KEY") or os.getenv("TRELLO_API_KEY")
+TRELLO_TOKEN = os.getenv("TRELLO_TOKEN")
+BOARD_REF = os.getenv("BOARD_ID") or os.getenv("TRELLO_BOARD_ID")
 
-# --- compatibility helper ---
-def get_card_by_id(card_id: str):
-    """
-    Alias helper used by bookings.py.
-    Tries to reuse existing get_card() if present, otherwise calls Trello API directly.
-    """
-    # If your file already has get_card(card_id), reuse it
-    if "get_card" in globals():
-        return globals()["get_card"](card_id)
+LIST_DEMANDES = os.getenv("LIST_NAME_FILTER", "📥 DEMANDES")
+LIST_RESERVED = os.getenv("RESERVED_LIST_NAME", "📅 RÉSERVÉES")
+LIST_DONE     = os.getenv("TRELLO_CLOSED_LIST_NAME", "✅ TERMINÉES")
+LIST_ONGOING  = os.getenv("LIST_ONGOING", "🔑 EN COURS")
+LIST_CANCEL   = os.getenv("LIST_CANCELLED", "❌ ANNULÉES")
 
-    # Fallback: direct call if you have a trello_get helper
-    if "trello_get" in globals():
-        return globals()["trello_get"](f"/cards/{card_id}")
-
-    # Last fallback: raise clear error
-    raise RuntimeError("No get_card() or trello_get() found in trello_client.py")
+BASE = "https://api.trello.com/1"
 
 
 def _check():
-    if not (TRELLO_KEY and TRELLO_TOKEN and BOARD_REF):
-        raise RuntimeError("Missing Trello env: TRELLO_KEY/TRELLO_TOKEN/BOARD_ID")
+    if not TRELLO_KEY or not TRELLO_TOKEN:
+        raise RuntimeError("Missing TRELLO_KEY/TRELLO_TOKEN env vars")
+
 
 def _params(extra=None):
     p = {"key": TRELLO_KEY, "token": TRELLO_TOKEN}
@@ -31,70 +25,67 @@ def _params(extra=None):
         p.update(extra)
     return p
 
-def _get(path, extra=None):
-    r = requests.get(f"{API}{path}", params=_params(extra), timeout=30)
+
+def _get(path, params=None):
+    _check()
+    r = requests.get(BASE + path, params=_params(params))
     r.raise_for_status()
     return r.json()
 
-def _post(path, extra=None):
-    r = requests.post(f"{API}{path}", params=_params(extra), timeout=30)
+
+def _post(path, data=None):
+    _check()
+    r = requests.post(BASE + path, params=_params(), data=data or {})
     r.raise_for_status()
     return r.json()
 
-def _put(path, extra=None):
-    r = requests.put(f"{API}{path}", params=_params(extra), timeout=30)
+
+def _put(path, data=None):
+    _check()
+    r = requests.put(BASE + path, params=_params(), data=data or {})
     r.raise_for_status()
     return r.json()
 
-def resolve_board_id(board_ref: str) -> dict:
-    ref = (board_ref or "").strip()
-    if "trello.com/b/" in ref:
-        ref = ref.split("trello.com/b/")[1].split("/")[0].strip()
-    board = _get(f"/boards/{ref}", {"fields": "id,name,url,shortLink"})
-    return board  # has id (long)
 
-class Trello:
-    def __init__(self):
-        _check()
-        self.board = resolve_board_id(BOARD_REF)
-        self.board_id = self.board["id"]
-        self._lists_cache = None  # name->id
+def resolve_board_id():
+    if not BOARD_REF:
+        raise RuntimeError("Missing BOARD_ID / TRELLO_BOARD_ID env var")
 
-    def lists(self):
-        lst = _get(f"/boards/{self.board_id}/lists", {"filter": "all", "fields": "name"})
-        self._lists_cache = { (x.get("name") or "").strip(): x["id"] for x in lst }
-        return self._lists_cache
+    ref = BOARD_REF.strip()
 
-    def list_id(self, name: str) -> str:
-        if not self._lists_cache:
-            self.lists()
-        if name not in self._lists_cache:
-            # refresh once
-            self.lists()
-        if name not in self._lists_cache:
-            raise RuntimeError(f"List not found: {name}")
-        return self._lists_cache[name]
+    if "trello.com" in ref and "/b/" in ref:
+        short = ref.split("/b/")[1].split("/")[0]
+        b = _get(f"/boards/{short}")
+        return b["id"]
 
-    def list_cards(self, list_name: str):
-        lid = self.list_id(list_name)
-        return _get(f"/lists/{lid}/cards", {"fields": "name,desc,idList,closed,dateLastActivity"})
+    b = _get(f"/boards/{ref}")
+    return b["id"]
 
-    def get_card(self, card_id: str):
-        return _get(f"/cards/{card_id}", {"fields": "name,desc,idList,closed,dateLastActivity"})
 
-    def create_card(self, list_name: str, name: str, desc: str = ""):
-        lid = self.list_id(list_name)
-        return _post("/cards", {"idList": lid, "name": name, "desc": desc})
+def get_lists(board_id: str):
+    return _get(f"/boards/{board_id}/lists", params={"fields": "name"})
 
-    def update_card(self, card_id: str, name: str | None = None, desc: str | None = None):
-        data = {}
-        if name is not None: data["name"] = name
-        if desc is not None: data["desc"] = desc
-        return _put(f"/cards/{card_id}", data)
 
-    def move_card(self, card_id: str, target_list_name: str):
-        lid = self.list_id(target_list_name)
-        return _put(f"/cards/{card_id}", {"idList": lid})
+def get_list_id_by_name(board_id: str, list_name: str):
+    lists = get_lists(board_id)
+    for l in lists:
+        if l.get("name") == list_name:
+            return l["id"]
+    raise RuntimeError(f'List "{list_name}" not found on board')
 
-    def add_comment(self, card_id: str, text: str):
-        return _post(f"/cards/{card_id}/actions/comments", {"text": text})
+
+def get_cards_by_list_id(list_id: str):
+    return _get(f"/lists/{list_id}/cards", params={"fields": "name,desc,idList"})
+
+
+def create_card(list_id: str, title: str, desc: str):
+    return _post("/cards", data={"idList": list_id, "name": title, "desc": desc})
+
+
+def move_card_to_list(card_id: str, list_id: str):
+    return _put(f"/cards/{card_id}", data={"idList": list_id})
+
+
+def get_card_by_id(card_id: str):
+    return _get(f"/cards/{card_id}", params={"fields": "name,desc,idList"})
+
