@@ -98,6 +98,12 @@ def get_card_by_id(card_id: str):
 class Trello:
     def __init__(self):
         self.board_id = resolve_board_id()
+    # keep old code compatibility: dashboard expects t.board
+        try:
+            self.board = _get(f"/boards/{self.board_id}", params={"fields": "name,url,shortUrl"})
+        except Exception:
+        # fallback minimal
+            self.board = {"id": self.board_id, "name": "Trello Board", "url": ""}
 
     # -------- Lists --------
     def get_lists(self):
