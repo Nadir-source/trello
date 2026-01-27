@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Login</title></head>
+<body style="font-family:Arial;margin:30px">
+  <h2>Connexion</h2>
+  <form method="post" action="/auth/login">
+    <label>Role</label>
+    <select name="role">
+      <option value="agent">Agent</option>
+      <option value="admin">Admin</option>
+    </select>
+    <label>Nom (pour l'audit)</label>
+    <input name="name" placeholder="Ex: Nadir / Mohamed">
+    <label>Mot de passe</label>
+    <input type="password" name="password" placeholder="AGENT_PASSWORD ou ADMIN_PASSWORD">
+    <button type="submit">Login</button>
+  </form>
+  <p style="color:#666">Astuce: mets AGENT_PASSWORD pour ton ami, ADMIN_PASSWORD pour toi.</p>
+</body>
+</html>

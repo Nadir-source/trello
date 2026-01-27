@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="box">
+  <div class="row">
+    <h2 style="margin:0">Dashboard</h2>
+    <span class="badge">Connecté: {{name}} ({{role}})</span>
+  </div>
+  <div class="muted">Board: {{board.name}} — {{board.url}}</div>
+</div>
+
+<div class="grid3">
+  <div class="box"><b>Demandes</b><div style="font-size:26px">{{stats.demandes}}</div></div>
+  <div class="box"><b>Réservées</b><div style="font-size:26px">{{stats.reserved}}</div></div>
+  <div class="box"><b>En cours</b><div style="font-size:26px">{{stats.ongoing}}</div></div>
+  <div class="box"><b>Terminées</b><div style="font-size:26px">{{stats.done}}</div></div>
+  <div class="box"><b>Véhicules</b><div style="font-size:26px">{{stats.vehicles}}</div></div>
+  <div class="box"><b>Clients</b><div style="font-size:26px">{{stats.clients}}</div></div>
+</div>
+
+<div class="box">
+  <b>Finance</b>
+  <div class="muted">Ouvertes: {{stats.inv_open}} | Payées: {{stats.inv_paid}} | Dépenses: {{stats.expenses}}</div>
+</div>
+{% endblock %}
