@@ -1,11 +1,92 @@
 {% extends "layout.html" %}
 {% block content %}
-<h2>Dashboard</h2>
-<ul>
-  <li>Demandes: {{stats.demandes}}</li>
-  <li>Réservations: {{stats.reserved}}</li>
-  <li>Terminées: {{stats.closed}}</li>
-  <li>Factures ouvertes: {{stats.invoices_open}}</li>
-  <li>Factures payées: {{stats.invoices_paid}}</li>
-</ul>
+
+<div class="dash-hero">
+  <div>
+    <h1 class="neon-title">Dashboard</h1>
+    <div class="muted">Vue rapide : activité, réservations, factures, clients & véhicules.</div>
+  </div>
+
+  <div class="dash-actions">
+    <a class="btn primary" href="/bookings">+ Nouvelle réservation</a>
+    <a class="btn" href="/clients">Voir clients</a>
+    <a class="btn" href="/vehicles">Voir véhicules</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card glow-blue">
+    <div class="kpi-top">
+      <div class="kpi-label">Demandes</div>
+      <div class="kpi-badge">📥</div>
+    </div>
+    <div class="kpi-value">{{stats.demandes}}</div>
+    <div class="kpi-sub">En attente de confirmation</div>
+  </div>
+
+  <div class="kpi-card glow-purple">
+    <div class="kpi-top">
+      <div class="kpi-label">Réservées</div>
+      <div class="kpi-badge">📅</div>
+    </div>
+    <div class="kpi-value">{{stats.reserved}}</div>
+    <div class="kpi-sub">Contrat générable</div>
+  </div>
+
+  <div class="kpi-card glow-green">
+    <div class="kpi-top">
+      <div class="kpi-label">Terminées</div>
+      <div class="kpi-badge">✅</div>
+    </div>
+    <div class="kpi-value">{{stats.closed}}</div>
+    <div class="kpi-sub">Historique / clôturé</div>
+  </div>
+
+  <div class="kpi-card glow-orange">
+    <div class="kpi-top">
+      <div class="kpi-label">Factures ouvertes</div>
+      <div class="kpi-badge">🧾</div>
+    </div>
+    <div class="kpi-value">{{stats.invoices_open}}</div>
+    <div class="kpi-sub">À encaisser</div>
+  </div>
+
+  <div class="kpi-card glow-pink">
+    <div class="kpi-top">
+      <div class="kpi-label">Factures payées</div>
+      <div class="kpi-badge">💰</div>
+    </div>
+    <div class="kpi-value">{{stats.invoices_paid}}</div>
+    <div class="kpi-sub">Encaissements OK</div>
+  </div>
+</div>
+
+<div class="dash-panels">
+  <div class="panel neon-panel">
+    <div class="panel-head2">
+      <div class="panel-title2">⚡ Résumé</div>
+      <div class="panel-sub2">Conseils rapides</div>
+    </div>
+    <ul class="dash-list">
+      <li><b>Contrat :</b> passe la carte en “Réservée” puis clique “Contrat FR+AR”.</li>
+      <li><b>Clients/Véhicules :</b> doivent exister dans Trello (listes dédiées).</li>
+      <li><b>Raccourci :</b> crée une demande → confirme → contrat → “En cours” → “Terminer”.</li>
+    </ul>
+  </div>
+
+  <div class="panel neon-panel">
+    <div class="panel-head2">
+      <div class="panel-title2">📌 À faire</div>
+      <div class="panel-sub2">Mini checklist</div>
+    </div>
+    <div class="todo">
+      <label class="todo-item"><input type="checkbox"> Vérifier prix/jour et dépôt</label>
+      <label class="todo-item"><input type="checkbox"> Vérifier document (CNI/Passeport)</label>
+      <label class="todo-item"><input type="checkbox"> Vérifier lieux remise/retour</label>
+      <label class="todo-item"><input type="checkbox"> Générer contrat FR/AR</label>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
+

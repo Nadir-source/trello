@@ -5,44 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ title or "Zohir Location Auto" }}</title>
 
-  <!-- Global CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- Nice font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- IMPORTANT: cache buster -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20260127-2') }}">
 </head>
 
-<body>
+<body class="theme-neon">
 
-  <!-- Topbar -->
-  <header class="topbar">
-    <div class="topbar-inner">
+  <div class="app-shell">
+    <header class="topbar">
       <div class="brand">
-        <div class="logo"></div>
-        <span>{{ title or "Zohir Location Auto" }}</span>
+        <div class="logo">Z</div>
+        <div class="brand-text">
+          <div class="brand-title">Zohir Location Auto</div>
+          <div class="brand-sub">Gestion des réservations (Trello)</div>
+        </div>
       </div>
 
       <nav class="nav">
-        <a href="/dashboard" class="{% if request.path.startswith('/dashboard') %}active{% endif %}">Dashboard</a>
-        <a href="/bookings" class="{% if request.path.startswith('/bookings') %}active{% endif %}">Réservations</a>
-        <a href="/clients" class="{% if request.path.startswith('/clients') %}active{% endif %}">Clients</a>
-        <a href="/vehicles" class="{% if request.path.startswith('/vehicles') %}active{% endif %}">Véhicules</a>
-        <a href="/finance" class="{% if request.path.startswith('/finance') %}active{% endif %}">Finance</a>
-        <a href="/logout">Logout</a>
+        <a class="navlink" href="/dashboard">Dashboard</a>
+        <a class="navlink" href="/bookings">Réservations</a>
+        <a class="navlink" href="/clients">Clients</a>
+        <a class="navlink" href="/vehicles">Véhicules</a>
+        <a class="navlink" href="/finance">Finance</a>
+        <a class="navlink danger" href="/logout">Logout</a>
       </nav>
+    </header>
 
-      <div class="user-chip">
-        <span class="dot"></span>
-        <span class="small">Connecté</span>
-        <b>{{ session.get('name','agent') }}</b>
+    <main class="main">
+      <div class="container">
+        {% block content %}{% endblock %}
       </div>
-    </div>
-  </header>
+    </main>
 
-  <!-- Page container -->
-  <main class="container">
-    {% if title %}
-      <div class="small" style="margin: 6px 0 14px 0;">{{ title }}</div>
-    {% endif %}
-    {% block content %}{% endblock %}
-  </main>
+    <footer class="footer">
+      <div>© Zohir Location Auto</div>
+      <div class="muted">Contrat FR/AR • DZD • CNI/Passeport</div>
+    </footer>
+  </div>
 
 </body>
 </html>
