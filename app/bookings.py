@@ -3,7 +3,6 @@ import io
 from app.auth import login_required, current_user, admin_required
 from app.trello_client import Trello
 from app.trello_schema import parse_payload, dump_payload, audit_add
-from app.pdf_generator import build_contract_pdf
 from app import config as C
 from flask import Blueprint, render_template, request, redirect, url_for, send_file
 from io import BytesIO
