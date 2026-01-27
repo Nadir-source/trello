@@ -1,135 +1,197 @@
-from flask import Blueprint, render_template, request, redirect, url_for, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from io import BytesIO
+from datetime import datetime
 
-from app.auth import admin_required
+from app.auth import login_required
+from app.trello_client import Trello
+import app.config as C
+
+# PDF
 from app.pdf_generator import build_contract_pdf_fr_ar
 
-from app.trello_client import (
-    resolve_board_id,
-    get_list_id_by_name,
-    get_cards_by_list_id,
-    create_card,
-    move_card_to_list,
-    get_card_by_id,
-    LIST_DEMANDES,
-    LIST_RESERVED,
-    LIST_DONE,
-    LIST_ONGOING,
-    LIST_CANCEL,
-)
 
 bookings_bp = Blueprint("bookings", __name__)
 
 
-def _board_and_lists():
-    board_id = resolve_board_id()
-    ids = {
-        "demandes": get_list_id_by_name(board_id, LIST_DEMANDES),
-        "reserved": get_list_id_by_name(board_id, LIST_RESERVED),
-        "ongoing":  get_list_id_by_name(board_id, LIST_ONGOING),
-        "done":     get_list_id_by_name(board_id, LIST_DONE),
-        "cancel":   get_list_id_by_name(board_id, LIST_CANCEL),
+# -----------------------------
+# Helpers: desc format & parsing
+# -----------------------------
+DESC_KEYS = ["CLIENT", "VEHICLE", "START", "END", "PPD", "DEPOSIT", "PAID", "DOC", "NOTES"]
+
+
+def build_desc(form: dict) -> str:
+    """
+    Standardize Trello card desc so data is always recoverable.
+    """
+    def g(k):  # safe get
+        return (form.get(k) or "").strip()
+
+    # DOC: CNI or PASSPORT
+    doc = g("doc").upper().replace("É", "E")
+    if doc not in ("CNI", "PASSPORT", ""):
+        doc = ""
+
+    # keep consistent keys
+    data = {
+        "CLIENT": g("client"),
+        "VEHICLE": g("vehicle"),
+        "START": g("start"),
+        "END": g("end"),
+        "PPD": g("ppd"),
+        "DEPOSIT": g("deposit"),
+        "PAID": g("paid"),
+        "DOC": doc,
+        "NOTES": g("notes"),
     }
-    return board_id, ids
+
+    lines = [f"{k}: {data.get(k,'')}" for k in DESC_KEYS]
+    return "\n".join(lines).strip() + "\n"
 
 
+def parse_desc(desc: str) -> dict:
+    """
+    Parse standardized desc. Works even if some lines are missing.
+    """
+    out = {k: "" for k in DESC_KEYS}
+    if not desc:
+        return out
+
+    for line in desc.splitlines():
+        if ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        k = k.strip().upper()
+        if k in out:
+            out[k] = v.strip()
+    return out
+
+
+def card_to_viewmodel(card: dict) -> dict:
+    """
+    Make a safe object for templates: id, name + parsed fields
+    """
+    desc = card.get("desc", "") if isinstance(card, dict) else ""
+    meta = parse_desc(desc)
+    vm = {
+        "id": card.get("id"),
+        "name": card.get("name", ""),
+        "desc": desc,
+        "client": meta["CLIENT"],
+        "vehicle": meta["VEHICLE"],
+        "start": meta["START"],
+        "end": meta["END"],
+        "ppd": meta["PPD"],
+        "deposit": meta["DEPOSIT"],
+        "paid": meta["PAID"],
+        "doc": meta["DOC"],
+        "notes": meta["NOTES"],
+    }
+    return vm
+
+
+def safe_len(x):
+    try:
+        return len(x)
+    except Exception:
+        return 0
+
+
+# -----------------------------
+# Routes
+# -----------------------------
 @bookings_bp.get("/bookings")
-@admin_required
-def bookings():
-    _, ids = _board_and_lists()
+@login_required
+def index():
+    t = Trello()
 
-    demandes = get_cards_by_list_id(ids["demandes"])
-    reserved = get_cards_by_list_id(ids["reserved"])
-    ongoing  = get_cards_by_list_id(ids["ongoing"])
-    done     = get_cards_by_list_id(ids["done"])
-    cancel   = get_cards_by_list_id(ids["cancel"])
+    demandes = [card_to_viewmodel(c) for c in t.list_cards(C.LIST_DEMANDES)]
+    reserved = [card_to_viewmodel(c) for c in t.list_cards(C.LIST_RESERVED)]
+    ongoing = [card_to_viewmodel(c) for c in t.list_cards(C.LIST_ONGOING)]
+    done = [card_to_viewmodel(c) for c in t.list_cards(C.LIST_DONE)]
+    cancel = [card_to_viewmodel(c) for c in t.list_cards(C.LIST_CANCEL)]
+
+    stats = {
+        "demandes": safe_len(demandes),
+        "reserved": safe_len(reserved),
+        "ongoing": safe_len(ongoing),
+        "done": safe_len(done),
+        "cancel": safe_len(cancel),
+    }
 
     return render_template(
         "bookings.html",
         demandes=demandes,
         reserved=reserved,
         ongoing=ongoing,
-        closed=done,
-        cancelled=cancel,
+        done=done,
+        cancel=cancel,
+        stats=stats,
     )
 
 
 @bookings_bp.post("/bookings/create")
-@admin_required
+@login_required
 def create_booking():
-    _, ids = _board_and_lists()
+    t = Trello()
 
-    title = request.form.get("title", "Location véhicule")
+    title = (request.form.get("title") or "").strip() or "Nouvelle réservation"
+    desc = build_desc(request.form)
 
-    desc = "\n".join([
-        f"CLIENT: {request.form.get('client','')}",
-        f"VEHICLE: {request.form.get('vehicle','')}",
-        f"START: {request.form.get('start','')}",
-        f"END: {request.form.get('end','')}",
-        f"PRICE/DAY: {request.form.get('ppd','')}",
-        f"DEPOSIT: {request.form.get('deposit','')}",
-        f"PAID: {request.form.get('paid','')}",
-        f"DOC: {request.form.get('doc','')}",
-        "",
-        request.form.get("notes",""),
-    ])
-
-    create_card(ids["demandes"], title, desc)
-    return redirect(url_for("bookings.bookings"))
+    # create in DEMANDES
+    t.create_card(C.LIST_DEMANDES, title, desc)
+    flash("✅ Demande créée dans Trello.", "ok")
+    return redirect(url_for("bookings.index"))
 
 
-@bookings_bp.post("/bookings/move/<card_id>/<target>")
-@admin_required
-def move(card_id, target):
-    _, ids = _board_and_lists()
+@bookings_bp.post("/bookings/move/<card_id>/<stage>")
+@login_required
+def move(card_id: str, stage: str):
+    t = Trello()
+    stage = stage.lower().strip()
 
-    if target == "reserved":
-        move_card_to_list(card_id, ids["reserved"])
-    elif target == "ongoing":
-        move_card_to_list(card_id, ids["ongoing"])
-    elif target == "done":
-        move_card_to_list(card_id, ids["done"])
-    elif target == "cancel":
-        move_card_to_list(card_id, ids["cancel"])
-    else:
-        # fallback demandes
-        move_card_to_list(card_id, ids["demandes"])
+    mapping = {
+        "demandes": C.LIST_DEMANDES,
+        "reserved": C.LIST_RESERVED,
+        "ongoing": C.LIST_ONGOING,
+        "done": C.LIST_DONE,
+        "cancel": C.LIST_CANCEL,
+    }
 
-    return redirect(url_for("bookings.bookings"))
+    if stage not in mapping:
+        flash("❌ Stage inconnu.", "err")
+        return redirect(url_for("bookings.index"))
+
+    t.move_card(card_id, mapping[stage])
+    flash(f"✅ Déplacé vers {mapping[stage]}", "ok")
+    return redirect(url_for("bookings.index"))
 
 
 @bookings_bp.get("/bookings/contract.pdf/<card_id>")
-@admin_required
-def contract_pdf(card_id):
-    card = get_card_by_id(card_id)
-    desc = card.get("desc", "")
+@login_required
+def contract_pdf(card_id: str):
+    """
+    Generate FR+AR contract from Trello card desc.
+    """
+    t = Trello()
+    card = t.get_card(card_id)  # dict: name, desc, ...
+    meta = parse_desc(card.get("desc", ""))
 
-    def extract(label):
-        for line in desc.splitlines():
-            if line.startswith(label + ":"):
-                return line.split(":", 1)[1].strip()
-        return ""
-
+    # data object for PDF generator
     data = {
-        "booking_ref": card_id,
-        "client": {
-            "name": extract("CLIENT"),
-            "document": extract("DOC") or "Carte nationale ou passeport",
-        },
-        "vehicle": {
-            "name": extract("VEHICLE"),
-        },
-        "dates": {
-            "start": extract("START"),
-            "end": extract("END"),
-        },
-        "pricing": {
-            "price_per_day": extract("PRICE/DAY"),
-            "deposit": extract("DEPOSIT"),
-            "paid": extract("PAID"),
-            "currency": "DZD",
-        },
-        "company": {"name": "Zohir Location Auto"},
+        "booking_ref": card_id[:8],
+        "title": card.get("name", ""),
+        "client_name": meta["CLIENT"],
+        "vehicle": meta["VEHICLE"],
+        "start": meta["START"],
+        "end": meta["END"],
+        "ppd": meta["PPD"],
+        "deposit": meta["DEPOSIT"],
+        "paid": meta["PAID"],
+        "doc_type": meta["DOC"],  # CNI / PASSPORT
+        "notes": meta["NOTES"],
+        "company_name": "Zohir Location Auto",
+        "currency": "DZD",
+        "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
     }
 
     pdf_bytes = build_contract_pdf_fr_ar(data)
@@ -138,6 +200,6 @@ def contract_pdf(card_id):
         BytesIO(pdf_bytes),
         mimetype="application/pdf",
         as_attachment=True,
-        download_name=f"contrat_{card_id}.pdf",
+        download_name=f"contrat_{data['booking_ref']}.pdf",
     )
 

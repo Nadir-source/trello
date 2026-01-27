@@ -1,156 +1,220 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="topbar">
-  <div class="brand">🚗 Zohir Location Auto</div>
-  <div class="badge">Gestion – Réservations (Trello)</div>
+<div class="page-head">
+  <div>
+    <h1>Réservations</h1>
+    <div class="muted">Tout se gère ici. Trello reste “backend”.</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n">{{stats.demandes}}</div><div class="l">Demandes</div></div>
+    <div class="stat"><div class="n">{{stats.reserved}}</div><div class="l">Réservées</div></div>
+    <div class="stat"><div class="n">{{stats.ongoing}}</div><div class="l">En cours</div></div>
+    <div class="stat"><div class="n">{{stats.done}}</div><div class="l">Terminées</div></div>
+    <div class="stat"><div class="n">{{stats.cancel}}</div><div class="l">Annulées</div></div>
+  </div>
 </div>
 
-<div style="height:14px"></div>
+<div class="card form-card">
+  <div class="card-title">Créer une demande</div>
 
-<div class="panel">
-  <h3>➕ Créer une demande</h3>
-
-  <form method="post" action="/bookings/create">
-    <div class="formgrid">
-      <input name="title" placeholder="Titre (ex: Clio – 10→12 Jan)" />
-      <input name="start" placeholder="Début (YYYY-MM-DD)" />
-      <input name="end" placeholder="Fin (YYYY-MM-DD)" />
+  <form method="post" action="/bookings/create" class="grid">
+    <div class="field">
+      <label>Titre</label>
+      <input name="title" placeholder="Ex: Location Clio 10-12 Jan" />
     </div>
 
-    <div class="formgrid2" style="margin-top:10px">
-      <input name="client" placeholder="Client (Nom / Tel)" />
-      <input name="vehicle" placeholder="Véhicule (Modèle / Immat)" />
-      <input name="ppd" placeholder="Prix/jour (DZD)" />
+    <div class="field">
+      <label>Client</label>
+      <input name="client" placeholder="Nom + Téléphone (ex: Karim 0550...)" required />
     </div>
 
-    <div class="formgrid2" style="margin-top:10px">
-      <input name="deposit" placeholder="Dépôt (DZD)" />
-      <input name="paid" placeholder="Payé (DZD)" />
-      <input name="doc" placeholder="CNI ou Passeport (numéro)" />
+    <div class="field">
+      <label>Véhicule</label>
+      <input name="vehicle" placeholder="Modèle / Immatriculation" required />
     </div>
 
-    <div style="margin-top:10px">
-      <textarea name="notes" placeholder="Notes (adresse, caution, km, etc.)"></textarea>
+    <div class="field">
+      <label>Date début</label>
+      <input name="start" placeholder="YYYY-MM-DD" />
     </div>
 
-    <div class="row" style="margin-top:10px">
-      <button class="btn primary" type="submit">✅ Créer la demande</button>
+    <div class="field">
+      <label>Date fin</label>
+      <input name="end" placeholder="YYYY-MM-DD" />
+    </div>
+
+    <div class="field">
+      <label>Prix / jour (DZD)</label>
+      <input name="ppd" placeholder="Ex: 8500" />
+    </div>
+
+    <div class="field">
+      <label>Dépôt (DZD)</label>
+      <input name="deposit" placeholder="Ex: 20000" />
+    </div>
+
+    <div class="field">
+      <label>Payé (DZD)</label>
+      <input name="paid" placeholder="Ex: 17000" />
+    </div>
+
+    <div class="field">
+      <label>Document</label>
+      <select name="doc">
+        <option value="">--</option>
+        <option value="CNI">Carte Nationale (CNI)</option>
+        <option value="PASSPORT">Passeport</option>
+      </select>
+    </div>
+
+    <div class="field full">
+      <label>Notes</label>
+      <textarea name="notes" placeholder="Remarques, conditions, caution, etc."></textarea>
+    </div>
+
+    <div class="actions full">
+      <button class="btn primary">Créer</button>
     </div>
   </form>
 </div>
 
-<hr>
+<div class="columns">
 
-<div class="grid" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
-  <!-- DEMANDES -->
-  <div class="panel">
-    <h3>📥 Demandes</h3>
+  <section class="col">
+    <div class="col-head">
+      <h3>📥 Demandes</h3>
+      <span class="pill">{{ demandes|length }}</span>
+    </div>
     {% for c in demandes %}
-      <div class="card">
-        <div><b>{{ c.name }}</b></div>
-        <div class="small">ID: {{ c.id }}</div>
+      <div class="card item">
+        <div class="item-head">
+          <div class="title">{{ c.name }}</div>
+          <div class="muted small">#{{ c.id[:8] }}</div>
+        </div>
 
-        <div class="row" style="margin-top:10px">
-          <form method="post" action="/bookings/move/{{ c.id }}/reserved">
-            <button class="btn ok" type="submit">➡️ Réserver</button>
+        <div class="meta">
+          <div><span class="tag">👤</span> {{ c.client }}</div>
+          <div><span class="tag">🚗</span> {{ c.vehicle }}</div>
+          <div><span class="tag">📅</span> {{ c.start }} → {{ c.end }}</div>
+          <div><span class="tag">💳</span> {{ c.ppd }} /j • Dépôt: {{ c.deposit }} • Payé: {{ c.paid }}</div>
+        </div>
+
+        <div class="row">
+          <form method="post" action="/bookings/move/{{c.id}}/reserved">
+            <button class="btn">➡️ Confirmer</button>
           </form>
-
-          <form method="post" action="/bookings/move/{{ c.id }}/cancel">
-            <button class="btn bad" type="submit">❌ Annuler</button>
+          <form method="post" action="/bookings/move/{{c.id}}/cancel">
+            <button class="btn danger">Annuler</button>
           </form>
         </div>
       </div>
-    {% else %}
-      <div class="small">Aucune demande.</div>
     {% endfor %}
-  </div>
+  </section>
 
-  <!-- RESERVED -->
-  <div class="panel">
-    <h3>📅 Réservées</h3>
+  <section class="col">
+    <div class="col-head">
+      <h3>📅 Réservées</h3>
+      <span class="pill">{{ reserved|length }}</span>
+    </div>
     {% for c in reserved %}
-      <div class="card">
-        <div><b>{{ c.name }}</b></div>
-        <div class="small">ID: {{ c.id }}</div>
+      <div class="card item">
+        <div class="item-head">
+          <div class="title">{{ c.name }}</div>
+          <div class="muted small">#{{ c.id[:8] }}</div>
+        </div>
 
-        <div class="row" style="margin-top:10px">
-          <a class="btn warn" href="/bookings/contract.pdf/{{ c.id }}">📄 Contrat FR+AR</a>
+        <div class="meta">
+          <div><span class="tag">👤</span> {{ c.client }}</div>
+          <div><span class="tag">🚗</span> {{ c.vehicle }}</div>
+          <div><span class="tag">📅</span> {{ c.start }} → {{ c.end }}</div>
+        </div>
 
-          <form method="post" action="/bookings/move/{{ c.id }}/ongoing">
-            <button class="btn primary" type="submit">🔑 En cours</button>
-          </form>
-
-          <form method="post" action="/bookings/move/{{ c.id }}/cancel">
-            <button class="btn bad" type="submit">❌ Annuler</button>
+        <div class="row">
+          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat FR+AR</a>
+          <form method="post" action="/bookings/move/{{c.id}}/ongoing">
+            <button class="btn">🔑 En cours</button>
           </form>
         </div>
       </div>
-    {% else %}
-      <div class="small">Aucune réservation.</div>
     {% endfor %}
-  </div>
+  </section>
 
-  <!-- ONGOING -->
-  <div class="panel">
-    <h3>🔑 En cours</h3>
+  <section class="col">
+    <div class="col-head">
+      <h3>🔑 En cours</h3>
+      <span class="pill">{{ ongoing|length }}</span>
+    </div>
     {% for c in ongoing %}
-      <div class="card">
-        <div><b>{{ c.name }}</b></div>
-        <div class="small">ID: {{ c.id }}</div>
-
-        <div class="row" style="margin-top:10px">
-          <a class="btn warn" href="/bookings/contract.pdf/{{ c.id }}">📄 Contrat FR+AR</a>
-
-          <form method="post" action="/bookings/move/{{ c.id }}/done">
-            <button class="btn ok" type="submit">✅ Terminer</button>
-          </form>
-
-          <form method="post" action="/bookings/move/{{ c.id }}/cancel">
-            <button class="btn bad" type="submit">❌ Annuler</button>
-          </form>
+      <div class="card item">
+        <div class="item-head">
+          <div class="title">{{ c.name }}</div>
+          <div class="muted small">#{{ c.id[:8] }}</div>
         </div>
-      </div>
-    {% else %}
-      <div class="small">Aucune location en cours.</div>
-    {% endfor %}
-  </div>
 
-  <!-- DONE -->
-  <div class="panel">
-    <h3>✅ Terminées</h3>
-    {% for c in closed %}
-      <div class="card">
-        <div><b>{{ c.name }}</b></div>
-        <div class="small">ID: {{ c.id }}</div>
-
-        <div class="row" style="margin-top:10px">
-          <a class="btn" href="/bookings/contract.pdf/{{ c.id }}">📄 Contrat FR+AR</a>
+        <div class="meta">
+          <div><span class="tag">👤</span> {{ c.client }}</div>
+          <div><span class="tag">🚗</span> {{ c.vehicle }}</div>
+          <div><span class="tag">📅</span> {{ c.start }} → {{ c.end }}</div>
         </div>
-      </div>
-    {% else %}
-      <div class="small">Aucune réservation terminée.</div>
-    {% endfor %}
-  </div>
 
-  <!-- CANCELLED -->
-  <div class="panel">
-    <h3>❌ Annulées</h3>
-    {% for c in cancelled %}
-      <div class="card">
-        <div><b>{{ c.name }}</b></div>
-        <div class="small">ID: {{ c.id }}</div>
-
-        <div class="row" style="margin-top:10px">
-          <form method="post" action="/bookings/move/{{ c.id }}/demandes">
-            <button class="btn" type="submit">↩️ Remettre en demande</button>
+        <div class="row">
+          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat</a>
+          <form method="post" action="/bookings/move/{{c.id}}/done">
+            <button class="btn ok">✅ Terminer</button>
           </form>
         </div>
       </div>
-    {% else %}
-      <div class="small">Aucune annulée.</div>
     {% endfor %}
-  </div>
+  </section>
+
+  <section class="col">
+    <div class="col-head">
+      <h3>✅ Terminées</h3>
+      <span class="pill">{{ done|length }}</span>
+    </div>
+    {% for c in done %}
+      <div class="card item">
+        <div class="item-head">
+          <div class="title">{{ c.name }}</div>
+          <div class="muted small">#{{ c.id[:8] }}</div>
+        </div>
+        <div class="meta">
+          <div><span class="tag">👤</span> {{ c.client }}</div>
+          <div><span class="tag">🚗</span> {{ c.vehicle }}</div>
+        </div>
+        <div class="row">
+          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat</a>
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="col">
+    <div class="col-head">
+      <h3>❌ Annulées</h3>
+      <span class="pill">{{ cancel|length }}</span>
+    </div>
+    {% for c in cancel %}
+      <div class="card item">
+        <div class="item-head">
+          <div class="title">{{ c.name }}</div>
+          <div class="muted small">#{{ c.id[:8] }}</div>
+        </div>
+        <div class="meta">
+          <div><span class="tag">👤</span> {{ c.client }}</div>
+          <div><span class="tag">🚗</span> {{ c.vehicle }}</div>
+        </div>
+        <div class="row">
+          <form method="post" action="/bookings/move/{{c.id}}/demandes">
+            <button class="btn">↩️ Remettre en demande</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
 </div>
 
 {% endblock %}
