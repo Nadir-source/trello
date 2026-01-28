@@ -1,94 +1,105 @@
 import os
 import re
+import json
 import requests
 
 BASE = "https://api.trello.com/1"
 
-TRELLO_KEY = os.getenv("TRELLO_KEY", "")
-TRELLO_TOKEN = os.getenv("TRELLO_TOKEN", "")
-TRELLO_BOARD = os.getenv("TRELLO_BOARD", "")  # id, shortLink, ou vide
 
-TIMEOUT = 30
-
-
-def _check():
-    if not TRELLO_KEY or not TRELLO_TOKEN:
-        raise RuntimeError("Missing TRELLO_KEY or TRELLO_TOKEN env vars")
+def _check_env(name: str) -> str:
+    v = os.getenv(name, "").strip()
+    if not v:
+        raise RuntimeError(f"Missing env var: {name}")
+    return v
 
 
-def _params(extra=None):
-    p = {"key": TRELLO_KEY, "token": TRELLO_TOKEN}
+def _params(extra: dict | None = None) -> dict:
+    p = {
+        "key": _check_env("TRELLO_KEY"),
+        "token": _check_env("TRELLO_TOKEN"),
+    }
     if extra:
         p.update(extra)
     return p
 
 
-def _get(path, params=None):
-    _check()
-    r = requests.get(BASE + path, params=_params(params), timeout=TIMEOUT)
+def _get(path: str, params: dict | None = None):
+    r = requests.get(BASE + path, params=_params(params), timeout=30)
     r.raise_for_status()
     return r.json()
 
 
-def _post(path, params=None, json=None):
-    _check()
-    r = requests.post(BASE + path, params=_params(params), json=json, timeout=TIMEOUT)
+def _post(path: str, data: dict | None = None, params: dict | None = None):
+    r = requests.post(BASE + path, params=_params(params), json=data or {}, timeout=30)
     r.raise_for_status()
     return r.json()
 
 
-def _put(path, params=None, json=None):
-    _check()
-    r = requests.put(BASE + path, params=_params(params), json=json, timeout=TIMEOUT)
+def _put(path: str, data: dict | None = None, params: dict | None = None):
+    r = requests.put(BASE + path, params=_params(params), json=data or {}, timeout=30)
     r.raise_for_status()
     return r.json()
-
-
-def resolve_board_id():
-    """
-    Résout le board :
-    1) TRELLO_BOARD = id -> OK
-    2) TRELLO_BOARD = shortLink -> GET /boards/{shortLink}
-    3) TRELLO_BOARD vide -> prend le 1er board du compte
-    """
-    ref = (TRELLO_BOARD or "").strip()
-
-    if not ref:
-        boards = _get("/members/me/boards", {"fields": "name,url", "filter": "open"})
-        if not boards:
-            raise RuntimeError("No Trello boards found for this token.")
-        return boards[0]["id"]
-
-    # id
-    if len(ref) >= 24:
-        return ref[:24]
-
-    # shortLink
-    b = _get(f"/boards/{ref}")
-    return b["id"]
-
-
-def get_card_by_id(card_id: str):
-    return _get(f"/cards/{card_id}", {"fields": "name,desc,idList"})
-
-
-def get_list_id_by_name(board_id: str, list_name: str):
-    lists = _get(f"/boards/{board_id}/lists", {"fields": "name"})
-    wanted = (list_name or "").strip().lower()
-    for l in lists:
-        if (l.get("name") or "").strip().lower() == wanted:
-            return l["id"]
-    raise RuntimeError(f"List not found on board: {list_name}")
 
 
 def _looks_like_list_id(x: str) -> bool:
+    # Trello IDs are typically 24 hex chars (but keep it flexible)
+    s = (x or "").strip()
+    return bool(re.fullmatch(r"[a-f0-9]{24}", s, flags=re.IGNORECASE))
+
+
+def resolve_board_id() -> str:
     """
-    Trello list ids are typically 24 hex chars, but we keep this permissive.
+    Env var:
+      - TRELLO_BOARD: board id (24 hex) OR shortLink (usually 8 chars) OR any board ref Trello accepts.
     """
-    if not x:
-        return False
-    s = x.strip()
-    return bool(re.fullmatch(r"[a-zA-Z0-9]{20,}", s))
+    ref = os.getenv("TRELLO_BOARD", "").strip()
+    if not ref:
+        raise RuntimeError("Missing TRELLO_BOARD env var (board id or shortLink).")
+
+    # If it's already a board id
+    if bool(re.fullmatch(r"[a-f0-9]{24}", ref, flags=re.IGNORECASE)):
+        return ref
+
+    # Otherwise ask Trello to resolve it
+    b = _get(f"/boards/{ref}", {"fields": "id"})
+    board_id = b.get("id", "").strip()
+    if not board_id:
+        raise RuntimeError(f"Unable to resolve board id from TRELLO_BOARD={ref!r}")
+    return board_id
+
+
+def get_list_id_by_name(board_id: str, list_name: str) -> str:
+    """
+    Return the Trello list ID from the list display name.
+    Raises if not found (IMPORTANT).
+    """
+    wanted = (list_name or "").strip()
+    if not wanted:
+        raise RuntimeError("Empty list_name")
+
+    lists = _get(f"/boards/{board_id}/lists", {"fields": "name"})
+    # 1) exact match
+    for l in lists:
+        if (l.get("name") or "").strip() == wanted:
+            return l["id"]
+
+    # 2) case-insensitive match
+    w2 = wanted.casefold()
+    for l in lists:
+        if (l.get("name") or "").strip().casefold() == w2:
+            return l["id"]
+
+    # 3) relaxed match: collapse spaces
+    def norm(s: str) -> str:
+        return re.sub(r"\s+", " ", (s or "").strip()).casefold()
+
+    w3 = norm(wanted)
+    for l in lists:
+        if norm(l.get("name") or "") == w3:
+            return l["id"]
+
+    available = ", ".join([(l.get("name") or "").strip() for l in lists if l.get("name")])
+    raise RuntimeError(f"List not found on board: {wanted!r}. Available: {available}")
 
 
 class Trello:
@@ -96,25 +107,17 @@ class Trello:
         self.board_id = resolve_board_id()
         self.board = _get(f"/boards/{self.board_id}", {"fields": "name,url"})
 
-    def get_list_id(self, list_name: str):
+    def get_list_id(self, list_name: str) -> str:
         return get_list_id_by_name(self.board_id, list_name)
 
     def list_cards(self, list_id_or_name: str):
-        """
-        Accepts either:
-        - list id (recommended)
-        - OR list name like "📥 DEMANDES"
-        """
         target = (list_id_or_name or "").strip()
         if not target:
             return []
 
-        if _looks_like_list_id(target):
-            list_id = target
-        else:
-            list_id = self.get_list_id(target)
-
+        list_id = target if _looks_like_list_id(target) else self.get_list_id(target)
         cards = _get(f"/lists/{list_id}/cards", {"fields": "name,desc,idList"})
+
         return [
             {
                 "id": c["id"],
@@ -125,28 +128,35 @@ class Trello:
             for c in cards
         ]
 
+    def get_card(self, card_id: str):
+        return _get(f"/cards/{card_id}", {"fields": "name,desc,idList,url"})
+
     def create_card(self, list_id_or_name: str, name: str, desc: str = ""):
         target = (list_id_or_name or "").strip()
-        if _looks_like_list_id(target):
-            list_id = target
-        else:
-            list_id = self.get_list_id(target)
+        list_id = target if _looks_like_list_id(target) else self.get_list_id(target)
         return _post("/cards", {"idList": list_id, "name": name, "desc": desc})
 
     def move_card(self, card_id: str, target_list_id_or_name: str):
         target = (target_list_id_or_name or "").strip()
-        if _looks_like_list_id(target):
-            target_list_id = target
-        else:
-            target_list_id = self.get_list_id(target)
-        return _put(f"/cards/{card_id}", {"idList": target_list_id})
+        target_list_id = target if _looks_like_list_id(target) else self.get_list_id(target)
+        return _put(f"/cards/{card_id}", params={"idList": target_list_id})
 
-    def delete_card(self, card_id: str):
-        _check()
-        r = requests.delete(BASE + f"/cards/{card_id}", params=_params(), timeout=TIMEOUT)
-        r.raise_for_status()
-        return True
+    def archive_card(self, card_id: str):
+        # Trello archive = closed=true
+        return _put(f"/cards/{card_id}", params={"closed": "true"})
 
-    def get_card(self, card_id: str):
-        return get_card_by_id(card_id)
+    # ---- Booking helpers (for your bookings.py) ----
+    def create_booking_card(self, data: dict):
+        """
+        Creates a booking request card in list LIST_DEMANDES (from app.config).
+        We store structured JSON in desc for easy parsing later.
+        """
+        import app.config as C
+
+        title = (data.get("title") or "").strip() or "Nouvelle réservation"
+        payload = dict(data)
+        payload["_type"] = "booking"
+        desc = json.dumps(payload, ensure_ascii=False, indent=2)
+
+        return self.create_card(C.LIST_DEMANDES, title, desc)
 
