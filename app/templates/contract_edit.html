@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Contrat (édition)</h1>
+    <div class="muted">Modifie le texte puis “Exporter PDF”</div>
+  </div>
+
+  <div class="row">
+    <a class="btn" href="/bookings">⬅️ Retour réservations</a>
+    <a class="btn primary" href="/bookings/contract/pdf/{{ model.meta.booking_id }}">📄 Exporter PDF</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Informations société</div>
+
+  <form method="post" action="/bookings/contract/save/{{ model.meta.booking_id }}" class="grid">
+    <div class="field">
+      <label>Nom</label>
+      <input name="company_name" value="{{model.header.company_name}}" />
+    </div>
+    <div class="field">
+      <label>Téléphone</label>
+      <input name="company_phone" value="{{model.header.company_phone}}" />
+    </div>
+    <div class="field full">
+      <label>Adresse</label>
+      <input name="company_address" value="{{model.header.company_address}}" />
+    </div>
+
+    <div class="field">
+      <label>Titre FR</label>
+      <input name="title_fr" value="{{model.header.title_fr}}" />
+    </div>
+    <div class="field">
+      <label>Titre AR</label>
+      <input name="title_ar" value="{{model.header.title_ar}}" />
+    </div>
+
+    <div class="field full">
+      <label>Texte principal (FR)</label>
+      <textarea name="body_fr" rows="4">{{model.body_fr}}</textarea>
+    </div>
+
+    <div class="field full">
+      <label>Texte principal (AR)</label>
+      <textarea name="body_ar" rows="4">{{model.body_ar}}</textarea>
+    </div>
+
+    <div class="field full">
+      <label>Conditions (FR) — 1 ligne = 1 clause</label>
+      <textarea name="clauses_fr" rows="6">{% for c in model.clauses_fr %}{{c}}
+{% endfor %}</textarea>
+    </div>
+
+    <div class="field full">
+      <label>Conditions (AR) — 1 ligne = 1 clause</label>
+      <textarea name="clauses_ar" rows="6">{% for c in model.clauses_ar %}{{c}}
+{% endfor %}</textarea>
+    </div>
+
+    <div class="card-title full" style="margin-top:10px;">Signature</div>
+
+    <div class="field">
+      <label>Lieu</label>
+      <input name="sig_place" value="{{model.signature.place}}" />
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <input name="sig_date" value="{{model.signature.date}}" />
+    </div>
+    <div class="field">
+      <label>Loueur</label>
+      <input name="sig_lessor" value="{{model.signature.lessor_name}}" />
+    </div>
+    <div class="field">
+      <label>Locataire</label>
+      <input name="sig_lessee" value="{{model.signature.lessee_name}}" />
+    </div>
+
+    <div class="actions full">
+      <button class="btn primary">💾 Enregistrer</button>
+      <a class="btn" href="/bookings/contract/pdf/{{ model.meta.booking_id }}">📄 Exporter PDF</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+
