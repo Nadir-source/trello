@@ -1,27 +1,40 @@
 import os
 
-def env(name: str, default: str | None = None) -> str | None:
-    v = os.getenv(name)
-    return v if v not in (None, "") else default
+def _env(name: str, default: str = "") -> str:
+    return os.getenv(name, default).strip()
 
-SECRET_KEY = env("SECRET_KEY", "change-me")
-ADMIN_PASSWORD = env("ADMIN_PASSWORD", "admin")
-CLIENT_PASSWORD = env("CLIENT_PASSWORD", None)
+# ===== Auth =====
+ADMIN_PASSWORD = _env("ADMIN_PASSWORD", "")
+AGENT_PASSWORD = _env("AGENT_PASSWORD", "")
 
-# Trello
-TRELLO_KEY = env("TRELLO_KEY")
-TRELLO_TOKEN = env("TRELLO_TOKEN")
-BOARD_ID = env("BOARD_ID") or env("TRELLO_BOARD_ID")  # compat si jamais
+# ===== Trello board =====
+# Peut être un ID (24 hex) OU un shortLink, ton trello_client resolve les deux
+TRELLO_BOARD = _env("TRELLO_BOARD", "")
 
-# Lists (tes noms)
-LIST_DEMANDES = env("LIST_NAME_FILTER", "📥 Demandes")
-LIST_RESERVED = env("RESERVED_LIST_NAME", "📅 Réservations")
-LIST_CLOSED = env("TRELLO_CLOSED_LIST_NAME", "✅ Terminées")
+# ===== Trello Lists (NOMS ou IDs) =====
+# Astuce: tu peux mettre directement les IDs Trello ici (recommandé),
+# sinon mets les noms exacts, et trello_client fera le match (même si emoji change)
+LIST_DEMANDES   = _env("LIST_DEMANDES", "📥 DEMANDES")
 
-LIST_INVOICES_OPEN = env("TRELLO_LIST_INVOICES_OPEN", "🧾 Invoices - Open")
-LIST_INVOICES_PAID = env("TRELLO_LIST_INVOICES_PAID", "🧾 Invoices - Paid")
+# "Réservé / Réservées"
+# sur ton board on voit "📅 RÉSERVÉES" et aussi "✅ Réservé"
+# ici on choisit "📅 RÉSERVÉES" (réservations planifiées)
+LIST_RESERVED   = _env("LIST_RESERVED", "📅 RÉSERVÉES")
 
-# Infos loueur (contrat)
-LOUEUR_NOM = env("LOUEUR_NOM", "LOUEUR")
-LOUEUR_TEL = env("LOUEUR_TEL", "")
-LOUEUR_ADRESSE = env("LOUEUR_ADRESSE", "")
+# "En cours" (à toi de choisir la bonne)
+# sur ton board on voit "🔑 EN COURS"
+LIST_ONGOING    = _env("LIST_ONGOING", "🔑 EN COURS")
+
+# Terminé / Clôturé
+LIST_DONE       = _env("LIST_DONE", "✅ TERMINÉES")
+
+# Annulé (si ton code l’utilise)
+LIST_CANCELED   = _env("LIST_CANCELED", "❌ ANNULÉES")
+
+# Vehicules / Clients / Factures (si utilisés ailleurs)
+LIST_VEHICLES   = _env("LIST_VEHICLES", "🚗 VÉHICULES")
+LIST_CLIENTS    = _env("LIST_CLIENTS", "👤 CLIENTS")
+LIST_INVOICES_OPEN = _env("LIST_INVOICES_OPEN", "🧾 FACTURES - OUVERTES")
+LIST_INVOICES_PAID = _env("LIST_INVOICES_PAID", "💰 FACTURES - PAYÉES")
+LIST_EXPENSES   = _env("LIST_EXPENSES", "💸 DÉPENSES")
+
