@@ -42,54 +42,44 @@ def _put(path: str, data: dict | None = None, params: dict | None = None):
 
 
 def _looks_like_list_id(x: str) -> bool:
-    # Trello IDs are typically 24 hex chars (but keep it flexible)
     s = (x or "").strip()
     return bool(re.fullmatch(r"[a-f0-9]{24}", s, flags=re.IGNORECASE))
 
 
 def resolve_board_id() -> str:
-    """
-    Env var:
-      - TRELLO_BOARD: board id (24 hex) OR shortLink (usually 8 chars) OR any board ref Trello accepts.
-    """
     ref = os.getenv("TRELLO_BOARD", "").strip()
     if not ref:
         raise RuntimeError("Missing TRELLO_BOARD env var (board id or shortLink).")
 
-    # If it's already a board id
     if bool(re.fullmatch(r"[a-f0-9]{24}", ref, flags=re.IGNORECASE)):
         return ref
 
-    # Otherwise ask Trello to resolve it
     b = _get(f"/boards/{ref}", {"fields": "id"})
-    board_id = b.get("id", "").strip()
+    board_id = (b.get("id") or "").strip()
     if not board_id:
         raise RuntimeError(f"Unable to resolve board id from TRELLO_BOARD={ref!r}")
     return board_id
 
 
 def get_list_id_by_name(board_id: str, list_name: str) -> str:
-    """
-    Return the Trello list ID from the list display name.
-    Raises if not found (IMPORTANT).
-    """
     wanted = (list_name or "").strip()
     if not wanted:
         raise RuntimeError("Empty list_name")
 
     lists = _get(f"/boards/{board_id}/lists", {"fields": "name"})
-    # 1) exact match
+
+    # exact
     for l in lists:
         if (l.get("name") or "").strip() == wanted:
             return l["id"]
 
-    # 2) case-insensitive match
+    # case-insensitive
     w2 = wanted.casefold()
     for l in lists:
         if (l.get("name") or "").strip().casefold() == w2:
             return l["id"]
 
-    # 3) relaxed match: collapse spaces
+    # relaxed spaces
     def norm(s: str) -> str:
         return re.sub(r"\s+", " ", (s or "").strip()).casefold()
 
@@ -142,15 +132,10 @@ class Trello:
         return _put(f"/cards/{card_id}", params={"idList": target_list_id})
 
     def archive_card(self, card_id: str):
-        # Trello archive = closed=true
         return _put(f"/cards/{card_id}", params={"closed": "true"})
 
-    # ---- Booking helpers (for your bookings.py) ----
+    # bookings helper (fix create_booking_card missing)
     def create_booking_card(self, data: dict):
-        """
-        Creates a booking request card in list LIST_DEMANDES (from app.config).
-        We store structured JSON in desc for easy parsing later.
-        """
         import app.config as C
 
         title = (data.get("title") or "").strip() or "Nouvelle réservation"
