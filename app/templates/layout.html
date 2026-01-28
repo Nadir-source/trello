@@ -5,36 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ title or "Zohir Location Auto" }}</title>
 
-  <!-- Nice font -->
+  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- FullCalendar (planning) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
+  <div class="bg-ambient"></div>
 
   <div class="app-shell">
-    <header class="topbar">
-      <div class="topbar-inner">
-        <div class="brand">
-          <div class="logo">Z</div>
-          <div class="brand-text">
-            <div class="brand-title">Zohir Location Auto</div>
-            <div class="brand-sub">Gestion (Trello) • Contrat FR/AR • DZD</div>
-          </div>
-        </div>
 
-        <nav class="nav">
-          <a class="navlink" href="/dashboard">Dashboard</a>
-          <a class="navlink" href="/bookings">Réservations</a>
-          <a class="navlink" href="/clients">Clients</a>
-          <a class="navlink" href="/vehicles">Véhicules</a>
-          <a class="navlink" href="/finance">Finance</a>
-          <a class="navlink danger" href="/logout">Logout</a>
-        </nav>
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo-glow">Z</div>
+        <div class="brand-text">
+          <div class="brand-title">Zohir Location Auto</div>
+          <div class="brand-sub">Trello-only • DZD • Contrat FR/AR</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="chip">👤 {{ session.get("name","User") }}</div>
+        <div class="chip chip-ok">🔐 {{ session.get("role","user") }}</div>
       </div>
     </header>
+
+    <aside class="sidebar">
+      <a class="navlink" href="/dashboard">🏠 Dashboard</a>
+      <a class="navlink" href="/bookings">📅 Réservations</a>
+      <a class="navlink" href="/clients">👥 Clients</a>
+      <a class="navlink" href="/vehicles">🚗 Véhicules</a>
+      <a class="navlink" href="/finance">💰 Finance</a>
+      <div class="sep"></div>
+      <a class="navlink danger" href="/logout">⛔ Logout</a>
+
+      <div class="side-card">
+        <div class="side-title">Tips</div>
+        <div class="muted">
+          • Crée Clients/Véhicules depuis Trello<br>
+          • Tout se fait dans le site (ton ami touche que le site)
+        </div>
+      </div>
+    </aside>
 
     <main class="main">
       <div class="container">
@@ -43,13 +62,13 @@
     </main>
 
     <footer class="footer">
-      <div class="container">
-        <div>© {{ title or "Zohir Location Auto" }}</div>
-        <div class="muted">CNI/Passeport • Chauffeur/GPS/Siège bébé</div>
-      </div>
+      <div>© {{ title or "Zohir Location Auto" }}</div>
+      <div class="muted">Neon UI • Planning • PDF FR/AR</div>
     </footer>
+
   </div>
 
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
 

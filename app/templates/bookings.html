@@ -1,115 +1,232 @@
 {% extends "layout.html" %}
 {% block content %}
-<h2>Réservations</h2>
 
-<div class="box">
-  <h3>Créer une demande</h3>
-  <form method="post" action="/bookings/create">
-    <input name="title" placeholder="Titre (ex: Location Clio 10-12)" />
-    <div class="grid">
+<div class="page-head">
+  <div>
+    <h1>Réservations</h1>
+    <div class="muted">Créer demande • Déplacer • Générer contrat FR/AR • Planning</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat neon-cyan"><div class="n">{{stats.demandes}}</div><div class="l">Demandes</div></div>
+    <div class="stat neon-purple"><div class="n">{{stats.reserved}}</div><div class="l">Réservées</div></div>
+    <div class="stat neon-green"><div class="n">{{stats.ongoing}}</div><div class="l">En cours</div></div>
+    <div class="stat neon-orange"><div class="n">{{stats.done}}</div><div class="l">Terminées</div></div>
+  </div>
+</div>
+
+<div class="grid-2 mt">
+  <div class="card neon form-card">
+    <div class="card-head">
       <div>
+        <div class="card-title">➕ Créer une demande</div>
+        <div class="muted">Ton ami remplit ça, tout est centralisé</div>
+      </div>
+      <span class="pill">Trello</span>
+    </div>
+
+    <form method="post" action="/bookings/create" class="grid">
+      <div class="field full">
+        <label>Titre</label>
+        <input name="title" placeholder="Ex: Location Clio 10-12" />
+      </div>
+
+      <div class="field">
         <label>Client</label>
-        <select name="client_card_id">
+        <select name="client_id">
           <option value="">-- choisir --</option>
           {% for c in clients %}
             <option value="{{c.id}}">{{c.name}}</option>
           {% endfor %}
         </select>
+        <div class="hint">Si vide: créer une carte dans la liste “Clients” sur Trello.</div>
       </div>
-      <div>
+
+      <div class="field">
         <label>Véhicule</label>
-        <select name="vehicle_card_id">
+        <select name="vehicle_id">
           <option value="">-- choisir --</option>
           {% for v in vehicles %}
             <option value="{{v.id}}">{{v.name}}</option>
           {% endfor %}
         </select>
+        <div class="hint">Si vide: créer une carte dans la liste “Véhicules”.</div>
       </div>
-      <div><input name="start_date" placeholder="Début (YYYY-MM-DD)"></div>
-      <div><input name="end_date" placeholder="Fin (YYYY-MM-DD)"></div>
-      <div><input name="price_per_day" placeholder="Prix/jour"></div>
-      <div><input name="deposit" placeholder="Dépôt"></div>
-      <div><input name="paid_amount" placeholder="Déjà payé"></div>
-      <div>
+
+      <div class="field">
+        <label>Début</label>
+        <input name="start" placeholder="YYYY-MM-DD" />
+      </div>
+
+      <div class="field">
+        <label>Fin</label>
+        <input name="end" placeholder="YYYY-MM-DD" />
+      </div>
+
+      <div class="field">
+        <label>Prix / jour (DZD)</label>
+        <input name="ppd" placeholder="Ex: 8500" />
+      </div>
+
+      <div class="field">
+        <label>Dépôt (DZD)</label>
+        <input name="deposit" placeholder="Ex: 20000" />
+      </div>
+
+      <div class="field">
+        <label>Déjà payé (DZD)</label>
+        <input name="paid" placeholder="Ex: 17000" />
+      </div>
+
+      <div class="field">
         <label>Méthode</label>
-        <select name="payment_method">
-          <option value="cash">Cash</option>
-          <option value="transfer">Virement</option>
-          <option value="card">Carte</option>
+        <select name="method">
+          <option value="Cash">Cash</option>
+          <option value="Virement">Virement</option>
+          <option value="Carte">Carte</option>
         </select>
       </div>
+
+      <div class="field">
+        <label>Document</label>
+        <select name="doc">
+          <option value="">--</option>
+          <option value="CNI">Carte Nationale</option>
+          <option value="PASSPORT">Passeport</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Lieu remise</label>
+        <input name="pickup" placeholder="Ex: Aéroport" />
+      </div>
+
+      <div class="field">
+        <label>Lieu retour</label>
+        <input name="return_place" placeholder="Ex: Centre ville" />
+      </div>
+
+      <div class="field full">
+        <label>Options</label>
+        <div class="checks">
+          <label><input type="checkbox" name="extra_driver"> Chauffeur</label>
+          <label><input type="checkbox" name="extra_gps"> GPS</label>
+          <label><input type="checkbox" name="extra_baby"> Siège bébé</label>
+        </div>
+      </div>
+
+      <div class="field full">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Remarques..."></textarea>
+      </div>
+
+      <div class="actions full">
+        <button class="btn primary">Créer demande</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card neon">
+    <div class="card-head">
+      <div>
+        <div class="card-title">🗓️ Planning</div>
+        <div class="muted">Réservées + En cours (vue calendrier)</div>
+      </div>
+      <div class="row gap">
+        <button class="btn" type="button" onclick="window.renderCalendar()">↻ Refresh</button>
+      </div>
     </div>
 
-    <div class="grid">
-      <div><input name="pickup_place" placeholder="Lieu remise"></div>
-      <div><input name="return_place" placeholder="Lieu retour"></div>
+    <!-- On embed les events en JSON via data-events -->
+    <div id="calendar"
+         class="calendar"
+         data-events='[
+           {% set all = reserved + ongoing %}
+           {% for c in all %}
+             {
+               "title": "{{ (c.vehicle ~ " • " ~ c.client)|e }}",
+               "start": "{{ c.start|e }}",
+               "end": "{{ c.end|e }}",
+               "url": "/bookings/contract.pdf/{{ c.id }}",
+               "extendedProps": { "id": "{{ c.id|e }}", "status": "{{ "reserved" if c in reserved else "ongoing" }}" }
+             }{{ "," if not loop.last else "" }}
+           {% endfor %}
+         ]'>
     </div>
 
-    <div class="row">
-      <label><input type="checkbox" name="extra_driver"> Chauffeur</label>
-      <label><input type="checkbox" name="extra_gps"> GPS</label>
-      <label><input type="checkbox" name="extra_child_seat"> Siège bébé</label>
+    <div class="muted small mt">
+      Cliquer un événement → ouvre le contrat PDF (si disponible).
     </div>
-
-    <textarea name="notes" placeholder="Notes"></textarea>
-    <button>Créer demande</button>
-  </form>
+  </div>
 </div>
 
-<div class="grid3">
-  <div class="box">
-    <h3>📥 Demandes</h3>
+<div class="columns mt">
+
+  <section class="col">
+    <div class="col-head"><h3>📥 Demandes</h3><span class="pill">{{ demandes|length }}</span></div>
     {% for c in demandes %}
-      <div class="card">
-        <b>{{c.name}}</b>
+      <div class="card item neon-soft">
+        <div class="title">{{c.name}}</div>
+        <div class="meta">
+          <div><span class="tag">👤</span>{{c.client}}</div>
+          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
+          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
+        </div>
         <div class="row">
-          <form method="post" action="/bookings/move/{{c.id}}/reserved"><button>➡️ Réserver</button></form>
-          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button>❌ Annuler</button></form>
+          <form method="post" action="/bookings/move/{{c.id}}/reserved"><button class="btn">➡️ Confirmer</button></form>
+          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button class="btn danger">Annuler</button></form>
         </div>
       </div>
     {% endfor %}
-  </div>
+    {% if demandes|length == 0 %}<div class="empty">Aucune demande.</div>{% endif %}
+  </section>
 
-  <div class="box">
-    <h3>📅 Réservées</h3>
+  <section class="col">
+    <div class="col-head"><h3>📅 Réservées</h3><span class="pill">{{ reserved|length }}</span></div>
     {% for c in reserved %}
-      <div class="card">
-        <b>{{c.name}}</b>
-        <div class="row">
-          <a href="/bookings/contract.pdf/{{c.id}}">📄 Contrat PDF</a>
+      <div class="card item neon-soft">
+        <div class="title">{{c.name}}</div>
+        <div class="meta">
+          <div><span class="tag">👤</span>{{c.client}}</div>
+          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
+          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
         </div>
         <div class="row">
-          <form method="post" action="/bookings/move/{{c.id}}/ongoing"><button>🔑 Remise</button></form>
-          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button>❌ Annuler</button></form>
+          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat FR+AR</a>
+          <form method="post" action="/bookings/move/{{c.id}}/ongoing"><button class="btn ok">🔑 En cours</button></form>
         </div>
       </div>
     {% endfor %}
-  </div>
+    {% if reserved|length == 0 %}<div class="empty">Aucune réservation.</div>{% endif %}
+  </section>
 
-  <div class="box">
-    <h3>🔑 En cours</h3>
+  <section class="col">
+    <div class="col-head"><h3>🔑 En cours</h3><span class="pill">{{ ongoing|length }}</span></div>
     {% for c in ongoing %}
-      <div class="card">
-        <b>{{c.name}}</b>
-        <div class="row">
-          <a href="/bookings/contract.pdf/{{c.id}}">📄 Contrat PDF</a>
+      <div class="card item neon-soft">
+        <div class="title">{{c.name}}</div>
+        <div class="meta">
+          <div><span class="tag">👤</span>{{c.client}}</div>
+          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
+          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
         </div>
         <div class="row">
-          <form method="post" action="/bookings/move/{{c.id}}/done"><button>✅ Retour</button></form>
-          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button>❌ Annuler</button></form>
+          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat</a>
+          <form method="post" action="/bookings/move/{{c.id}}/done"><button class="btn ok">✅ Terminer</button></form>
         </div>
       </div>
     {% endfor %}
-  </div>
+    {% if ongoing|length == 0 %}<div class="empty">Aucun en cours.</div>{% endif %}
+  </section>
+
 </div>
 
-<div class="box">
-  <h3>✅ Terminées</h3>
-  {% for c in done %}
-    <div class="card">
-      <b>{{c.name}}</b> — <a href="/bookings/contract.pdf/{{c.id}}">📄 PDF</a>
-    </div>
-  {% endfor %}
-</div>
+<script>
+  // Auto-render on page load
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.renderCalendar) window.renderCalendar();
+  });
+</script>
 
 {% endblock %}
+
