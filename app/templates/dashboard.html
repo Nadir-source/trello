@@ -4,94 +4,139 @@
 <div class="page-head">
   <div>
     <h1>Dashboard</h1>
-    <div class="muted">Vue rapide • activité • KPI • alertes</div>
-  </div>
-</div>
-
-<div class="kpi-grid">
-  <div class="kpi">
-    <div class="label">📥 Demandes</div>
-    <div class="value">{{ stats.demandes }}</div>
-    <div class="sub">Nouvelles demandes à traiter</div>
-  </div>
-  <div class="kpi">
-    <div class="label">📅 Réservées</div>
-    <div class="value">{{ stats.reserved }}</div>
-    <div class="sub">Contrats prêts à générer</div>
-  </div>
-  <div class="kpi">
-    <div class="label">🔑 En cours</div>
-    <div class="value">{{ stats.ongoing }}</div>
-    <div class="sub">Locations actives</div>
-  </div>
-  <div class="kpi">
-    <div class="label">✅ Terminées</div>
-    <div class="value">{{ stats.done or stats.closed }}</div>
-    <div class="sub">Locations clôturées</div>
-  </div>
-  <div class="kpi">
-    <div class="label">🚗 Véhicules</div>
-    <div class="value">{{ stats.vehicles }}</div>
-    <div class="sub">Cartes “Véhicules” Trello</div>
-  </div>
-  <div class="kpi">
-    <div class="label">👤 Clients</div>
-    <div class="value">{{ stats.clients }}</div>
-    <div class="sub">Cartes “Clients” Trello</div>
-  </div>
-</div>
-
-<div class="grid2">
-  <div class="card panel glow">
-    <div class="card-pad">
-      <h3>📊 Finance (résumé)</h3>
-      <div class="list">
-        <div class="rowline">
-          <div>Factures ouvertes</div>
-          <span class="badge warn">{{ stats.invoices_open }}</span>
-        </div>
-        <div class="rowline">
-          <div>Factures payées</div>
-          <span class="badge ok">{{ stats.invoices_paid }}</span>
-        </div>
-        <div class="rowline">
-          <div>Dépenses</div>
-          <span class="badge danger">{{ stats.expenses or 0 }}</span>
-        </div>
-      </div>
-
-      <div style="margin-top:12px;" class="muted">
-        Astuce: depuis “Réservations” tu peux générer le contrat FR/AR en 1 clic.
-      </div>
+    <div class="muted">
+      Vue globale : réservations, clients, véhicules, finance
     </div>
   </div>
 
-  <div class="card panel">
-    <div class="card-pad">
-      <h3>⚡ Actions rapides</h3>
-      <div class="row" style="margin-bottom:10px;">
-        <a class="btn primary" href="/bookings">➕ Nouvelle réservation</a>
-        <a class="btn" href="/clients">👤 Gérer clients</a>
-        <a class="btn" href="/vehicles">🚗 Gérer véhicules</a>
-      </div>
+  <div class="stats">
+    <div class="stat"><div class="n">{{stats.demandes}}</div><div class="l">Demandes</div></div>
+    <div class="stat"><div class="n">{{stats.reserved}}</div><div class="l">Réservées</div></div>
+    <div class="stat"><div class="n">{{stats.ongoing}}</div><div class="l">En cours</div></div>
+    <div class="stat"><div class="n">{{stats.done}}</div><div class="l">Terminées</div></div>
+  </div>
+</div>
 
-      <h3 style="margin-top:14px;">🧠 Qualité des données</h3>
-      <div class="list">
-        <div class="rowline">
-          <div>Clients sans téléphone</div>
-          <span class="badge warn">à venir</span>
+<div class="columns" style="grid-template-columns: 2fr 1fr 1fr;">
+  <section class="card panel glow">
+    <div class="card-title">⚡ Résumé rapide</div>
+    <div class="muted">
+      Board Trello :
+      {% if board_url %}
+        <a class="btn" style="margin-left:8px" href="{{board_url}}" target="_blank">Ouvrir Trello</a>
+      {% endif %}
+    </div>
+
+    <div style="height:10px"></div>
+
+    <div class="card" style="padding:14px; background: rgba(255,255,255,.03);">
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:950">📌 Objectif du jour</div>
+          <div class="muted small">Confirmer les demandes + générer contrats + encaisser paiements</div>
         </div>
-        <div class="rowline">
-          <div>Véhicules sans prix/jour</div>
-          <span class="badge warn">à venir</span>
-        </div>
-        <div class="rowline">
-          <div>Docs manquants (CNI/Passeport)</div>
-          <span class="badge warn">à venir</span>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn primary" href="/bookings">➕ Nouvelle réservation</a>
+          <a class="btn" href="/finance">💰 Finance</a>
         </div>
       </div>
     </div>
-  </div>
+
+    <div style="height:12px"></div>
+
+    <div class="card" style="padding:14px; background: rgba(255,255,255,.03);">
+      <div style="font-weight:950; margin-bottom:6px">🧠 Conseils (workflow)</div>
+      <ul class="muted" style="margin:0; padding-left:18px; line-height:1.7">
+        <li>Créer demande → passer en Réservée</li>
+        <li>Générer Contrat FR/AR → imprimer / signer</li>
+        <li>Passer En cours (remise clé) → puis Terminée</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="card panel">
+    <div class="card-title">👥 Clients</div>
+    <div style="font-size:34px; font-weight:950">{{stats.clients or 0}}</div>
+    <div class="muted small">Cartes dans la liste Clients</div>
+    <div style="height:10px"></div>
+    <a class="btn" href="/clients">Ouvrir</a>
+  </section>
+
+  <section class="card panel">
+    <div class="card-title">🚗 Véhicules</div>
+    <div style="font-size:34px; font-weight:950">{{stats.vehicles or 0}}</div>
+    <div class="muted small">Cartes dans la liste Véhicules</div>
+    <div style="height:10px"></div>
+    <a class="btn" href="/vehicles">Ouvrir</a>
+  </section>
+</div>
+
+<div style="height:12px"></div>
+
+<div class="columns" style="grid-template-columns: 1.2fr 1.8fr;">
+  <section class="card panel glow">
+    <div class="card-title">💳 Finance</div>
+    <div class="muted">Vue simple (tu peux enrichir après)</div>
+    <div style="height:10px"></div>
+
+    <div class="card" style="padding:14px; background: rgba(255,255,255,.03);">
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:950">Factures ouvertes</div>
+          <div style="font-size:26px; font-weight:950">{{stats.invoices_open}}</div>
+        </div>
+        <div>
+          <div style="font-weight:950">Factures payées</div>
+          <div style="font-size:26px; font-weight:950">{{stats.invoices_paid}}</div>
+        </div>
+      </div>
+
+      <div style="height:10px"></div>
+      <a class="btn" href="/finance">Voir détails</a>
+    </div>
+  </section>
+
+  <section class="card panel">
+    <div class="card-title">🧾 Dernières réservations</div>
+    <div class="muted small">Vue “mini-kanban” pour voir rapidement</div>
+    <div style="height:12px"></div>
+
+    <div class="columns" style="grid-template-columns: 1fr 1fr 1fr; margin-top:0">
+      <div class="col">
+        <div class="col-head"><h3>📥 Demandes</h3><span class="pill">{{demandes|length}}</span></div>
+        {% for c in demandes[:3] %}
+          <div class="card item">
+            <div class="title">{{c.name}}</div>
+            <div class="muted small">👤 {{c.client}} • 🚗 {{c.vehicle}}</div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="col">
+        <div class="col-head"><h3>📅 Réservées</h3><span class="pill">{{reserved|length}}</span></div>
+        {% for c in reserved[:3] %}
+          <div class="card item">
+            <div class="title">{{c.name}}</div>
+            <div class="muted small">📅 {{c.start}} → {{c.end}}</div>
+            <a class="btn" style="margin-top:8px" href="/bookings/contract.pdf/{{c.id}}" target="_blank">📄 Contrat</a>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="col">
+        <div class="col-head"><h3>🔑 En cours</h3><span class="pill">{{ongoing|length}}</span></div>
+        {% for c in ongoing[:3] %}
+          <div class="card item">
+            <div class="title">{{c.name}}</div>
+            <div class="muted small">👤 {{c.client}} • 🚗 {{c.vehicle}}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div style="height:10px"></div>
+    <a class="btn primary" href="/bookings">Ouvrir Réservations</a>
+  </section>
 </div>
 
 {% endblock %}
