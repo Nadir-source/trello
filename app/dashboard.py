@@ -1,73 +1,112 @@
-# app/dashboard.py
-from flask import Blueprint, render_template, session
-from app.auth import login_required
-from app.trello_client import Trello
-import app.config as C
+{% extends "layout.html" %}
+{% block content %}
 
-dashboard_bp = Blueprint("dashboard", __name__)
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <div class="muted">KPIs • aperçu business • actions rapides</div>
+  </div>
 
-def _safe_list_cards(t: Trello, list_name: str):
-    """
-    Evite de casser le dashboard si une liste n'existe pas.
-    Retourne toujours une liste.
-    """
-    try:
-        return t.list_cards(list_name) or []
-    except Exception:
-        return []
+  <div class="row gap">
+    <a class="btn primary" href="/bookings">➕ Nouvelle réservation</a>
+    <a class="btn" href="/clients">👥 Clients</a>
+    <a class="btn" href="/vehicles">🚗 Véhicules</a>
+  </div>
+</div>
 
-@dashboard_bp.route("/")
-@login_required
-def root():
-    # redirige vers le dashboard
-    return index()
+<div class="grid-4">
+  <div class="metric neon-cyan">
+    <div class="k">📥 Demandes</div>
+    <div class="v">{{ stats.demandes }}</div>
+    <div class="bar"><span style="width: {{ (stats.demandes * 10) if stats.demandes < 10 else 100 }}%"></span></div>
+  </div>
 
-@dashboard_bp.route("/dashboard")
-@login_required
-def index():
-    role = session.get("role", "user")
-    name = session.get("name", "Utilisateur")
+  <div class="metric neon-purple">
+    <div class="k">📅 Réservées</div>
+    <div class="v">{{ stats.reserved }}</div>
+    <div class="bar"><span style="width: {{ (stats.reserved * 10) if stats.reserved < 10 else 100 }}%"></span></div>
+  </div>
 
-    t = Trello()
+  <div class="metric neon-green">
+    <div class="k">🔑 En cours</div>
+    <div class="v">{{ stats.ongoing }}</div>
+    <div class="bar"><span style="width: {{ (stats.ongoing * 10) if stats.ongoing < 10 else 100 }}%"></span></div>
+  </div>
 
-    # Récupérer cartes par liste (safe)
-    demandes = _safe_list_cards(t, C.LIST_DEMANDES)
-    reserved = _safe_list_cards(t, C.LIST_RESERVED)
-    ongoing  = _safe_list_cards(t, getattr(C, "LIST_ONGOING", "🔑 EN COURS"))
-    done     = _safe_list_cards(t, getattr(C, "LIST_DONE", "✅ TERMINÉES"))
-    cancel   = _safe_list_cards(t, getattr(C, "LIST_CANCEL", "❌ ANNULÉES"))
+  <div class="metric neon-orange">
+    <div class="k">✅ Terminées</div>
+    <div class="v">{{ stats.done }}</div>
+    <div class="bar"><span style="width: {{ (stats.done * 10) if stats.done < 10 else 100 }}%"></span></div>
+  </div>
+</div>
 
-    # Si tu as des listes invoices dans config, on les calcule, sinon 0
-    invoices_open = 0
-    invoices_paid = 0
-    if hasattr(C, "LIST_INVOICES_OPEN"):
-        invoices_open = len(_safe_list_cards(t, C.LIST_INVOICES_OPEN))
-    if hasattr(C, "LIST_INVOICES_PAID"):
-        invoices_paid = len(_safe_list_cards(t, C.LIST_INVOICES_PAID))
+<div class="grid-2 mt">
 
-    stats = {
-        "demandes": len(demandes),
-        "reserved": len(reserved),
-        "ongoing": len(ongoing),
-        "done": len(done),
-        "cancel": len(cancel),
-        "invoices_open": invoices_open,
-        "invoices_paid": invoices_paid,
-    }
+  <div class="card neon">
+    <div class="card-head">
+      <div>
+        <div class="card-title">📌 À traiter</div>
+        <div class="muted">Dernières demandes</div>
+      </div>
+      <a class="btn" href="/bookings">Ouvrir</a>
+    </div>
 
-    # board (optionnel) : ton template peut l'afficher
-    board = getattr(t, "board", None)
+    <div class="list">
+      {% set d = demandes|default([]) %}
+      {% if d|length > 0 %}
+        {% for c in d[:5] %}
+          <div class="list-row">
+            <div class="list-main">
+              <div class="t">{{ c.name }}</div>
+              <div class="muted small">👤 {{ c.client }} • 🚗 {{ c.vehicle }} • 📅 {{ c.start }} → {{ c.end }}</div>
+            </div>
+            <div class="list-actions">
+              <a class="btn" href="/bookings">Voir</a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">Aucune demande.</div>
+      {% endif %}
+    </div>
+  </div>
 
-    return render_template(
-        "dashboard.html",
-        role=role,
-        name=name,
-        stats=stats,
-        board=board,
-        demandes=demandes,
-        reserved=reserved,
-        ongoing=ongoing,
-        done=done,
-        cancel=cancel,
-    )
+  <div class="card neon">
+    <div class="card-head">
+      <div>
+        <div class="card-title">💰 Finance</div>
+        <div class="muted">Encaissements & factures</div>
+      </div>
+      <a class="btn" href="/finance">Détails</a>
+    </div>
+
+    <div class="grid-2">
+      <div class="mini metric neon-cyan">
+        <div class="k">🧾 Factures ouvertes</div>
+        <div class="v">{{ stats.invoices_open }}</div>
+      </div>
+      <div class="mini metric neon-green">
+        <div class="k">✅ Factures payées</div>
+        <div class="v">{{ stats.invoices_paid }}</div>
+      </div>
+      <div class="mini metric neon-red">
+        <div class="k">❌ Annulées</div>
+        <div class="v">{{ stats.cancel }}</div>
+      </div>
+      <div class="mini metric neon-purple">
+        <div class="k">📦 Activité totale</div>
+        <div class="v">{{ stats.demandes + stats.reserved + stats.ongoing + stats.done }}</div>
+      </div>
+    </div>
+
+    <div class="note mt">
+      <div class="muted">
+        🎯 Prochaine étape: afficher <b>CA du mois</b> + <b>reste à encaisser</b> + <b>réservations à venir</b>.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
 

@@ -1,221 +1,274 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
-from io import BytesIO
-from datetime import datetime
+{% extends "layout.html" %}
+{% block content %}
 
-from app.auth import login_required
-from app.trello_client import Trello
-import app.config as C
+<div class="page-head">
+  <div>
+    <h1>Réservations</h1>
+    <div class="muted">Planning semaine • filtres • contrat FR/AR • workflow Trello</div>
+  </div>
 
-from app.pdf_generator import build_contract_pdf_fr_ar
+  <div class="stats">
+    <div class="stat neon-cyan"><div class="n">{{stats.demandes}}</div><div class="l">Demandes</div></div>
+    <div class="stat neon-purple"><div class="n">{{stats.reserved}}</div><div class="l">Réservées</div></div>
+    <div class="stat neon-green"><div class="n">{{stats.ongoing}}</div><div class="l">En cours</div></div>
+    <div class="stat neon-orange"><div class="n">{{stats.done}}</div><div class="l">Terminées</div></div>
+  </div>
+</div>
 
-bookings_bp = Blueprint("bookings", __name__)
+<div class="grid-2 mt">
 
-DESC_KEYS = ["CLIENT", "VEHICLE", "START", "END", "PPD", "DEPOSIT", "PAID", "DOC", "NOTES", "METHOD", "PICKUP", "RETURN", "EXTRA_DRIVER", "EXTRA_GPS", "EXTRA_BABY"]
+  <!-- FORM -->
+  <div class="card neon form-card">
+    <div class="card-head">
+      <div>
+        <div class="card-title">➕ Nouvelle demande</div>
+        <div class="muted">Le site = opérationnel pour ton ami (pas besoin Trello)</div>
+      </div>
+      <span class="pill">Create</span>
+    </div>
 
+    <form method="post" action="/bookings/create" class="grid">
+      <div class="field full">
+        <label>Titre</label>
+        <input name="title" placeholder="Ex: Location Clio 10-12" />
+      </div>
 
-def _g(form, k):
-    return (form.get(k) or "").strip()
+      <div class="field">
+        <label>Client</label>
+        <select name="client_id">
+          <option value="">-- choisir --</option>
+          {% for c in clients %}
+            <option value="{{c.id}}">{{c.name}}</option>
+          {% endfor %}
+        </select>
+        <div class="hint">Si vide: créer une carte dans “Clients” sur Trello.</div>
+      </div>
 
+      <div class="field">
+        <label>Véhicule</label>
+        <select name="vehicle_id">
+          <option value="">-- choisir --</option>
+          {% for v in vehicles %}
+            <option value="{{v.id}}">{{v.name}}</option>
+          {% endfor %}
+        </select>
+        <div class="hint">Si vide: créer une carte dans “Véhicules”.</div>
+      </div>
 
-def build_desc(data: dict) -> str:
-    out = {k: "" for k in DESC_KEYS}
-    out.update({k: (data.get(k) or "").strip() for k in DESC_KEYS})
+      <div class="field">
+        <label>Début</label>
+        <input name="start" placeholder="YYYY-MM-DD" />
+      </div>
 
-    # normalise doc
-    doc = out["DOC"].upper().replace("É", "E")
-    if doc not in ("CNI", "PASSPORT", ""):
-        doc = ""
-    out["DOC"] = doc
+      <div class="field">
+        <label>Fin</label>
+        <input name="end" placeholder="YYYY-MM-DD" />
+      </div>
 
-    # normalise extras
-    for k in ["EXTRA_DRIVER", "EXTRA_GPS", "EXTRA_BABY"]:
-        out[k] = "YES" if out.get(k) in ("on", "true", "1", "YES") else "NO"
+      <div class="field">
+        <label>Prix / jour (DZD)</label>
+        <input name="ppd" placeholder="Ex: 8500" />
+      </div>
 
-    lines = [f"{k}: {out.get(k,'')}" for k in DESC_KEYS]
-    return "\n".join(lines).strip() + "\n"
+      <div class="field">
+        <label>Dépôt (DZD)</label>
+        <input name="deposit" placeholder="Ex: 20000" />
+      </div>
 
+      <div class="field">
+        <label>Déjà payé (DZD)</label>
+        <input name="paid" placeholder="Ex: 17000" />
+      </div>
 
-def parse_desc(desc: str) -> dict:
-    out = {k: "" for k in DESC_KEYS}
-    if not desc:
-        return out
-    for line in desc.splitlines():
-        if ":" not in line:
-            continue
-        k, v = line.split(":", 1)
-        k = k.strip().upper()
-        if k in out:
-            out[k] = v.strip()
-    return out
+      <div class="field">
+        <label>Méthode</label>
+        <select name="method">
+          <option value="Cash">Cash</option>
+          <option value="Virement">Virement</option>
+          <option value="Carte">Carte</option>
+        </select>
+      </div>
 
+      <div class="field">
+        <label>Document</label>
+        <select name="doc">
+          <option value="">--</option>
+          <option value="CNI">Carte Nationale</option>
+          <option value="PASSPORT">Passeport</option>
+        </select>
+      </div>
 
-def card_to_vm(card: dict) -> dict:
-    meta = parse_desc(card.get("desc", ""))
-    return {
-        "id": card.get("id"),
-        "name": card.get("name", ""),
-        "client": meta["CLIENT"],
-        "vehicle": meta["VEHICLE"],
-        "start": meta["START"],
-        "end": meta["END"],
-        "ppd": meta["PPD"],
-        "deposit": meta["DEPOSIT"],
-        "paid": meta["PAID"],
-        "doc": meta["DOC"],
-        "notes": meta["NOTES"],
-        "method": meta["METHOD"],
-        "pickup": meta["PICKUP"],
-        "return_place": meta["RETURN"],
-        "extra_driver": meta["EXTRA_DRIVER"],
-        "extra_gps": meta["EXTRA_GPS"],
-        "extra_baby": meta["EXTRA_BABY"],
-    }
+      <div class="field">
+        <label>Lieu remise</label>
+        <input name="pickup" placeholder="Ex: Aéroport" />
+      </div>
 
+      <div class="field">
+        <label>Lieu retour</label>
+        <input name="return_place" placeholder="Ex: Centre ville" />
+      </div>
 
-@bookings_bp.get("/bookings")
-@login_required
-def index():
-    t = Trello()
+      <div class="field full">
+        <label>Options</label>
+        <div class="checks">
+          <label><input type="checkbox" name="extra_driver"> Chauffeur</label>
+          <label><input type="checkbox" name="extra_gps"> GPS</label>
+          <label><input type="checkbox" name="extra_baby"> Siège bébé</label>
+        </div>
+      </div>
 
-    # ✅ listes pour remplir les SELECT
-    clients_cards = t.list_cards(C.LIST_CLIENTS)
-    vehicles_cards = t.list_cards(C.LIST_VEHICLES)
+      <div class="field full">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Remarques..."></textarea>
+      </div>
 
-    clients = [{"id": c["id"], "name": c.get("name", "")} for c in clients_cards]
-    vehicles = [{"id": c["id"], "name": c.get("name", "")} for c in vehicles_cards]
+      <div class="actions full">
+        <button class="btn primary">Créer demande</button>
+      </div>
+    </form>
+  </div>
 
-    demandes = [card_to_vm(c) for c in t.list_cards(C.LIST_DEMANDES)]
-    reserved = [card_to_vm(c) for c in t.list_cards(C.LIST_RESERVED)]
-    ongoing = [card_to_vm(c) for c in t.list_cards(C.LIST_ONGOING)]
-    done = [card_to_vm(c) for c in t.list_cards(C.LIST_DONE)]
-    cancel = [card_to_vm(c) for c in t.list_cards(C.LIST_CANCEL)]
+  <!-- CALENDAR -->
+  <div class="card neon">
+    <div class="card-head">
+      <div>
+        <div class="card-title">🗓️ Planning</div>
+        <div class="muted">Semaine par défaut • click event = PDF contrat</div>
+      </div>
+      <div class="row gap">
+        <button id="calendarRefresh" class="btn" type="button">↻ Refresh</button>
+        <button id="filterReset" class="btn" type="button">🧹 Reset</button>
+      </div>
+    </div>
 
-    stats = {
-        "demandes": len(demandes),
-        "reserved": len(reserved),
-        "ongoing": len(ongoing),
-        "done": len(done),
-        "cancel": len(cancel),
-    }
+    <div class="filters">
+      <div class="filter">
+        <label>Statut</label>
+        <select id="filterStatus">
+          <option value="all">Tous</option>
+          <option value="reserved">Réservées</option>
+          <option value="ongoing">En cours</option>
+          <option value="done">Terminées</option>
+          <option value="cancel">Annulées</option>
+        </select>
+      </div>
 
-    return render_template(
-        "bookings.html",
-        clients=clients,
-        vehicles=vehicles,
-        demandes=demandes,
-        reserved=reserved,
-        ongoing=ongoing,
-        done=done,
-        cancel=cancel,
-        stats=stats,
-    )
+      <div class="filter">
+        <label>Véhicule</label>
+        <select id="filterVehicle">
+          <option value="all">Tous</option>
+        </select>
+      </div>
 
+      <div class="filter">
+        <label>Recherche</label>
+        <input id="filterSearch" placeholder="Client / véhicule..." />
+      </div>
 
-@bookings_bp.post("/bookings/create")
-@login_required
-def create_booking():
-    t = Trello()
+      <div class="legend">
+        <div class="lg">
+          <span class="dot dot-purple"></span> Réservée (<b id="countReserved">0</b>)
+        </div>
+        <div class="lg">
+          <span class="dot dot-green"></span> En cours (<b id="countOngoing">0</b>)
+        </div>
+        <div class="lg">
+          <span class="dot dot-orange"></span> Terminée (<b id="countDone">0</b>)
+        </div>
+        <div class="lg">
+          <span class="dot dot-red"></span> Annulée (<b id="countCancel">0</b>)
+        </div>
+      </div>
+    </div>
 
-    title = _g(request.form, "title") or "Nouvelle réservation"
+    <!-- Embed events -->
+    <div id="calendar" class="calendar"
+      data-events='[
+        {% set all = reserved + ongoing %}
+        {% for c in all %}
+          {
+            "title": "{{ (c.vehicle ~ " • " ~ c.client)|e }}",
+            "start": "{{ c.start|e }}",
+            "end": "{{ c.end|e }}",
+            "url": "/bookings/contract.pdf/{{ c.id }}",
+            "extendedProps": {
+              "id": "{{ c.id|e }}",
+              "status": "{{ "reserved" if c in reserved else "ongoing" }}",
+              "vehicle": "{{ c.vehicle|e }}",
+              "client": "{{ c.client|e }}"
+            }
+          }{{ "," if not loop.last else "" }}
+        {% endfor %}
+      ]'>
+    </div>
 
-    # ✅ select envoie des IDs -> on récupère les noms depuis Trello
-    client_id = _g(request.form, "client_id")
-    vehicle_id = _g(request.form, "vehicle_id")
+    <div class="muted small mt">
+      Astuce: passe en “Mois” si tu veux une vue globale (boutons en haut du calendrier).
+    </div>
+  </div>
 
-    client_name = ""
-    vehicle_name = ""
+</div>
 
-    if client_id:
-        c = t.get_card(client_id)
-        client_name = c.get("name", "")
+<div class="columns mt">
 
-    if vehicle_id:
-        v = t.get_card(vehicle_id)
-        vehicle_name = v.get("name", "")
+  <section class="col">
+    <div class="col-head"><h3>📥 Demandes</h3><span class="pill">{{ demandes|length }}</span></div>
+    {% for c in demandes %}
+      <div class="card item neon-soft">
+        <div class="title">{{c.name}}</div>
+        <div class="meta">
+          <div><span class="tag">👤</span>{{c.client}}</div>
+          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
+          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
+        </div>
+        <div class="row">
+          <form method="post" action="/bookings/move/{{c.id}}/reserved"><button class="btn">➡️ Confirmer</button></form>
+          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button class="btn danger">Annuler</button></form>
+        </div>
+      </div>
+    {% endfor %}
+    {% if demandes|length == 0 %}<div class="empty">Aucune demande.</div>{% endif %}
+  </section>
 
-    desc = build_desc({
-        "CLIENT": client_name or _g(request.form, "client_free"),
-        "VEHICLE": vehicle_name or _g(request.form, "vehicle_free"),
-        "START": _g(request.form, "start"),
-        "END": _g(request.form, "end"),
-        "PPD": _g(request.form, "ppd"),
-        "DEPOSIT": _g(request.form, "deposit"),
-        "PAID": _g(request.form, "paid"),
-        "DOC": _g(request.form, "doc"),
-        "NOTES": _g(request.form, "notes"),
-        "METHOD": _g(request.form, "method"),
-        "PICKUP": _g(request.form, "pickup"),
-        "RETURN": _g(request.form, "return_place"),
-        "EXTRA_DRIVER": request.form.get("extra_driver", ""),
-        "EXTRA_GPS": request.form.get("extra_gps", ""),
-        "EXTRA_BABY": request.form.get("extra_baby", ""),
-    })
+  <section class="col">
+    <div class="col-head"><h3>📅 Réservées</h3><span class="pill">{{ reserved|length }}</span></div>
+    {% for c in reserved %}
+      <div class="card item neon-soft">
+        <div class="title">{{c.name}}</div>
+        <div class="meta">
+          <div><span class="tag">👤</span>{{c.client}}</div>
+          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
+          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
+        </div>
+        <div class="row">
+          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat FR+AR</a>
+          <form method="post" action="/bookings/move/{{c.id}}/ongoing"><button class="btn ok">🔑 En cours</button></form>
+        </div>
+      </div>
+    {% endfor %}
+    {% if reserved|length == 0 %}<div class="empty">Aucune réservation.</div>{% endif %}
+  </section>
 
-    t.create_card(C.LIST_DEMANDES, title, desc)
-    flash("✅ Demande créée.", "ok")
-    return redirect(url_for("bookings.index"))
+  <section class="col">
+    <div class="col-head"><h3>🔑 En cours</h3><span class="pill">{{ ongoing|length }}</span></div>
+    {% for c in ongoing %}
+      <div class="card item neon-soft">
+        <div class="title">{{c.name}}</div>
+        <div class="meta">
+          <div><span class="tag">👤</span>{{c.client}}</div>
+          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
+          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
+        </div>
+        <div class="row">
+          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat</a>
+          <form method="post" action="/bookings/move/{{c.id}}/done"><button class="btn ok">✅ Terminer</button></form>
+        </div>
+      </div>
+    {% endfor %}
+    {% if ongoing|length == 0 %}<div class="empty">Aucun en cours.</div>{% endif %}
+  </section>
 
+</div>
 
-@bookings_bp.post("/bookings/move/<card_id>/<stage>")
-@login_required
-def move(card_id: str, stage: str):
-    t = Trello()
-    stage = stage.lower().strip()
-
-    mapping = {
-        "demandes": C.LIST_DEMANDES,
-        "reserved": C.LIST_RESERVED,
-        "ongoing": C.LIST_ONGOING,
-        "done": C.LIST_DONE,
-        "cancel": C.LIST_CANCEL,
-    }
-
-    if stage not in mapping:
-        flash("❌ Stage inconnu.", "err")
-        return redirect(url_for("bookings.index"))
-
-    t.move_card(card_id, mapping[stage])
-    flash("✅ Déplacé.", "ok")
-    return redirect(url_for("bookings.index"))
-
-
-@bookings_bp.get("/bookings/contract.pdf/<card_id>")
-@login_required
-def contract_pdf(card_id: str):
-    t = Trello()
-    card = t.get_card(card_id)
-    meta = parse_desc(card.get("desc", ""))
-
-    data = {
-        "booking_ref": card_id[:8],
-        "title": card.get("name", ""),
-        "client_name": meta["CLIENT"],
-        "vehicle": meta["VEHICLE"],
-        "start": meta["START"],
-        "end": meta["END"],
-        "ppd": meta["PPD"],
-        "deposit": meta["DEPOSIT"],
-        "paid": meta["PAID"],
-        "doc_type": meta["DOC"],
-        "notes": meta["NOTES"],
-        "method": meta["METHOD"],
-        "pickup": meta["PICKUP"],
-        "return_place": meta["RETURN"],
-        "extras": {
-            "driver": meta["EXTRA_DRIVER"],
-            "gps": meta["EXTRA_GPS"],
-            "baby": meta["EXTRA_BABY"],
-        },
-        "company_name": "Zohir Location Auto",
-        "currency": "DZD",
-        "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
-    }
-
-    pdf_bytes = build_contract_pdf_fr_ar(data)
-    return send_file(
-        BytesIO(pdf_bytes),
-        mimetype="application/pdf",
-        as_attachment=True,
-        download_name=f"contrat_{data['booking_ref']}.pdf",
-    )
+{% endblock %}
 
