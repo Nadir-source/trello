@@ -1,232 +1,172 @@
 {% extends "layout.html" %}
+{% block title %}Réservations{% endblock %}
+
 {% block content %}
+<div class="page">
 
-<div class="page-head">
-  <div>
-    <h1>Réservations</h1>
-    <div class="muted">Créer demande • Déplacer • Générer contrat FR/AR • Planning</div>
+  <h1 style="margin:0 0 14px 0;">Réservations</h1>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat neon-cyan"><div class="n">{{ stats.demandes }}</div><div class="l">Demandes</div></div>
+    <div class="stat neon-green"><div class="n">{{ stats.reserved }}</div><div class="l">Réservées</div></div>
+    <div class="stat neon-purple"><div class="n">{{ stats.ongoing }}</div><div class="l">En cours</div></div>
+    <div class="stat neon-yellow"><div class="n">{{ stats.done }}</div><div class="l">Terminées</div></div>
+
+    <div class="stat"><div class="n">{{ stats.clients }}</div><div class="l">Clients</div></div>
+    <div class="stat"><div class="n">{{ stats.vehicles_available }}</div><div class="l">Véhicules dispo</div></div>
   </div>
 
-  <div class="stats">
-    <div class="stat neon-cyan"><div class="n">{{stats.demandes}}</div><div class="l">Demandes</div></div>
-    <div class="stat neon-purple"><div class="n">{{stats.reserved}}</div><div class="l">Réservées</div></div>
-    <div class="stat neon-green"><div class="n">{{stats.ongoing}}</div><div class="l">En cours</div></div>
-    <div class="stat neon-orange"><div class="n">{{stats.done}}</div><div class="l">Terminées</div></div>
-  </div>
-</div>
+  <!-- FORM CREATE -->
+  <div class="card">
+    <h2 style="margin:0 0 10px 0;">Créer une réservation</h2>
 
-<div class="grid-2 mt">
-  <div class="card neon form-card">
-    <div class="card-head">
-      <div>
-        <div class="card-title">➕ Créer une demande</div>
-        <div class="muted">Ton ami remplit ça, tout est centralisé</div>
-      </div>
-      <span class="pill">Trello</span>
-    </div>
-
-    <form method="post" action="/bookings/create" class="grid">
-      <div class="field full">
-        <label>Titre</label>
-        <input name="title" placeholder="Ex: Location Clio 10-12" />
-      </div>
-
+    <form method="post" action="{{ url_for('bookings.create') }}" class="grid">
       <div class="field">
         <label>Client</label>
-        <select name="client_id">
-          <option value="">-- choisir --</option>
+        <select name="client_id" required>
+          <option value="">— Choisir un client —</option>
           {% for c in clients %}
-            <option value="{{c.id}}">{{c.name}}</option>
+            <option value="{{ c.id }}">{{ c.label }}{% if c.phone %} • {{ c.phone }}{% endif %}</option>
           {% endfor %}
         </select>
-        <div class="hint">Si vide: créer une carte dans la liste “Clients” sur Trello.</div>
       </div>
 
       <div class="field">
         <label>Véhicule</label>
-        <select name="vehicle_id">
-          <option value="">-- choisir --</option>
+        <select name="vehicle_id" required>
+          <option value="">— Choisir un véhicule —</option>
           {% for v in vehicles %}
-            <option value="{{v.id}}">{{v.name}}</option>
+            {% if v.status == "AVAILABLE" %}
+              <option value="{{ v.id }}">{{ v.label }}</option>
+            {% endif %}
           {% endfor %}
         </select>
-        <div class="hint">Si vide: créer une carte dans la liste “Véhicules”.</div>
+        <div class="hint">Seuls les véhicules avec status <b>AVAILABLE</b> sont proposés.</div>
       </div>
 
       <div class="field">
-        <label>Début</label>
-        <input name="start" placeholder="YYYY-MM-DD" />
+        <label>Date début</label>
+        <input type="datetime-local" name="start_date" required>
       </div>
 
       <div class="field">
-        <label>Fin</label>
-        <input name="end" placeholder="YYYY-MM-DD" />
-      </div>
-
-      <div class="field">
-        <label>Prix / jour (DZD)</label>
-        <input name="ppd" placeholder="Ex: 8500" />
-      </div>
-
-      <div class="field">
-        <label>Dépôt (DZD)</label>
-        <input name="deposit" placeholder="Ex: 20000" />
-      </div>
-
-      <div class="field">
-        <label>Déjà payé (DZD)</label>
-        <input name="paid" placeholder="Ex: 17000" />
-      </div>
-
-      <div class="field">
-        <label>Méthode</label>
-        <select name="method">
-          <option value="Cash">Cash</option>
-          <option value="Virement">Virement</option>
-          <option value="Carte">Carte</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Document</label>
-        <select name="doc">
-          <option value="">--</option>
-          <option value="CNI">Carte Nationale</option>
-          <option value="PASSPORT">Passeport</option>
-        </select>
+        <label>Date fin</label>
+        <input type="datetime-local" name="end_date" required>
       </div>
 
       <div class="field">
         <label>Lieu remise</label>
-        <input name="pickup" placeholder="Ex: Aéroport" />
+        <input type="text" name="pickup_location" placeholder="Aéroport / Centre ville..." required>
       </div>
 
       <div class="field">
         <label>Lieu retour</label>
-        <input name="return_place" placeholder="Ex: Centre ville" />
+        <input type="text" name="return_location" placeholder="Aéroport / Centre ville..." required>
       </div>
 
-      <div class="field full">
+      <div class="field">
+        <label>Type document</label>
+        <select name="doc_type">
+          <option value="CNI">CNI</option>
+          <option value="Passeport">Passeport</option>
+          <option value="Permis">Permis</option>
+        </select>
+      </div>
+
+      <div class="field">
         <label>Options</label>
         <div class="checks">
-          <label><input type="checkbox" name="extra_driver"> Chauffeur</label>
-          <label><input type="checkbox" name="extra_gps"> GPS</label>
-          <label><input type="checkbox" name="extra_baby"> Siège bébé</label>
+          <label><input type="checkbox" name="opt_gps"> GPS</label>
+          <label><input type="checkbox" name="opt_chauffeur"> Chauffeur</label>
+          <label><input type="checkbox" name="opt_baby_seat"> Siège bébé</label>
         </div>
       </div>
 
       <div class="field full">
         <label>Notes</label>
-        <textarea name="notes" placeholder="Remarques..."></textarea>
+        <textarea name="notes" rows="3" placeholder="Remarques..."></textarea>
       </div>
 
-      <div class="actions full">
-        <button class="btn primary">Créer demande</button>
+      <!-- Hidden fields (on remplit côté backend via IDs + mapping si besoin plus tard) -->
+      <input type="hidden" name="client_name" value="">
+      <input type="hidden" name="vehicle_name" value="">
+
+      <div class="field full">
+        <button class="btn" type="submit">✅ Créer</button>
       </div>
     </form>
   </div>
 
-  <div class="card neon">
-    <div class="card-head">
-      <div>
-        <div class="card-title">🗓️ Planning</div>
-        <div class="muted">Réservées + En cours (vue calendrier)</div>
-      </div>
-      <div class="row gap">
-        <button class="btn" type="button" onclick="window.renderCalendar()">↻ Refresh</button>
-      </div>
+  <!-- LISTS (simple affichage) -->
+  <div class="columns">
+    <div class="col">
+      <h3>📥 Demandes</h3>
+      {% for c in demandes %}
+        <div class="item">{{ c.name }}</div>
+      {% else %}
+        <div class="muted">Aucune</div>
+      {% endfor %}
     </div>
 
-    <!-- On embed les events en JSON via data-events -->
-    <div id="calendar"
-         class="calendar"
-         data-events='[
-           {% set all = reserved + ongoing %}
-           {% for c in all %}
-             {
-               "title": "{{ (c.vehicle ~ " • " ~ c.client)|e }}",
-               "start": "{{ c.start|e }}",
-               "end": "{{ c.end|e }}",
-               "url": "/bookings/contract.pdf/{{ c.id }}",
-               "extendedProps": { "id": "{{ c.id|e }}", "status": "{{ "reserved" if c in reserved else "ongoing" }}" }
-             }{{ "," if not loop.last else "" }}
-           {% endfor %}
-         ]'>
+    <div class="col">
+      <h3>✅ Réservées</h3>
+      {% for c in reserved %}
+        <div class="item">{{ c.name }}</div>
+      {% else %}
+        <div class="muted">Aucune</div>
+      {% endfor %}
     </div>
 
-    <div class="muted small mt">
-      Cliquer un événement → ouvre le contrat PDF (si disponible).
+    <div class="col">
+      <h3>🔑 En cours</h3>
+      {% for c in ongoing %}
+        <div class="item">{{ c.name }}</div>
+      {% else %}
+        <div class="muted">Aucune</div>
+      {% endfor %}
+    </div>
+
+    <div class="col">
+      <h3>🏁 Terminées</h3>
+      {% for c in done %}
+        <div class="item">{{ c.name }}</div>
+      {% else %}
+        <div class="muted">Aucune</div>
+      {% endfor %}
     </div>
   </div>
-</div>
-
-<div class="columns mt">
-
-  <section class="col">
-    <div class="col-head"><h3>📥 Demandes</h3><span class="pill">{{ demandes|length }}</span></div>
-    {% for c in demandes %}
-      <div class="card item neon-soft">
-        <div class="title">{{c.name}}</div>
-        <div class="meta">
-          <div><span class="tag">👤</span>{{c.client}}</div>
-          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
-          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
-        </div>
-        <div class="row">
-          <form method="post" action="/bookings/move/{{c.id}}/reserved"><button class="btn">➡️ Confirmer</button></form>
-          <form method="post" action="/bookings/move/{{c.id}}/cancel"><button class="btn danger">Annuler</button></form>
-        </div>
-      </div>
-    {% endfor %}
-    {% if demandes|length == 0 %}<div class="empty">Aucune demande.</div>{% endif %}
-  </section>
-
-  <section class="col">
-    <div class="col-head"><h3>📅 Réservées</h3><span class="pill">{{ reserved|length }}</span></div>
-    {% for c in reserved %}
-      <div class="card item neon-soft">
-        <div class="title">{{c.name}}</div>
-        <div class="meta">
-          <div><span class="tag">👤</span>{{c.client}}</div>
-          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
-          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
-        </div>
-        <div class="row">
-          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat FR+AR</a>
-          <form method="post" action="/bookings/move/{{c.id}}/ongoing"><button class="btn ok">🔑 En cours</button></form>
-        </div>
-      </div>
-    {% endfor %}
-    {% if reserved|length == 0 %}<div class="empty">Aucune réservation.</div>{% endif %}
-  </section>
-
-  <section class="col">
-    <div class="col-head"><h3>🔑 En cours</h3><span class="pill">{{ ongoing|length }}</span></div>
-    {% for c in ongoing %}
-      <div class="card item neon-soft">
-        <div class="title">{{c.name}}</div>
-        <div class="meta">
-          <div><span class="tag">👤</span>{{c.client}}</div>
-          <div><span class="tag">🚗</span>{{c.vehicle}}</div>
-          <div><span class="tag">📅</span>{{c.start}} → {{c.end}}</div>
-        </div>
-        <div class="row">
-          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">📄 Contrat</a>
-          <form method="post" action="/bookings/move/{{c.id}}/done"><button class="btn ok">✅ Terminer</button></form>
-        </div>
-      </div>
-    {% endfor %}
-    {% if ongoing|length == 0 %}<div class="empty">Aucun en cours.</div>{% endif %}
-  </section>
 
 </div>
 
-<script>
-  // Auto-render on page load
-  document.addEventListener("DOMContentLoaded", () => {
-    if (window.renderCalendar) window.renderCalendar();
-  });
-</script>
-
+<style>
+  .stats-grid { display:grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap:10px; margin-bottom:16px; }
+  .stat { padding:12px; border-radius:14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
+  .stat .n { font-size:22px; font-weight:800; }
+  .stat .l { opacity:.75; margin-top:2px; font-size:12px; }
+  .neon-cyan { outline:2px solid rgba(34,211,238,.18); }
+  .neon-green { outline:2px solid rgba(34,197,94,.18); }
+  .neon-purple { outline:2px solid rgba(168,85,247,.18); }
+  .neon-yellow { outline:2px solid rgba(250,204,21,.18); }
+  .card { padding:14px; border-radius:16px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); margin-bottom:18px; }
+  .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size:12px; opacity:.8; }
+  input, select, textarea { padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.2); color:#e9eefc; }
+  .checks { display:flex; gap:12px; flex-wrap:wrap; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.15); }
+  .btn { padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(59,130,246,.18); color:#e9eefc; font-weight:800; cursor:pointer; }
+  .btn:hover { background:rgba(59,130,246,.25); }
+  .hint { font-size:12px; opacity:.65; }
+  .columns { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
+  .col { padding:12px; border-radius:16px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
+  .item { padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); margin-bottom:8px; }
+  .muted { opacity:.6; }
+  @media (max-width: 1100px) {
+    .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid { grid-template-columns: 1fr; }
+    .columns { grid-template-columns: 1fr; }
+  }
+</style>
 {% endblock %}
 
