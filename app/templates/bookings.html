@@ -3,25 +3,22 @@
 
 {% block content %}
 <div class="page">
-
   <h1 style="margin:0 0 14px 0;">Réservations</h1>
 
-  <!-- STATS -->
   <div class="stats-grid">
     <div class="stat neon-cyan"><div class="n">{{ stats.demandes }}</div><div class="l">Demandes</div></div>
     <div class="stat neon-green"><div class="n">{{ stats.reserved }}</div><div class="l">Réservées</div></div>
     <div class="stat neon-purple"><div class="n">{{ stats.ongoing }}</div><div class="l">En cours</div></div>
     <div class="stat neon-yellow"><div class="n">{{ stats.done }}</div><div class="l">Terminées</div></div>
-
     <div class="stat"><div class="n">{{ stats.clients }}</div><div class="l">Clients</div></div>
     <div class="stat"><div class="n">{{ stats.vehicles_available }}</div><div class="l">Véhicules dispo</div></div>
   </div>
 
-  <!-- FORM CREATE -->
   <div class="card">
     <h2 style="margin:0 0 10px 0;">Créer une réservation</h2>
 
-    <form method="post" action="{{ url_for('bookings.create') }}" class="grid">
+    <!-- ✅ IMPORTANT: method="POST" + action bookings.create -->
+    <form method="POST" action="{{ url_for('bookings.create') }}" class="grid">
       <div class="field">
         <label>Client</label>
         <select name="client_id" required>
@@ -57,12 +54,12 @@
 
       <div class="field">
         <label>Lieu remise</label>
-        <input type="text" name="pickup_location" placeholder="Aéroport / Centre ville..." required>
+        <input type="text" name="pickup_location" required>
       </div>
 
       <div class="field">
         <label>Lieu retour</label>
-        <input type="text" name="return_location" placeholder="Aéroport / Centre ville..." required>
+        <input type="text" name="return_location" required>
       </div>
 
       <div class="field">
@@ -85,12 +82,8 @@
 
       <div class="field full">
         <label>Notes</label>
-        <textarea name="notes" rows="3" placeholder="Remarques..."></textarea>
+        <textarea name="notes" rows="3"></textarea>
       </div>
-
-      <!-- Hidden fields (on remplit côté backend via IDs + mapping si besoin plus tard) -->
-      <input type="hidden" name="client_name" value="">
-      <input type="hidden" name="vehicle_name" value="">
 
       <div class="field full">
         <button class="btn" type="submit">✅ Créer</button>
@@ -98,45 +91,27 @@
     </form>
   </div>
 
-  <!-- LISTS (simple affichage) -->
   <div class="columns">
     <div class="col">
       <h3>📥 Demandes</h3>
-      {% for c in demandes %}
-        <div class="item">{{ c.name }}</div>
-      {% else %}
-        <div class="muted">Aucune</div>
-      {% endfor %}
+      {% for c in demandes %}<div class="item">{{ c.name }}</div>{% else %}<div class="muted">Aucune</div>{% endfor %}
     </div>
 
     <div class="col">
       <h3>✅ Réservées</h3>
-      {% for c in reserved %}
-        <div class="item">{{ c.name }}</div>
-      {% else %}
-        <div class="muted">Aucune</div>
-      {% endfor %}
+      {% for c in reserved %}<div class="item">{{ c.name }}</div>{% else %}<div class="muted">Aucune</div>{% endfor %}
     </div>
 
     <div class="col">
       <h3>🔑 En cours</h3>
-      {% for c in ongoing %}
-        <div class="item">{{ c.name }}</div>
-      {% else %}
-        <div class="muted">Aucune</div>
-      {% endfor %}
+      {% for c in ongoing %}<div class="item">{{ c.name }}</div>{% else %}<div class="muted">Aucune</div>{% endfor %}
     </div>
 
     <div class="col">
       <h3>🏁 Terminées</h3>
-      {% for c in done %}
-        <div class="item">{{ c.name }}</div>
-      {% else %}
-        <div class="muted">Aucune</div>
-      {% endfor %}
+      {% for c in done %}<div class="item">{{ c.name }}</div>{% else %}<div class="muted">Aucune</div>{% endfor %}
     </div>
   </div>
-
 </div>
 
 <style>

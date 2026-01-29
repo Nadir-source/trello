@@ -27,18 +27,13 @@ def _load_clients(t: Trello):
     clients = []
     for c in cards:
         p = parse_payload(c.get("desc", ""))
-        # ton clients.py met full_name/phone/... dans le payload
         label = (p.get("full_name") or c.get("name") or "").strip()
         clients.append({
             "id": c["id"],
             "label": label,
             "full_name": p.get("full_name", label),
             "phone": p.get("phone", ""),
-            "doc_id": p.get("doc_id", ""),
-            "driver_license": p.get("driver_license", ""),
-            "address": p.get("address", ""),
         })
-    # tri alpha
     clients.sort(key=lambda x: (x.get("label") or "").lower())
     return clients
 
@@ -60,16 +55,9 @@ def _load_vehicles(t: Trello):
         vehicles.append({
             "id": c["id"],
             "label": label,
-            "plate": plate,
-            "brand": brand,
-            "model": model,
-            "year": p.get("year", ""),
-            "color": p.get("color", ""),
-            "km": p.get("km", ""),
             "status": status,
         })
 
-    # afficher disponibles en premier
     vehicles.sort(key=lambda x: (x.get("status") != "AVAILABLE", (x.get("label") or "").lower()))
     return vehicles
 
@@ -84,7 +72,6 @@ def index():
     ongoing = t.list_cards(C.LIST_ONGOING)
     done = t.list_cards(C.LIST_DONE)
 
-    # ✅ NEW: on charge les listes pour le formulaire
     clients = _load_clients(t)
     vehicles = _load_vehicles(t)
 
@@ -94,7 +81,6 @@ def index():
         "ongoing": len(ongoing),
         "done": len(done),
         "clients": len(clients),
-        "vehicles": len(vehicles),
         "vehicles_available": sum(1 for v in vehicles if v.get("status") == "AVAILABLE"),
     }
 
@@ -115,57 +101,42 @@ def index():
 def create():
     form = request.form
 
-    # soit tu passes un ID, soit un texte
     client_id = _g(form, "client_id")
     vehicle_id = _g(form, "vehicle_id")
 
-    client_name = _g(form, "client_name", "client")
-    vehicle_name = _g(form, "vehicle_name", "vehicle")
+    start_date = _g(form, "start_date")
+    end_date = _g(form, "end_date")
 
-    start_date = _g(form, "start_date", "start")
-    end_date = _g(form, "end_date", "end")
+    pickup_location = _g(form, "pickup_location")
+    return_location = _g(form, "return_location")
 
-    pickup_location = _g(form, "pickup_location", "pickup", "lieu_remise")
-    return_location = _g(form, "return_location", "dropoff", "lieu_retour")
+    doc_type = _g(form, "doc_type", default="CNI")
+    notes = _g(form, "notes")
 
-    doc_type = _g(form, "doc_type", "document")
-    notes = _g(form, "notes", "remarques")
+    gps = _gb(form, "opt_gps")
+    chauffeur = _gb(form, "opt_chauffeur")
+    baby_seat = _gb(form, "opt_baby_seat")
 
-    chauffeur = _gb(form, "opt_chauffeur", "chauffeur")
-    gps = _gb(form, "opt_gps", "gps")
-    baby_seat = _gb(form, "opt_baby_seat", "baby_seat", "siege_bebe")
-
-    # titre fallback
-    title = _g(form, "title", "name", default="Nouvelle réservation")
-    if client_name and vehicle_name:
-        title = f"{client_name} — {vehicle_name}"
-
+    # On peut aussi envoyer les noms, mais l'ID suffit
     payload = {
         "_type": "booking",
-        "title": title,
         "client_id": client_id,
         "vehicle_id": vehicle_id,
-        "client_name": client_name,
-        "vehicle_name": vehicle_name,
         "start_date": start_date,
         "end_date": end_date,
         "pickup_location": pickup_location,
         "return_location": return_location,
         "doc_type": doc_type,
         "notes": notes,
-        "options": {
-            "gps": gps,
-            "chauffeur": chauffeur,
-            "baby_seat": baby_seat,
-        },
+        "options": {"gps": gps, "chauffeur": chauffeur, "baby_seat": baby_seat},
     }
 
     role, name = current_user()
-    audit_add(payload, name, "booking_create", {"client": client_name, "vehicle": vehicle_name})
+    audit_add(payload, name, "booking_create", {"client_id": client_id, "vehicle_id": vehicle_id})
 
     t = Trello()
     t.create_booking_card(payload)
 
-    flash("✅ Réservation créée (carte Trello).", "success")
+    flash("✅ Réservation créée.", "success")
     return redirect(url_for("bookings.index"))
 
