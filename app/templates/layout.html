@@ -2,73 +2,149 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title or "Zohir Location Auto" }}</title>
-
-  <!-- Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- FullCalendar (planning) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Zohir Location Auto{% endblock %}</title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
-  <div class="bg-ambient"></div>
-
   <div class="app-shell">
 
-    <header class="topbar">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
       <div class="brand">
-        <div class="logo-glow">Z</div>
+        <div class="logo">Z</div>
         <div class="brand-text">
           <div class="brand-title">Zohir Location Auto</div>
           <div class="brand-sub">Trello-only • DZD • Contrat FR/AR</div>
         </div>
       </div>
 
-      <div class="top-actions">
-        <div class="chip">👤 {{ session.get("name","User") }}</div>
-        <div class="chip chip-ok">🔐 {{ session.get("role","user") }}</div>
-      </div>
-    </header>
+      <nav class="nav">
+        <!-- Dashboard -->
+        <a class="nav-item {% if request.path.startswith('/dashboard') %}active{% endif %}"
+           href="{{ url_for('dashboard.index') }}">
+          <span class="ico">🏠</span>
+          <span>Dashboard</span>
+        </a>
 
-    <aside class="sidebar">
-      <a class="navlink" href="/dashboard">🏠 Dashboard</a>
-      <a class="navlink" href="/bookings">📅 Réservations</a>
-      <a class="navlink" href="/clients">👥 Clients</a>
-      <a class="navlink" href="/vehicles">🚗 Véhicules</a>
-      <a class="navlink" href="/finance">💰 Finance</a>
-      <div class="sep"></div>
-      <a class="navlink danger" href="/logout">⛔ Logout</a>
+        <!-- ✅ Réservations (FIX) -->
+        <a class="nav-item {% if request.path.startswith('/bookings') %}active{% endif %}"
+           href="{{ url_for('bookings.index') }}">
+          <span class="ico">🗓️</span>
+          <span>Réservations</span>
+        </a>
 
-      <div class="side-card">
-        <div class="side-title">Tips</div>
-        <div class="muted">
-          • Crée Clients/Véhicules depuis Trello<br>
-          • Tout se fait dans le site (ton ami touche que le site)
+        <!-- Clients -->
+        <a class="nav-item {% if request.path.startswith('/clients') %}active{% endif %}"
+           href="{{ url_for('clients.index') }}">
+          <span class="ico">👥</span>
+          <span>Clients</span>
+        </a>
+
+        <!-- Véhicules -->
+        <a class="nav-item {% if request.path.startswith('/vehicles') %}active{% endif %}"
+           href="{{ url_for('vehicles.index') }}">
+          <span class="ico">🚗</span>
+          <span>Véhicules</span>
+        </a>
+
+        <!-- Finance -->
+        <a class="nav-item {% if request.path.startswith('/finance') %}active{% endif %}"
+           href="{{ url_for('finance.index') }}">
+          <span class="ico">💰</span>
+          <span>Finance</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <!-- ✅ Logout (auth.logout existe chez toi) -->
+        <a class="nav-item logout" href="{{ url_for('auth.logout') }}">
+          <span class="ico">⛔</span>
+          <span>Logout</span>
+        </a>
+
+        <div class="tips">
+          <div class="tips-title">Tips</div>
+          <ul>
+            <li>Crée Clients/Véhicules depuis Trello</li>
+            <li>Tout se fait dans le site (ton ami touche que le site)</li>
+          </ul>
         </div>
       </div>
     </aside>
 
+    <!-- MAIN -->
     <main class="main">
-      <div class="container">
-        {% block content %}{% endblock %}
-      </div>
-    </main>
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          {% block header_left %}{% endblock %}
+        </div>
 
-    <footer class="footer">
-      <div>© {{ title or "Zohir Location Auto" }}</div>
-      <div class="muted">Neon UI • Planning • PDF FR/AR</div>
-    </footer>
+        <div class="topbar-right">
+          <div class="user-pill">
+            <span class="ico">👤</span>
+            <span>{{ session.get("user_name", "User") }}</span>
+          </div>
+          <div class="role-pill">
+            <span class="ico">🔒</span>
+            <span>{{ session.get("user_role", "user") }}</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- FLASH -->
+      <section class="flash-wrap">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </section>
+
+      <!-- CONTENT -->
+      <section class="content">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
 
   </div>
 
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <!-- CSS minimal de secours (si style.css n'existe pas / incomplet) -->
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#070a12; color:#e9eefc; }
+    .app-shell { display:flex; min-height:100vh; }
+    .sidebar { width:280px; padding:18px 16px; border-right:1px solid rgba(255,255,255,.08); background:rgba(10,14,26,.7); }
+    .brand { display:flex; gap:12px; align-items:center; padding:10px 10px 18px; }
+    .logo { width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+            background:linear-gradient(135deg, #3b82f6, #a855f7); font-weight:800; }
+    .brand-title { font-weight:800; font-size:16px; }
+    .brand-sub { opacity:.7; font-size:12px; margin-top:2px; }
+    .nav { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+    .nav-item { display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:12px;
+                text-decoration:none; color:inherit; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
+    .nav-item:hover { background:rgba(255,255,255,.06); }
+    .nav-item.active { outline:2px solid rgba(59,130,246,.35); background:rgba(59,130,246,.08); }
+    .ico { width:22px; text-align:center; opacity:.9; }
+    .sidebar-footer { margin-top:18px; display:flex; flex-direction:column; gap:14px; }
+    .tips { padding:12px; border-radius:14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
+    .tips-title { font-weight:700; margin-bottom:6px; opacity:.9; }
+    .tips ul { margin:0; padding-left:18px; opacity:.75; }
+    .main { flex:1; display:flex; flex-direction:column; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.08); }
+    .topbar-right { display:flex; gap:10px; align-items:center; }
+    .user-pill, .role-pill { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px;
+      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
+    .flash-wrap { padding:10px 22px; }
+    .flash { padding:10px 12px; border-radius:12px; margin-bottom:8px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); }
+    .flash-success { border-color: rgba(34,197,94,.35); }
+    .flash-error { border-color: rgba(239,68,68,.35); }
+    .content { padding:18px 22px 28px; }
+  </style>
 </body>
 </html>
 
