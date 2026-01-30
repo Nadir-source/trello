@@ -42,6 +42,16 @@ def _put(path: str, data: dict | None = None, params: dict | None = None):
     return r.json()
 
 
+def _delete(path: str, params: dict | None = None):
+    r = requests.delete(BASE + path, params=_params(params), timeout=30)
+    r.raise_for_status()
+    # Trello renvoie souvent "OK" en texte
+    try:
+        return r.json()
+    except Exception:
+        return {"status": r.text}
+
+
 def _looks_like_list_id(x: str) -> bool:
     s = (x or "").strip()
     return bool(re.fullmatch(r"[a-f0-9]{24}", s, flags=re.IGNORECASE))
@@ -132,8 +142,20 @@ class Trello:
         target_list_id = target if _looks_like_list_id(target) else self.get_list_id(target)
         return _put(f"/cards/{card_id}", params={"idList": target_list_id})
 
+    # --- Archive / unarchive ---
     def archive_card(self, card_id: str):
         return _put(f"/cards/{card_id}", params={"closed": "true"})
+
+    def unarchive_card(self, card_id: str):
+        return _put(f"/cards/{card_id}", params={"closed": "false"})
+
+    # --- ✅ Delete (hard delete) ---
+    def delete_card(self, card_id: str):
+        """
+        Suppression définitive d'une carte Trello.
+        (Si tu veux une suppression soft, utilise archive_card à la place.)
+        """
+        return _delete(f"/cards/{card_id}")
 
     # bookings helper
     def create_booking_card(self, data: dict):
@@ -146,7 +168,7 @@ class Trello:
 
         return self.create_card(C.LIST_DEMANDES, title, desc)
 
-    # ✅ NEW: attach file to Trello card
+    # ✅ attach file to Trello card
     def attach_file_to_card(self, card_id: str, filename: str, file_bytes: bytes):
         """
         Upload un fichier en pièce jointe sur la carte Trello.
