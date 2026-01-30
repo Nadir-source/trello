@@ -1,182 +1,275 @@
-# app/bookings.py
-from __future__ import annotations
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Réservations</title>
+  <style>
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#0b0f16;color:#e9eef7}
+    a{color:inherit}
+    .wrap{max-width:1400px;margin:0 auto;padding:18px}
+    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    h2{margin:0 0 12px 0}
+    .stats{display:flex;gap:10px;flex-wrap:wrap}
+    .stat{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;min-width:110px;background:rgba(255,255,255,.03)}
+    .stat .n{font-size:22px;font-weight:800}
+    .stat .l{font-size:12px;opacity:.8}
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-
-from app.auth import login_required, admin_required, current_user
-from app.trello_client import Trello
-from app.trello_schema import parse_payload, dump_payload, audit_add
-from app.pdf_generator import build_contract_pdf
-from app import config as C
-
-bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
-
-
-def _as_booking(card: dict) -> dict:
-    p = parse_payload(card.get("desc", ""))
-    return {
-        "id": card["id"],
-        "name": card.get("name", ""),
-        "desc": card.get("desc", ""),
-        "payload": p,
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+    .card{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px;background:rgba(255,255,255,.02)}
+    label{font-size:12px;opacity:.85}
+    input,textarea,select{
+      padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);color:#e9eef7;outline:none
     }
-
-
-def _normalize_lang(x: str | None) -> str:
-    v = (x or "fr").lower().strip()
-    if v in ("fr", "en", "ar"):
-        return v
-    return "fr"
-
-
-@bookings_bp.get("/")
-@login_required
-def index():
-    t = Trello()
-
-    demandes = [_as_booking(c) for c in t.list_cards(C.LIST_DEMANDES)]
-    reserved = [_as_booking(c) for c in t.list_cards(C.LIST_RESERVED)]
-    ongoing = [_as_booking(c) for c in t.list_cards(C.LIST_ONGOING)]
-    done = [_as_booking(c) for c in t.list_cards(C.LIST_DONE)]
-    canceled = [_as_booking(c) for c in t.list_cards(C.LIST_CANCELED)]
-
-    stats = {
-        "demandes": len(demandes),
-        "reserved": len(reserved),
-        "ongoing": len(ongoing),
-        "done": len(done),
-        "canceled": len(canceled),
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .full{grid-column:1/-1}
+    .btn{padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);color:#e9eef7;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center
     }
+    .btn:hover{filter:brightness(1.08)}
+    .small{padding:6px 9px;border-radius:10px;font-size:12px}
+    .primary{background:rgba(0,140,255,.20);border-color:rgba(0,140,255,.30)}
+    .warn{background:rgba(255,200,0,.16);border-color:rgba(255,200,0,.28)}
+    .danger{background:rgba(255,0,70,.14);border-color:rgba(255,0,70,.26)}
+    .success{background:rgba(0,200,120,.16);border-color:rgba(0,200,120,.28)}
+    hr{border:none;border-top:1px solid rgba(255,255,255,.10);margin:16px 0}
 
-    # Dropdowns clients / véhicules
-    clients_cards = t.list_cards(C.LIST_CLIENTS)
-    vehicles_cards = t.list_cards(C.LIST_VEHICLES)
+    .board{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:start}
+    @media(max-width:1400px){.board{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:800px){.board{grid-template-columns:1fr}}
+    .col{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:10px;background:rgba(255,255,255,.02)}
+    .colhead{font-weight:800;margin-bottom:8px}
+    .ticket{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;margin-bottom:8px;background:rgba(255,255,255,.03)}
+    .title{font-weight:800}
+    .sub{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin-top:4px;opacity:.9}
+    .muted{opacity:.65}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .flash{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);margin-bottom:12px;background:rgba(0,0,0,.20)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h2>Réservations</h2>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="n">{{ stats.demandes }}</div><div class="l">Demandes</div></div>
+        <div class="stat"><div class="n">{{ stats.reserved }}</div><div class="l">Réservé</div></div>
+        <div class="stat"><div class="n">{{ stats.ongoing }}</div><div class="l">En location</div></div>
+        <div class="stat"><div class="n">{{ stats.done }}</div><div class="l">Terminé</div></div>
+        <div class="stat"><div class="n">{{ stats.canceled }}</div><div class="l">Annulé</div></div>
+      </div>
+    </div>
 
-    clients = []
-    for c in clients_cards:
-        p = parse_payload(c.get("desc", ""))
-        name = c.get("name", "")
-        clients.append({"id": c["id"], "name": name, **p})
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-    vehicles = []
-    for c in vehicles_cards:
-        p = parse_payload(c.get("desc", ""))
-        name = c.get("name", "")
-        vehicles.append({"id": c["id"], "name": name, **p})
+    <hr/>
 
-    return render_template(
-        "bookings.html",
-        demandes=demandes,
-        reserved=reserved,
-        ongoing=ongoing,
-        done=done,
-        canceled=canceled,
-        stats=stats,
-        clients=clients,
-        vehicles=vehicles,
-    )
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin:0 0 10px 0;">Nouvelle réservation</h3>
+        <form method="post" action="{{ url_for('bookings.create') }}" class="form">
+          <div>
+            <label>Client</label>
+            <input name="client_name" required placeholder="Nom client" />
+          </div>
+          <div>
+            <label>Véhicule</label>
+            <input name="vehicle_name" required placeholder="Nom véhicule" />
+          </div>
 
+          <div>
+            <label>Téléphone</label>
+            <input name="client_phone" placeholder="+213..." />
+          </div>
+          <div>
+            <label>Adresse</label>
+            <input name="client_address" placeholder="Adresse..." />
+          </div>
 
-@bookings_bp.post("/create")
-@login_required
-@admin_required
-def create():
-    t = Trello()
+          <div>
+            <label>Document (CNI/Passeport)</label>
+            <input name="doc_id" />
+          </div>
+          <div>
+            <label>Permis</label>
+            <input name="driver_license" />
+          </div>
 
-    client_name = request.form.get("client_name", "").strip()
-    vehicle_name = request.form.get("vehicle_name", "").strip()
+          <div>
+            <label>Départ</label>
+            <input type="datetime-local" name="start_date" required />
+          </div>
+          <div>
+            <label>Retour</label>
+            <input type="datetime-local" name="end_date" required />
+          </div>
 
-    payload = {
-        "_type": "booking",
-        "client_name": client_name,
-        "client_phone": request.form.get("client_phone", "").strip(),
-        "client_address": request.form.get("client_address", "").strip(),
-        "doc_id": request.form.get("doc_id", "").strip(),
-        "driver_license": request.form.get("driver_license", "").strip(),
+          <div>
+            <label>Lieu livraison</label>
+            <input name="pickup_location" />
+          </div>
+          <div>
+            <label>Lieu restitution</label>
+            <input name="return_location" />
+          </div>
 
-        "vehicle_name": vehicle_name,
-        "vehicle_plate": request.form.get("vehicle_plate", "").strip(),
-        "vehicle_model": request.form.get("vehicle_model", "").strip(),
-        "vehicle_vin": request.form.get("vehicle_vin", "").strip(),
+          <div>
+            <label>Plaque</label>
+            <input name="vehicle_plate" />
+          </div>
+          <div>
+            <label>Modèle</label>
+            <input name="vehicle_model" />
+          </div>
 
-        "start_date": request.form.get("start_date", "").strip(),
-        "end_date": request.form.get("end_date", "").strip(),
-        "pickup_location": request.form.get("pickup_location", "").strip(),
-        "return_location": request.form.get("return_location", "").strip(),
+          <div class="full">
+            <label>Notes</label>
+            <textarea name="notes" rows="3"></textarea>
+          </div>
 
-        "notes": request.form.get("notes", "").strip(),
-        "options": {
-            "gps": bool(request.form.get("opt_gps")),
-            "chauffeur": bool(request.form.get("opt_driver")),
-            "baby_seat": bool(request.form.get("opt_baby_seat")),
-        }
-    }
+          <div class="full" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <label style="margin-right:8px">Options</label>
+            <label class="muted"><input type="checkbox" name="opt_gps" /> GPS</label>
+            <label class="muted"><input type="checkbox" name="opt_driver" /> Chauffeur</label>
+            <label class="muted"><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
+          </div>
 
-    role, name = current_user()
-    audit_add(payload, name, "booking_create", {"client_name": client_name, "vehicle_name": vehicle_name})
+          <div class="full">
+            <button class="btn primary" type="submit">Créer (Demande)</button>
+          </div>
+        </form>
+      </div>
 
-    title = f"{client_name} — {vehicle_name}".strip(" —")
-    t.create_card(C.LIST_DEMANDES, title or "Nouvelle réservation", dump_payload(payload))
+      <div class="card">
+        <h3 style="margin:0 0 10px 0;">Aide</h3>
+        <div class="muted">Si tu vois encore du code Python sur /bookings/, c’est que le fichier template n’est pas bon ou pas au bon endroit.</div>
+      </div>
+    </div>
 
-    flash("Réservation créée dans DEMANDES ✅", "success")
-    return redirect(url_for("bookings.index"))
+    <hr/>
 
+    <div class="board">
+      <div class="col">
+        <div class="colhead">📥 DEMANDES</div>
+        {% for b in demandes %}
+          <div class="ticket">
+            <div class="title">{{ b.name }}</div>
+            <div class="sub">
+              {% if b.payload.client_name %}<span>👤 {{ b.payload.client_name }}</span>{% endif %}
+              {% if b.payload.vehicle_name %}<span>🚗 {{ b.payload.vehicle_name }}</span>{% endif %}
+            </div>
+            <div class="sub muted">
+              {% if b.payload.start_date %}⏱ {{ b.payload.start_date }}{% endif %}
+              {% if b.payload.end_date %} → {{ b.payload.end_date }}{% endif %}
+            </div>
+            <div class="actions">
+              <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='reserved') }}">
+                <button class="btn small warn" type="submit">Passer en Réservé</button>
+              </form>
+              <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
+                <button class="btn small danger" type="submit">Annuler</button>
+              </form>
 
-@bookings_bp.post("/move/<card_id>/<action>")
-@login_required
-@admin_required
-def move(card_id: str, action: str):
-    mapping = {
-        "demandes": C.LIST_DEMANDES,
-        "reserved": C.LIST_RESERVED,
-        "ongoing": C.LIST_ONGOING,
-        "done": C.LIST_DONE,
-        "cancel": C.LIST_CANCELED,
-        "canceled": C.LIST_CANCELED,
-    }
-    target = mapping.get(action)
-    if not target:
-        flash(f"Action inconnue: {action}", "error")
-        return redirect(url_for("bookings.index"))
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
+            </div>
+          </div>
+        {% else %}
+          <div class="muted">Aucune demande.</div>
+        {% endfor %}
+      </div>
 
-    t = Trello()
-    t.move_card(card_id, target)
-    flash("Carte déplacée ✅", "success")
-    return redirect(url_for("bookings.index"))
+      <div class="col">
+        <div class="colhead">📅 RÉSERVÉ</div>
+        {% for b in reserved %}
+          <div class="ticket">
+            <div class="title">{{ b.name }}</div>
+            <div class="actions">
+              <form method="post" action="{{ url_for('bookings.contract_and_move', card_id=b.id) }}">
+                <select name="lang">
+                  <option value="fr">FR</option>
+                  <option value="en">EN</option>
+                  <option value="ar">AR</option>
+                </select>
+                <button class="btn small primary" type="submit">Générer + En location</button>
+              </form>
+              <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
+                <button class="btn small danger" type="submit">Annuler</button>
+              </form>
 
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
+            </div>
+          </div>
+        {% else %}
+          <div class="muted">Aucune réservation.</div>
+        {% endfor %}
+      </div>
 
-@bookings_bp.post("/contract_and_move/<card_id>")
-@login_required
-@admin_required
-def contract_and_move(card_id: str):
-    """
-    1) générer contrat PDF (lang au choix)
-    2) attacher PDF à la carte Trello
-    3) déplacer vers EN LOCATION
-    """
-    lang = _normalize_lang(request.form.get("lang"))
+      <div class="col">
+        <div class="colhead">🔑 EN LOCATION</div>
+        {% for b in ongoing %}
+          <div class="ticket">
+            <div class="title">{{ b.name }}</div>
+            <div class="actions">
+              <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='done') }}">
+                <button class="btn small success" type="submit">Terminer</button>
+              </form>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
+            </div>
+          </div>
+        {% else %}
+          <div class="muted">Aucune location en cours.</div>
+        {% endfor %}
+      </div>
 
-    t = Trello()
-    card = t.get_card(card_id)
-    payload = parse_payload(card.get("desc", ""))
+      <div class="col">
+        <div class="colhead">✅ TERMINÉ</div>
+        {% for b in done %}
+          <div class="ticket">
+            <div class="title">{{ b.name }}</div>
+            <div class="actions">
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
+            </div>
+          </div>
+        {% else %}
+          <div class="muted">Aucun terminé.</div>
+        {% endfor %}
+      </div>
 
-    if payload.get("_type") != "booking":
-        flash("La carte n'a pas une desc JSON _type=booking.", "error")
-        return redirect(url_for("bookings.index"))
-
-    payload["trello_card_id"] = card_id
-    payload["trello_card_name"] = card.get("name", "")
-
-    # 1) PDF
-    pdf_bytes = build_contract_pdf(payload, lang=lang)
-
-    # 2) attach Trello
-    filename = f"contrat_{card_id}_{lang}.pdf"
-    t.attach_file_to_card(card_id, filename, pdf_bytes)
-
-    # 3) move en location
-    t.move_card(card_id, C.LIST_ONGOING)
-
-    flash(f"Contrat ({lang.upper()}) généré + attaché + passé en location ✅", "success")
-    return redirect(url_for("bookings.index"))
+      <div class="col">
+        <div class="colhead">❌ ANNULÉ</div>
+        {% for b in canceled %}
+          <div class="ticket">
+            <div class="title">{{ b.name }}</div>
+            <div class="actions">
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
+              <a class="btn small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
+            </div>
+          </div>
+        {% else %}
+          <div class="muted">Aucun annulé.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>
 
