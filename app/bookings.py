@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-from app.auth import login_required, admin_required, current_user
+from app.auth import login_required, staff_required, current_user
 from app.trello_client import Trello
 from app.trello_schema import parse_payload, dump_payload, audit_add
 from app.pdf_generator import build_contract_pdf
@@ -23,23 +23,20 @@ def _as_booking(card: dict) -> dict:
 
 
 def _status_events(bookings: list[dict], status: str) -> list[dict]:
-    """
-    Transforme une liste de dict booking -> events FullCalendar.
-    On prend start_date/end_date du payload si dispo.
-    """
+    """Events FullCalendar depuis start_date / end_date."""
     events = []
     for b in bookings:
         p = b.get("payload") or {}
-        start = p.get("start_date") or ""
-        end = p.get("end_date") or ""
+        start = (p.get("start_date") or "").strip()
+        end = (p.get("end_date") or "").strip()
         if not start:
             continue
 
-        client_name = p.get("client_name", "")
-        vehicle_name = p.get("vehicle_name", "")
-        title = b.get("name") or ""
-        if not title.strip():
-            title = " — ".join([x for x in [client_name, vehicle_name] if x]).strip() or "Réservation"
+        client_name = (p.get("client_name") or "").strip()
+        vehicle_name = (p.get("vehicle_name") or "").strip()
+        title = (b.get("name") or "").strip()
+        if not title:
+            title = " — ".join([x for x in [client_name, vehicle_name] if x]) or "Réservation"
 
         events.append(
             {
@@ -73,7 +70,7 @@ def index():
         "canceled": len(canceled),
     }
 
-    # Dropdowns / référentiels
+    # Référentiels
     clients_cards = t.list_cards(C.LIST_CLIENTS)
     vehicles_cards = t.list_cards(C.LIST_VEHICLES)
 
@@ -89,7 +86,7 @@ def index():
         name = c.get("name", "")
         vehicles.append({"id": c["id"], "name": name, **p})
 
-    # Events calendrier
+    # Calendrier (optionnel)
     calendar_events = []
     calendar_events += _status_events(demandes, "demandes")
     calendar_events += _status_events(reserved, "reserved")
@@ -113,10 +110,11 @@ def index():
 
 @bookings_bp.post("/create")
 @login_required
-@admin_required
+@staff_required
 def create():
     """
-    Création réservation via formulaire -> carte Trello avec desc JSON _type=booking.
+    Création réservation via formulaire -> carte Trello desc JSON _type=booking.
+    Admin + Agent OK.
     """
     t = Trello()
 
@@ -158,11 +156,10 @@ def create():
 
 @bookings_bp.post("/move/<card_id>/<action>")
 @login_required
-@admin_required
+@staff_required
 def move(card_id: str, action: str):
     """
-    Déplacer une réservation vers une liste Trello.
-    Actions: demandes / reserved / ongoing / done / cancel
+    Déplacer une réservation vers une liste Trello (admin + agent).
     """
     mapping = {
         "demandes": C.LIST_DEMANDES,
@@ -185,12 +182,10 @@ def move(card_id: str, action: str):
 
 @bookings_bp.post("/contract_and_move/<card_id>")
 @login_required
-@admin_required
+@staff_required
 def contract_and_move(card_id: str):
     """
-    1) générer contrat PDF
-    2) attacher PDF à la carte Trello
-    3) déplacer vers EN LOCATION (LIST_ONGOING)
+    Génère contrat PDF + attache sur Trello + passe en location (admin + agent).
     """
     t = Trello()
     card = t.get_card(card_id)
