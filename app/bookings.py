@@ -1,7 +1,8 @@
 # app/bookings.py
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
+from datetime import datetime
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 
@@ -13,6 +14,10 @@ from app import config as C
 
 bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
 
+
+# =========================================================
+# Helpers
+# =========================================================
 
 def _normalize_lang(v: Optional[str]) -> str:
     v = (v or "fr").lower().strip()
@@ -29,16 +34,47 @@ def _as_booking(card: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _parse_start_date(payload: dict) -> datetime:
+    """
+    Utilisé pour trier les cartes par date.
+    Les cartes sans date passent à la fin.
+    """
+    s = (payload.get("start_date") or "").strip()
+    try:
+        return datetime.fromisoformat(s)
+    except Exception:
+        return datetime.max
+
+
+def _sort_bookings(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Ordre d'affichage :
+    1) date de début (croissante)
+    2) nom du client
+    """
+    return sorted(
+        items,
+        key=lambda b: (
+            _parse_start_date(b.get("payload", {})),
+            (b.get("payload", {}).get("client_name") or "").lower(),
+        ),
+    )
+
+
+# =========================================================
+# Pages
+# =========================================================
+
 @bookings_bp.get("/")
 @login_required
 def index():
     t = Trello()
 
-    demandes = [_as_booking(c) for c in t.list_cards(C.LIST_DEMANDES)]
-    reserved = [_as_booking(c) for c in t.list_cards(C.LIST_RESERVED)]
-    ongoing = [_as_booking(c) for c in t.list_cards(C.LIST_ONGOING)]
-    done = [_as_booking(c) for c in t.list_cards(C.LIST_DONE)]
-    canceled = [_as_booking(c) for c in t.list_cards(C.LIST_CANCELED)]
+    demandes = _sort_bookings([_as_booking(c) for c in t.list_cards(C.LIST_DEMANDES)])
+    reserved = _sort_bookings([_as_booking(c) for c in t.list_cards(C.LIST_RESERVED)])
+    ongoing = _sort_bookings([_as_booking(c) for c in t.list_cards(C.LIST_ONGOING)])
+    done = _sort_bookings([_as_booking(c) for c in t.list_cards(C.LIST_DONE)])
+    canceled = _sort_bookings([_as_booking(c) for c in t.list_cards(C.LIST_CANCELED)])
 
     stats = {
         "demandes": len(demandes),
@@ -65,13 +101,13 @@ def calendar_page():
     return render_template("calendar.html")
 
 
+# =========================================================
+# API
+# =========================================================
+
 @bookings_bp.get("/api/calendar")
 @login_required
 def api_calendar():
-    """
-    Retourne des events simples pour la page calendrier.
-    On prend DEMANDES/RÉSERVÉ/EN LOCATION (tu peux ajouter DONE si tu veux).
-    """
     t = Trello()
     lists = [
         ("demandes", C.LIST_DEMANDES),
@@ -80,6 +116,7 @@ def api_calendar():
     ]
 
     events = []
+
     for status, list_id in lists:
         for card in t.list_cards(list_id):
             p = parse_payload(card.get("desc", "") or "")
@@ -93,7 +130,7 @@ def api_calendar():
 
             client = (p.get("client_name") or "").strip()
             vehicle = (p.get("vehicle_name") or p.get("vehicle_model") or "").strip()
-            title = f"{client} — {vehicle}".strip(" —") or (card.get("name") or "")
+            title = f"{client} — {vehicle}".strip(" —") or card.get("name", "")
 
             events.append(
                 {
@@ -123,6 +160,10 @@ def api_card(card_id: str):
         }
     )
 
+
+# =========================================================
+# Actions
+# =========================================================
 
 @bookings_bp.post("/create")
 @login_required
@@ -157,7 +198,10 @@ def create():
     }
 
     role, name = current_user()
-    audit_add(payload, role, name, "booking_create", {"client_name": client_name, "vehicle_name": vehicle_name})
+    audit_add(payload, role, name, "booking_create", {
+        "client_name": client_name,
+        "vehicle_name": vehicle_name,
+    })
 
     title = f"{client_name} — {vehicle_name}".strip(" —") or "Nouvelle réservation"
     t.create_card(C.LIST_DEMANDES, title, dump_payload(payload))
@@ -178,6 +222,7 @@ def move(card_id: str, action: str):
         "canceled": C.LIST_CANCELED,
         "cancel": C.LIST_CANCELED,
     }
+
     target = mapping.get(action)
     if not target:
         flash("Action inconnue ❌", "error")
@@ -185,6 +230,7 @@ def move(card_id: str, action: str):
 
     t = Trello()
     t.move_card(card_id, target)
+
     flash("Carte déplacée ✅", "success")
     return redirect(url_for("bookings.index"))
 
@@ -229,12 +275,11 @@ def contract_and_move():
     payload["trello_card_name"] = card.get("name", "")
 
     pdf_bytes = build_contract_pdf(payload, lang=lang)
-
     filename = f"contrat_{card_id}_{lang}.pdf"
-    t.attach_file_to_card(card_id, filename, pdf_bytes)
 
+    t.attach_file_to_card(card_id, filename, pdf_bytes)
     t.move_card(card_id, C.LIST_ONGOING)
 
-    flash(f"Contrat {lang.upper()} généré + attaché + passé en location ✅", "success")
+    flash(f"Contrat {lang.upper()} généré + passé en location ✅", "success")
     return redirect(url_for("bookings.index"))
 
