@@ -1,3 +1,4 @@
+(.venv) nadir@N-GK5DL34:~/012026/trello-car-rental/trello-car-rental-v2/app$ cat bookings.py
 # app/bookings.py
 from __future__ import annotations
 
@@ -179,3 +180,4 @@ def contract_and_move(card_id: str):
     flash("Contrat généré + attaché + passé en location ✅", "success")
     return redirect(url_for("bookings.index"))
 
+(.venv) nadir@N-GK5DL34:~/012026/trello-car-rental/trello-car-rental-v2/app$

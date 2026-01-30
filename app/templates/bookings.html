@@ -17,6 +17,17 @@
 
 <hr/>
 
+<!-- ✅ CALENDRIER -->
+<div class="card calendar-card">
+  <div class="calendar-head">
+    <h3>Calendrier</h3>
+    <div class="muted">Clique un événement → ouvre le contrat PDF (si dispo).</div>
+  </div>
+  <div id="calendar"></div>
+</div>
+
+<hr/>
+
 <div class="grid-2">
   <div class="card">
     <h3>Nouvelle réservation</h3>
@@ -24,14 +35,14 @@
     <form method="post" action="{{ url_for('bookings.create') }}" class="form-grid">
       <div class="field">
         <label>Client (nom)</label>
-        <input name="client_name" placeholder="Nom client (ex: Nadir)" required />
-        <small>Astuce : tu peux choisir dans la liste juste en bas (optionnel).</small>
+        <input id="client_name" name="client_name" placeholder="Nom client (ex: Nadir)" required />
+        <small>Astuce : clique un client à droite pour remplir automatiquement.</small>
       </div>
 
       <div class="field">
         <label>Véhicule (nom)</label>
-        <input name="vehicle_name" placeholder="Véhicule (ex: Livan X3 Pro)" required />
-        <small>Astuce : tu peux choisir dans la liste juste en bas (optionnel).</small>
+        <input id="vehicle_name" name="vehicle_name" placeholder="Véhicule (ex: Livan X3 Pro)" required />
+        <small>Astuce : clique un véhicule à droite pour remplir automatiquement.</small>
       </div>
 
       <div class="field">
@@ -96,9 +107,11 @@
 
       <div class="field full options-row">
         <label>Options</label>
-        <label class="chk"><input type="checkbox" name="opt_gps" /> GPS</label>
-        <label class="chk"><input type="checkbox" name="opt_driver" /> Chauffeur</label>
-        <label class="chk"><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
+        <div class="opts">
+          <label class="chk"><input type="checkbox" name="opt_gps" /> GPS</label>
+          <label class="chk"><input type="checkbox" name="opt_driver" /> Chauffeur</label>
+          <label class="chk"><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
+        </div>
       </div>
 
       <div class="field full">
@@ -115,7 +128,7 @@
         <h4>Clients disponibles</h4>
         <div class="list">
           {% for c in clients %}
-            <div class="pill">{{ c.name }}</div>
+            <button type="button" class="pill pick-client" data-name="{{ c.name }}">{{ c.name }}</button>
           {% else %}
             <div class="muted">Aucun client trouvé dans Trello.</div>
           {% endfor %}
@@ -126,7 +139,7 @@
         <h4>Véhicules disponibles</h4>
         <div class="list">
           {% for v in vehicles %}
-            <div class="pill">{{ v.name }}</div>
+            <button type="button" class="pill pick-vehicle" data-name="{{ v.name }}">{{ v.name }}</button>
           {% else %}
             <div class="muted">Aucun véhicule trouvé dans Trello.</div>
           {% endfor %}
@@ -135,8 +148,7 @@
     </div>
 
     <div class="muted" style="margin-top:10px;">
-      Si la liste est vide, c’est que les cartes Trello “👤 CLIENTS” / “🚗 VÉHICULES” n’ont pas été chargées
-      (mauvais LIST_CLIENTS/LIST_VEHICLES dans config.py).
+      Si la liste est vide, vérifie dans <b>config.py</b> les IDs <b>LIST_CLIENTS</b> et <b>LIST_VEHICLES</b>.
     </div>
   </div>
 </div>
@@ -221,6 +233,10 @@
             <button class="btn btn-small btn-success" type="submit">Terminer</button>
           </form>
 
+          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
+            <button class="btn btn-small btn-danger" type="submit">Annuler</button>
+          </form>
+
           <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
             Contrat
           </a>
@@ -261,6 +277,71 @@
   </div>
 </div>
 
+<!-- ✅ FullCalendar (CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+<script>
+  // ✅ helper : click client/vehicle pills -> remplit inputs
+  document.querySelectorAll(".pick-client").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const v = btn.getAttribute("data-name") || "";
+      const inp = document.getElementById("client_name");
+      if (inp) inp.value = v;
+    });
+  });
+  document.querySelectorAll(".pick-vehicle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const v = btn.getAttribute("data-name") || "";
+      const inp = document.getElementById("vehicle_name");
+      if (inp) inp.value = v;
+    });
+  });
+
+  // ✅ calendrier
+  const events = {{ calendar_events | tojson }};
+
+  function statusClass(status){
+    if(status === "demandes") return "fc-demandes";
+    if(status === "reserved") return "fc-reserved";
+    if(status === "ongoing") return "fc-ongoing";
+    if(status === "done") return "fc-done";
+    if(status === "canceled") return "fc-canceled";
+    return "";
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const el = document.getElementById("calendar");
+    if (!el) return;
+
+    const calendar = new FullCalendar.Calendar(el, {
+      initialView: "dayGridMonth",
+      height: "auto",
+      headerToolbar: {
+        left: "prev,next today",
+        center: "title",
+        right: "dayGridMonth,timeGridWeek,timeGridDay"
+      },
+      navLinks: true,
+      nowIndicator: true,
+      eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+      events: events.map(e => ({
+        ...e,
+        classNames: [statusClass((e.extendedProps||{}).status)]
+      })),
+      eventClick: function(info){
+        // ouvre le contrat PDF en nouvel onglet si url présent
+        if (info.event.url) {
+          window.open(info.event.url, "_blank");
+          info.jsEvent.preventDefault();
+        }
+      }
+    });
+
+    calendar.render();
+  });
+</script>
+
 <style>
   .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
   .stats-row{display:flex;gap:10px;flex-wrap:wrap}
@@ -275,20 +356,28 @@
 
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
-  .card{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px}
+
+  .card{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px;background:rgba(255,255,255,.02)}
+  .calendar-card{padding:14px}
+  .calendar-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+  #calendar{border-radius:14px;overflow:hidden}
+
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .field{display:flex;flex-direction:column;gap:6px}
   .field.full{grid-column:1/-1}
   input,textarea{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.15);color:inherit}
   small{opacity:.75}
-  .options-row{display:flex;flex-direction:column}
+  .options-row .opts{display:flex;gap:14px;flex-wrap:wrap}
   .chk{display:inline-flex;align-items:center;gap:8px;margin-right:12px}
+
   .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:900px){.split{grid-template-columns:1fr}}
   .mini{border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:10px}
   .list{display:flex;flex-wrap:wrap;gap:6px}
-  .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:12px;opacity:.9}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:12px;opacity:.95;background:rgba(0,0,0,.10);cursor:pointer}
+  .pill:hover{filter:brightness(1.08)}
   .muted{opacity:.7}
+
   .board{display:grid;grid-template-columns:repeat(5, 1fr);gap:10px;align-items:start}
   @media(max-width:1400px){.board{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:800px){.board{grid-template-columns:1fr}}
@@ -298,6 +387,7 @@
   .t-title{font-weight:700}
   .t-sub{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin-top:4px}
   .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
   .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);text-decoration:none;color:inherit;background:rgba(0,0,0,.12);cursor:pointer}
   .btn:hover{filter:brightness(1.08)}
   .btn-small{padding:6px 9px;border-radius:10px;font-size:12px}
@@ -306,6 +396,21 @@
   .btn-success{background:rgba(0,200,120,.16);border-color:rgba(0,200,120,.28)}
   .btn-danger{background:rgba(255,0,70,.14);border-color:rgba(255,0,70,.26)}
   .empty{opacity:.7;padding:10px}
+
+  /* ✅ couleurs des events FullCalendar via classNames */
+  .fc .fc-event.fc-demandes { border-color: rgba(0,255,255,.45) !important; background: rgba(0,255,255,.12) !important; }
+  .fc .fc-event.fc-reserved { border-color: rgba(255,200,0,.50) !important; background: rgba(255,200,0,.12) !important; }
+  .fc .fc-event.fc-ongoing { border-color: rgba(0,200,120,.55) !important; background: rgba(0,200,120,.12) !important; }
+  .fc .fc-event.fc-done { border-color: rgba(0,140,255,.55) !important; background: rgba(0,140,255,.12) !important; }
+  .fc .fc-event.fc-canceled { border-color: rgba(255,0,70,.55) !important; background: rgba(255,0,70,.12) !important; }
+
+  /* Dark-ish calendar */
+  .fc { color: inherit; }
+  .fc .fc-scrollgrid, .fc .fc-scrollgrid td, .fc .fc-scrollgrid th { border-color: rgba(255,255,255,.08) !important; }
+  .fc .fc-toolbar-title { color: #e9eefc; }
+  .fc .fc-button { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
+  .fc .fc-button:hover { filter: brightness(1.1); }
+  .fc .fc-daygrid-day-number { color: rgba(233,238,252,.75); }
 </style>
 
 {% endblock %}
