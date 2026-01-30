@@ -13,9 +13,6 @@ contracts_bp = Blueprint("contracts", __name__, url_prefix="/contracts")
 
 
 def _parse_desc_json(desc: str) -> dict:
-    """
-    Desc Trello = JSON. Tolère texte autour mais tente JSON direct d'abord.
-    """
     s = (desc or "").strip()
     if not s:
         return {}
@@ -32,17 +29,14 @@ def _parse_desc_json(desc: str) -> dict:
         return {}
 
 
-def _normalize_lang(x: str | None) -> str:
-    v = (x or "fr").lower().strip()
-    if v in ("fr", "en", "ar"):
-        return v
-    return "fr"
+def _normalize_lang(v: str | None) -> str:
+    v = (v or "fr").lower().strip()
+    return v if v in ("fr", "en", "ar") else "fr"
 
 
 @contracts_bp.get("/<card_id>.pdf")
 @login_required
 def contract_pdf(card_id: str):
-    # ✅ /contracts/<id>.pdf?lang=fr|en|ar
     lang = _normalize_lang(request.args.get("lang"))
 
     t = Trello()
@@ -50,12 +44,19 @@ def contract_pdf(card_id: str):
     desc = card.get("desc", "")
     payload = _parse_desc_json(desc)
 
-    # fallback si pas un booking JSON
+    # fallback si pas de payload booking
     if payload.get("_type") != "booking":
         payload = {
             "_type": "booking",
             "client_name": "",
+            "client_phone": "",
+            "client_address": "",
+            "doc_id": "",
+            "driver_license": "",
             "vehicle_name": "",
+            "vehicle_plate": "",
+            "vehicle_model": "",
+            "vehicle_vin": "",
             "start_date": "",
             "end_date": "",
             "pickup_location": "",
@@ -74,6 +75,6 @@ def contract_pdf(card_id: str):
         io.BytesIO(pdf_bytes),
         mimetype="application/pdf",
         as_attachment=True,
-        download_name=filename,
+        download_name=filename
     )
 

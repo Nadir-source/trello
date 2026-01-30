@@ -1,6 +1,4 @@
-{# app/templates/bookings.html #}
 {% extends "layout.html" %}
-
 {% block content %}
 
 <div class="page-head">
@@ -22,70 +20,25 @@
     <h3>Nouvelle réservation</h3>
 
     <form method="post" action="{{ url_for('bookings.create') }}" class="form-grid">
-      <div class="field">
-        <label>Client (nom)</label>
-        <input name="client_name" placeholder="Nom client (ex: Nadir)" required />
-      </div>
+      <div class="field"><label>Client (nom)</label><input name="client_name" required /></div>
+      <div class="field"><label>Véhicule (nom)</label><input name="vehicle_name" required /></div>
 
-      <div class="field">
-        <label>Véhicule (nom)</label>
-        <input name="vehicle_name" placeholder="Véhicule (ex: Livan X3 Pro)" required />
-      </div>
+      <div class="field"><label>Téléphone</label><input name="client_phone" /></div>
+      <div class="field"><label>Adresse</label><input name="client_address" /></div>
 
-      <div class="field">
-        <label>Téléphone client</label>
-        <input name="client_phone" placeholder="+213..." />
-      </div>
+      <div class="field"><label>Document (CNI/Passeport)</label><input name="doc_id" /></div>
+      <div class="field"><label>Permis</label><input name="driver_license" /></div>
 
-      <div class="field">
-        <label>Adresse client</label>
-        <input name="client_address" placeholder="Adresse..." />
-      </div>
+      <div class="field"><label>Départ</label><input type="datetime-local" name="start_date" required /></div>
+      <div class="field"><label>Retour</label><input type="datetime-local" name="end_date" required /></div>
 
-      <div class="field">
-        <label>Document (CNI / Passeport)</label>
-        <input name="doc_id" placeholder="N° document" />
-      </div>
+      <div class="field"><label>Lieu livraison</label><input name="pickup_location" /></div>
+      <div class="field"><label>Lieu restitution</label><input name="return_location" /></div>
 
-      <div class="field">
-        <label>Permis</label>
-        <input name="driver_license" placeholder="N° permis" />
-      </div>
+      <div class="field"><label>Plaque</label><input name="vehicle_plate" /></div>
+      <div class="field"><label>Modèle</label><input name="vehicle_model" /></div>
 
-      <div class="field">
-        <label>Date/heure départ</label>
-        <input type="datetime-local" name="start_date" required />
-      </div>
-
-      <div class="field">
-        <label>Date/heure retour</label>
-        <input type="datetime-local" name="end_date" required />
-      </div>
-
-      <div class="field">
-        <label>Lieu livraison</label>
-        <input name="pickup_location" placeholder="Aéroport / Centre ville..." />
-      </div>
-
-      <div class="field">
-        <label>Lieu restitution</label>
-        <input name="return_location" placeholder="Aéroport / Centre ville..." />
-      </div>
-
-      <div class="field">
-        <label>Plaque véhicule</label>
-        <input name="vehicle_plate" placeholder="123-AL-456" />
-      </div>
-
-      <div class="field">
-        <label>Modèle véhicule</label>
-        <input name="vehicle_model" placeholder="Marque + modèle" />
-      </div>
-
-      <div class="field full">
-        <label>Notes</label>
-        <textarea name="notes" rows="3" placeholder="Notes..."></textarea>
-      </div>
+      <div class="field full"><label>Notes</label><textarea name="notes" rows="3"></textarea></div>
 
       <div class="field full options-row">
         <label>Options</label>
@@ -101,21 +54,66 @@
   </div>
 
   <div class="card">
-    <h3>Aide</h3>
+    <h3>Actions rapides</h3>
     <div class="muted">
-      Onglets + calendrier viennent de <code>layout.html</code>. Cette page ne doit pas être en HTML standalone.
+      - <b>Détails</b> ouvre un popup avec toutes les infos.<br/>
+      - <b>Archiver</b> = soft delete Trello.<br/>
+      - <b>Supprimer</b> = delete définitif Trello.<br/>
     </div>
   </div>
 </div>
 
 <hr/>
 
-{# ✅ ICI : si ton calendrier était un include, on le remet #}
-{% include "calendar.html" ignore missing %}
-
-<hr/>
-
 <div class="board">
+  {% macro card_actions(b, phase) %}
+    <div class="actions">
+
+      <button class="btn btn-small" type="button" onclick="openDetails('{{ b.id }}')">Détails</button>
+
+      {% if phase == 'demandes' %}
+        <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='reserved') }}">
+          <button class="btn btn-small btn-warning" type="submit">Passer en Réservé</button>
+        </form>
+      {% endif %}
+
+      {% if phase == 'reserved' %}
+        <form method="post" action="{{ url_for('bookings.contract_and_move', card_id=b.id) }}">
+          <select name="lang" class="btn btn-small">
+            <option value="fr">FR</option>
+            <option value="en">EN</option>
+            <option value="ar">AR</option>
+          </select>
+          <button class="btn btn-small btn-primary" type="submit">Générer + En location</button>
+        </form>
+      {% endif %}
+
+      {% if phase == 'ongoing' %}
+        <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='done') }}">
+          <button class="btn btn-small btn-success" type="submit">Terminer</button>
+        </form>
+      {% endif %}
+
+      {% if phase != 'done' %}
+        <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
+          <button class="btn btn-small btn-danger" type="submit">Annuler</button>
+        </form>
+      {% endif %}
+
+      <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
+      <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
+      <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
+
+      <form method="post" action="{{ url_for('bookings.archive', card_id=b.id) }}" onsubmit="return confirm('Archiver la carte ?')">
+        <button class="btn btn-small" type="submit">Archiver</button>
+      </form>
+
+      <form method="post" action="{{ url_for('bookings.delete', card_id=b.id) }}" onsubmit="return confirm('SUPPRIMER définitivement la carte ?')">
+        <button class="btn btn-small btn-danger" type="submit">Supprimer</button>
+      </form>
+    </div>
+  {% endmacro %}
+
   <div class="col">
     <div class="col-head">📥 DEMANDES</div>
     {% for b in demandes %}
@@ -125,24 +123,9 @@
           {% if b.payload.start_date %}⏱ {{ b.payload.start_date }}{% endif %}
           {% if b.payload.end_date %} → {{ b.payload.end_date }}{% endif %}
         </div>
-
-        <div class="actions">
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='reserved') }}">
-            <button class="btn btn-small btn-warning" type="submit">Passer en Réservé</button>
-          </form>
-
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
-            <button class="btn btn-small btn-danger" type="submit">Annuler</button>
-          </form>
-
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
-        </div>
+        {{ card_actions(b, 'demandes') }}
       </div>
-    {% else %}
-      <div class="empty">Aucune demande.</div>
-    {% endfor %}
+    {% else %}<div class="empty">Aucune demande.</div>{% endfor %}
   </div>
 
   <div class="col">
@@ -150,29 +133,9 @@
     {% for b in reserved %}
       <div class="ticket">
         <div class="t-title">{{ b.name }}</div>
-
-        <div class="actions">
-          <form method="post" action="{{ url_for('bookings.contract_and_move', card_id=b.id) }}">
-            <select name="lang" class="btn btn-small">
-              <option value="fr">FR</option>
-              <option value="en">EN</option>
-              <option value="ar">AR</option>
-            </select>
-            <button class="btn btn-small btn-primary" type="submit">Générer + En location</button>
-          </form>
-
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
-            <button class="btn btn-small btn-danger" type="submit">Annuler</button>
-          </form>
-
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
-        </div>
+        {{ card_actions(b, 'reserved') }}
       </div>
-    {% else %}
-      <div class="empty">Aucune réservation.</div>
-    {% endfor %}
+    {% else %}<div class="empty">Aucune réservation.</div>{% endfor %}
   </div>
 
   <div class="col">
@@ -180,17 +143,9 @@
     {% for b in ongoing %}
       <div class="ticket">
         <div class="t-title">{{ b.name }}</div>
-
-        <div class="actions">
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='done') }}">
-            <button class="btn btn-small btn-success" type="submit">Terminer</button>
-          </form>
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">Contrat FR</a>
-        </div>
+        {{ card_actions(b, 'ongoing') }}
       </div>
-    {% else %}
-      <div class="empty">Aucune location en cours.</div>
-    {% endfor %}
+    {% else %}<div class="empty">Aucune location en cours.</div>{% endfor %}
   </div>
 
   <div class="col">
@@ -198,15 +153,9 @@
     {% for b in done %}
       <div class="ticket">
         <div class="t-title">{{ b.name }}</div>
-        <div class="actions">
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=fr" target="_blank">FR</a>
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=en" target="_blank">EN</a>
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}?lang=ar" target="_blank">AR</a>
-        </div>
+        {{ card_actions(b, 'done') }}
       </div>
-    {% else %}
-      <div class="empty">Aucun terminé.</div>
-    {% endfor %}
+    {% else %}<div class="empty">Aucun terminé.</div>{% endfor %}
   </div>
 
   <div class="col">
@@ -214,12 +163,58 @@
     {% for b in canceled %}
       <div class="ticket">
         <div class="t-title">{{ b.name }}</div>
+        {{ card_actions(b, 'canceled') }}
       </div>
-    {% else %}
-      <div class="empty">Aucun annulé.</div>
-    {% endfor %}
+    {% else %}<div class="empty">Aucun annulé.</div>{% endfor %}
   </div>
 </div>
+
+<!-- POPUP DETAILS -->
+<div id="modal" class="modal hidden" onclick="closeIfBackdrop(event)">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <div id="mTitle" class="m-title">Détails</div>
+        <div id="mSub" class="m-sub muted"></div>
+      </div>
+      <button class="btn btn-small" onclick="closeModal()">Fermer</button>
+    </div>
+
+    <div class="modal-body">
+      <pre id="mJson" class="m-json"></pre>
+      <div id="mLinks" class="m-links"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function openDetails(cardId){
+    const r = await fetch(`/bookings/api/card/${cardId}`);
+    const data = await r.json();
+
+    document.getElementById("mTitle").textContent = data.name || "Carte";
+    document.getElementById("mSub").textContent = data.url ? data.url : "";
+
+    document.getElementById("mJson").textContent = JSON.stringify(data.payload || {}, null, 2);
+
+    const links = [];
+    if(data.url) links.push(`<a class="btn btn-small" href="${data.url}" target="_blank">Ouvrir Trello</a>`);
+    links.push(`<a class="btn btn-small" href="/contracts/${cardId}.pdf?lang=fr" target="_blank">Contrat FR</a>`);
+    links.push(`<a class="btn btn-small" href="/contracts/${cardId}.pdf?lang=en" target="_blank">Contract EN</a>`);
+    links.push(`<a class="btn btn-small" href="/contracts/${cardId}.pdf?lang=ar" target="_blank">عقد AR</a>`);
+
+    document.getElementById("mLinks").innerHTML = links.join(" ");
+    document.getElementById("modal").classList.remove("hidden");
+  }
+
+  function closeModal(){
+    document.getElementById("modal").classList.add("hidden");
+  }
+
+  function closeIfBackdrop(e){
+    if(e.target && e.target.id === "modal") closeModal();
+  }
+</script>
 
 <style>
   .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
@@ -238,6 +233,7 @@
   .options-row{display:flex;flex-direction:column}
   .chk{display:inline-flex;align-items:center;gap:8px;margin-right:12px}
   .muted{opacity:.7}
+
   .board{display:grid;grid-template-columns:repeat(5, 1fr);gap:10px;align-items:start}
   @media(max-width:1400px){.board{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:800px){.board{grid-template-columns:1fr}}
@@ -247,6 +243,7 @@
   .t-title{font-weight:700}
   .t-sub{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin-top:4px}
   .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
   .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);text-decoration:none;color:inherit;background:rgba(0,0,0,.12);cursor:pointer}
   .btn:hover{filter:brightness(1.08)}
   .btn-small{padding:6px 9px;border-radius:10px;font-size:12px}
@@ -255,6 +252,16 @@
   .btn-success{background:rgba(0,200,120,.16);border-color:rgba(0,200,120,.28)}
   .btn-danger{background:rgba(255,0,70,.14);border-color:rgba(255,0,70,.26)}
   .empty{opacity:.7;padding:10px}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999}
+  .modal.hidden{display:none}
+  .modal-card{width:min(900px, 96vw);max-height:85vh;overflow:auto;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:rgba(10,10,12,.92);padding:14px}
+  .modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;position:sticky;top:0;background:rgba(10,10,12,.96);padding-bottom:10px}
+  .m-title{font-size:18px;font-weight:800}
+  .m-sub{font-size:12px}
+  .m-json{white-space:pre-wrap;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;background:rgba(0,0,0,.22)}
+  .m-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 </style>
 
 {% endblock %}
