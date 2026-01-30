@@ -22,7 +22,7 @@ _DEFAULT_FONT = "Helvetica"
 _DEFAULT_FONT_BOLD = "Helvetica-Bold"
 
 # Optional: if you add a ttf font (recommended) it will be used.
-# Put a font here for better Arabic + accents:
+# Put fonts here for better Arabic + accents:
 #   app/static/fonts/DejaVuSans.ttf
 #   app/static/fonts/DejaVuSans-Bold.ttf
 UNICODE_FONT_REGULAR = os.getenv("PDF_UNICODE_FONT_REGULAR", "DejaVuSans")
@@ -95,7 +95,7 @@ LABELS = {
         "tenant": "Le Locataire",
         "renter": "Le Loueur",
         "vehicle": "Objet de la location",
-        "denomination": "Nom / Prénom",
+        "denomination": "Dénomination",
         "phone": "Téléphone",
         "address": "Adresse",
         "doc": "Document (CNI/Passeport)",
@@ -103,7 +103,7 @@ LABELS = {
         "driver1": "Conducteur habilité 01",
         "driver2": "Conducteur habilité 02",
         "name": "Nom / Prénom",
-        "pickup_date": "Période de location",
+        "pickup_date": "Date de location",
         "from": "du",
         "to": "au",
         "pickup_time": "Heure de départ",
@@ -113,11 +113,11 @@ LABELS = {
         "plate": "Immatriculation",
         "vin": "N° série (VIN)",
         "state": "État du véhicule",
-        "ok": "Aucun problème",
+        "ok": "Aucun problèmes",
         "damaged": "Véhicule endommagé",
         "other_pb": "Autres problèmes",
         "dirt": "Salissures",
-        "missing": "Équipement manquant",
+        "missing": "Équipement manquants",
         "burns": "Brûlures des sièges",
         "other": "Autres",
         "return_fill": "À remplir au retour",
@@ -227,97 +227,83 @@ LABELS = {
     },
 }
 
-
 # ============================================================
-# CONDITIONS (MAX / COMPLET)
-# NOTE: ceci n'est pas un avis juridique, adapte selon ton activité.
+# Conditions (max / plus complet)
 # ============================================================
 
 CONDITIONS_FR = [
-    "1. Objet : Le présent contrat encadre la mise à disposition d’un véhicule par le Loueur au Locataire, selon les informations indiquées sur la page 1.",
-    "2. Identité & documents : Le Locataire et tout conducteur habilité doivent présenter une pièce d’identité et un permis valides. Le Loueur peut refuser la remise des clés en cas de doute ou documents incomplets.",
-    "3. Conducteurs autorisés : Seules les personnes mentionnées au contrat sont autorisées à conduire. Le prêt du volant à un tiers non déclaré engage la responsabilité du Locataire.",
-    "4. Usage du véhicule : Le véhicule est utilisé en « bon père de famille ». Sont interdits : conduite dangereuse, courses, transport illégal, surcharge, sous-location, apprentissage de conduite, usage hors route non adapté.",
-    "5. Territoire : Le véhicule ne peut sortir du territoire autorisé par le Loueur sans accord écrit (ex : wilayas spécifiques / frontières).",
-    "6. État du véhicule au départ : Le Locataire reconnaît l’état du véhicule au départ. Des photos/vidéos datées au départ sont recommandées (intérieur/extérieur).",
-    "7. Carburant : Le véhicule est remis avec un niveau de carburant. Il doit être restitué au même niveau (sauf accord contraire) ; à défaut, la différence est facturée.",
-    "8. Kilométrage : Le kilométrage et/ou le forfait (si applicable) est celui indiqué. Tout dépassement peut être facturé.",
-    "9. Durée & retards : La location est consentie pour la période indiquée. Tout retard non validé par le Loueur peut entraîner facturation supplémentaire.",
-    "10. Paiement : Le Locataire s’engage à régler le montant convenu, ainsi que les frais additionnels (prolongation, nettoyage, carburant, livraison/restitution, options).",
-    "11. Dépôt de garantie / caution : Si une caution est exigée, elle couvre les dommages, pertes, carburant, amendes, nettoyage, accessoires manquants. Elle peut être conservée partiellement ou totalement selon constat.",
-    "12. Amendes & infractions : Le Locataire est seul responsable des amendes, PV, frais de stationnement, fourrière, péages pendant la location.",
-    "13. Entretien & alertes : Le Locataire doit surveiller voyants (huile, température, pneus). En cas d’alerte, arrêter le véhicule et prévenir immédiatement le Loueur.",
-    "14. Interdiction de réparation : Aucune réparation, modification ou intervention (pneus, batterie, pièces) sans accord du Loueur, sauf urgence sécuritaire.",
-    "15. Panne : En cas de panne, le Locataire doit prévenir le Loueur. La prise en charge dépend de l’origine (usure normale vs mauvaise utilisation).",
-    "16. Accident / incident : Tout accident doit être déclaré immédiatement au Loueur avec photos, lieu, circonstances, coordonnées des tiers. Un constat/rapport est requis si possible.",
-    "17. Vol : En cas de vol ou tentative de vol, le Locataire doit déposer plainte immédiatement et fournir le récépissé au Loueur. Les clés/documents doivent être remis si disponibles.",
-    "18. Responsabilité : Le Locataire est responsable des dommages causés par sa faute, négligence, ou violation des règles du contrat, y compris accessoires manquants et dégâts intérieur.",
-    "19. Assurance : Les garanties et franchises appliquées sont celles communiquées par le Loueur. Certaines situations peuvent être exclues (alcool, drogue, vitesse excessive, conducteur non autorisé).",
-    "20. Nettoyage : Le véhicule doit être restitué dans un état correct. Un nettoyage peut être facturé (salissures importantes, odeurs, poils, sable, taches).",
-    "21. Objets personnels : Le Loueur n’est pas responsable des objets oubliés dans le véhicule.",
-    "22. Restitution : La restitution se fait au lieu/date/heure convenus. Le Loueur effectue un contrôle (extérieur/intérieur).",
-    "23. Perte de clés/papiers : Toute perte de clés, carte grise, accessoires (triangle, cric, roue de secours, câble) est facturée au Locataire.",
-    "24. Résiliation : Le Loueur peut reprendre le véhicule en cas de non-paiement, non-respect des conditions, suspicion de fraude ou usage interdit.",
-    "25. Données : Les informations fournies servent à la gestion de la location. Elles peuvent être conservées pour preuve/gestion (contrat, incidents, facturation).",
-    "26. Litiges : En cas de litige, les parties privilégient une solution amiable. À défaut, la juridiction compétente est celle indiquée par le Loueur (à adapter).",
+    "1. Objet : Le loueur met à disposition du locataire le véhicule identifié au présent contrat.",
+    "2. Documents : Le locataire/ conducteur présente une pièce d’identité, un permis valide et, si demandé, un justificatif de domicile.",
+    "3. Conducteurs : Seuls les conducteurs déclarés et autorisés peuvent conduire le véhicule. Toute conduite par un tiers engage la responsabilité du locataire.",
+    "4. Âge/Expérience : Le loueur peut refuser la location si l’âge, l’expérience de conduite ou la situation du conducteur ne le permettent pas.",
+    "5. État du véhicule au départ : Le locataire reconnaît l’état du véhicule au départ (photos recommandées). Toute réserve doit être indiquée avant départ.",
+    "6. Usage : Interdiction d’usage hors route, compétition, remorquage (sauf accord), transport de marchandises illicites ou usage contraire à la loi.",
+    "7. Zone de circulation : Toute sortie de zone/ville/pays (si applicable) doit être validée par le loueur.",
+    "8. Carburant : Le véhicule est remis avec un niveau de carburant convenu et doit être restitué selon le même niveau, sauf accord contraire.",
+    "9. Kilométrage : Le kilométrage inclus et l’éventuel surplus sont facturables selon le tarif défini par le loueur.",
+    "10. Durée : La location est consentie pour la période indiquée. Tout dépassement peut être facturé (heures/jours supplémentaires).",
+    "11. Paiement : Le locataire s’engage à régler le montant convenu (location + options). Un dépôt/ caution peut être exigé.",
+    "12. Amendes/Péages : Amendes, infractions, péages, stationnement et frais liés à la conduite sont à la charge du locataire.",
+    "13. Accident/Incident : Tout accident/incident doit être signalé immédiatement au loueur (photos, coordonnées, constat si possible).",
+    "14. Vol : En cas de vol, le locataire doit déposer plainte sans délai et remettre le récépissé au loueur.",
+    "15. Assurance : L’assurance et/ou franchise appliquées sont celles indiquées par le loueur. Certaines exclusions peuvent s’appliquer.",
+    "16. Dommages : Les dommages non couverts par l’assurance, ou dus à une négligence (ex: clés perdues, mauvaise utilisation), restent à la charge du locataire.",
+    "17. Entretien : Le locataire s’engage à un usage raisonnable. Toute alerte mécanique doit être signalée (ne pas continuer à rouler si risque).",
+    "18. Restitution : Le véhicule doit être restitué au lieu/date/heure prévus, avec les documents/équipements remis (clé, triangle, gilet, etc.).",
+    "19. Nettoyage : Des frais de nettoyage peuvent être appliqués si le véhicule est rendu très sale (intérieur/extérieur).",
+    "20. Résiliation : En cas de non-respect des conditions, le loueur peut exiger la restitution immédiate du véhicule.",
+    "21. Données/Confidentialité : Les informations du locataire peuvent être conservées pour la gestion du contrat et des factures.",
+    "22. Litiges : En cas de litige, une solution amiable est privilégiée avant toute action.",
 ]
 
 CONDITIONS_EN = [
-    "1. Purpose: This contract governs the rental of a vehicle from the Owner to the Renter, based on the details on page 1.",
-    "2. Identity & documents: Valid ID and driving license are required for the renter and any authorized driver. The Owner may refuse delivery if documents are incomplete.",
-    "3. Authorized drivers: Only drivers listed in the contract may drive. Any unauthorized driver makes the renter fully liable.",
-    "4. Vehicle use: Proper and careful use is required. Forbidden: racing, illegal transport, overloading, sub-rental, driving lessons, off-road misuse.",
-    "5. Territory: The vehicle may not leave the authorized area without written approval.",
-    "6. Condition at pickup: The renter acknowledges the vehicle condition at pickup. Dated photos/videos are recommended.",
-    "7. Fuel: Vehicle must be returned with the same fuel level unless otherwise agreed; differences may be charged.",
-    "8. Mileage: Mileage limit/package (if any) applies as stated; excess mileage may be charged.",
-    "9. Duration & delays: Rental applies for the agreed period. Unapproved delays may incur extra charges.",
-    "10. Payment: The renter shall pay the agreed price and any additional costs (extension, cleaning, fuel, delivery/return, options).",
-    "11. Deposit: If required, the deposit covers damages, fuel, fines, cleaning, missing accessories. It may be partially/fully retained after inspection.",
-    "12. Fines: The renter is responsible for fines, tickets, parking, tolls, impound fees during the rental.",
-    "13. Maintenance alerts: The renter must monitor warning lights (oil, temperature, tires). In case of alert, stop and contact the owner immediately.",
-    "14. No repairs: No repairs/modifications without owner approval, except for safety emergencies.",
-    "15. Breakdown: In case of breakdown, renter must contact owner. Coverage depends on cause (normal wear vs misuse).",
-    "16. Accident/incident: Must be reported immediately with photos, location, circumstances, third-party details. A police report/statement is required when possible.",
-    "17. Theft: In case of theft, renter must file a police report immediately and provide proof. Keys/documents must be returned if available.",
-    "18. Liability: Renter is liable for damages caused by negligence, misuse, contract breach, missing accessories, interior damage.",
-    "19. Insurance: Insurance/franchise terms apply as specified by the owner. Exclusions may apply (alcohol/drugs, excessive speed, unauthorized driver).",
-    "20. Cleaning: Vehicle must be returned reasonably clean. Excess cleaning may be charged (sand, stains, odors, pet hair).",
-    "21. Personal items: Owner is not responsible for items left in the vehicle.",
-    "22. Return: Vehicle must be returned at agreed place/time. Owner performs inspection (inside/outside).",
-    "23. Lost keys/docs: Loss of keys, documents, accessories (triangle, jack, spare wheel, cable) will be charged.",
-    "24. Termination: Owner may repossess the vehicle in case of non-payment, breach, fraud suspicion, or forbidden use.",
-    "25. Data: Information is used for rental management and may be retained for records (contract, incidents, billing).",
-    "26. Disputes: Parties seek an amicable solution first. Otherwise, competent jurisdiction applies (to be adapted).",
+    "1. Purpose: The owner provides the vehicle identified in this contract to the renter.",
+    "2. Documents: Valid ID and driving license are required; proof of address may be requested.",
+    "3. Drivers: Only declared/authorized drivers may operate the vehicle. Any third-party driving is under renter’s responsibility.",
+    "4. Eligibility: The owner may refuse rental based on age/experience or driver situation.",
+    "5. Vehicle condition at pickup: The renter acknowledges the vehicle condition (photos recommended). Any remarks must be stated before departure.",
+    "6. Use: No off-road, racing, towing (unless agreed), illegal transport, or unlawful use.",
+    "7. Area of use: Leaving the authorized area/city/country (if applicable) must be approved by the owner.",
+    "8. Fuel: Vehicle is provided with an agreed fuel level and must be returned with the same level unless otherwise agreed.",
+    "9. Mileage: Included mileage and any excess mileage may be billed according to the owner’s rates.",
+    "10. Duration: Rental applies for stated dates/time. Overruns may be billed (extra hours/days).",
+    "11. Payment: The renter pays the agreed amount (rental + options). A deposit may be required.",
+    "12. Fines/Tolls: Fines, violations, tolls, parking fees are at renter’s expense.",
+    "13. Accident/Incident: Any accident/incident must be reported immediately (photos, details, report when applicable).",
+    "14. Theft: In case of theft, renter must file a police report promptly and provide proof to the owner.",
+    "15. Insurance: Insurance/franchise terms apply as specified by the owner; exclusions may apply.",
+    "16. Damages: Damages not covered by insurance or due to negligence (e.g., lost keys) remain renter’s responsibility.",
+    "17. Care: Renter must use the vehicle reasonably and report any mechanical warning (do not continue driving if unsafe).",
+    "18. Return: Vehicle must be returned at agreed time/place with all provided items (keys, safety kit, etc.).",
+    "19. Cleaning: Cleaning fees may apply if the vehicle is returned excessively dirty.",
+    "20. Termination: If terms are breached, owner may demand immediate return of the vehicle.",
+    "21. Data: Renter information may be stored for contract and billing purposes.",
+    "22. Disputes: Parties should seek an amicable solution before legal action.",
 ]
 
 CONDITIONS_AR = [
-    _maybe_ar("1. الهدف: يحدد هذا العقد شروط كراء السيارة بين المؤجر والمستأجر حسب المعلومات في الصفحة الأولى."),
-    _maybe_ar("2. الهوية والوثائق: يجب تقديم بطاقة هوية ورخصة سياقة ساريتين. يمكن للمؤجر رفض تسليم السيارة إذا كانت الوثائق ناقصة."),
-    _maybe_ar("3. السائقون المصرح لهم: لا يحق القيادة إلا للأشخاص المذكورين في العقد. أي سائق غير مصرح به يجعل المستأجر مسؤولاً بالكامل."),
-    _maybe_ar("4. استعمال السيارة: الاستعمال يجب أن يكون بحسن نية. يمنع: السباق، النقل غير القانوني، الحمولة الزائدة، التأجير من الباطن، تعليم السياقة، الاستعمال خارج الطريق بشكل غير مناسب."),
-    _maybe_ar("5. النطاق الجغرافي: لا يجوز إخراج السيارة من المنطقة المسموح بها دون موافقة كتابية من المؤجر."),
-    _maybe_ar("6. حالة السيارة عند التسليم: يقر المستأجر بحالة السيارة عند التسليم. ينصح بالصور/الفيديو بتاريخ التسليم."),
-    _maybe_ar("7. الوقود: يجب إرجاع السيارة بنفس مستوى الوقود المتفق عليه، وإلا يتم احتساب الفرق."),
-    _maybe_ar("8. الكيلومترات: يطبق الحد/الباقة المذكورة، وأي تجاوز قد يتم احتسابه."),
-    _maybe_ar("9. المدة والتأخير: أي تأخير غير مصرح به قد يؤدي إلى رسوم إضافية."),
-    _maybe_ar("10. الدفع: يلتزم المستأجر بدفع المبلغ المتفق عليه وكل الرسوم الإضافية (تمديد، تنظيف، وقود، تسليم/استرجاع، خيارات)."),
-    _maybe_ar("11. الضمان/الكفالة: إذا تم طلب كفالة فهي تغطي الأضرار، الوقود، المخالفات، التنظيف، المعدات الناقصة، وقد يتم اقتطاعها حسب المعاينة."),
-    _maybe_ar("12. المخالفات: المستأجر مسؤول عن جميع المخالفات والغرامات والرسوم خلال مدة الكراء."),
-    _maybe_ar("13. التنبيهات والصيانة: يجب مراقبة أضواء التحذير (زيت، حرارة، إطارات). عند ظهور إنذار يجب التوقف وإبلاغ المؤجر فوراً."),
-    _maybe_ar("14. منع الإصلاح: يمنع إجراء أي إصلاح أو تعديل دون موافقة المؤجر إلا في حالات السلامة القصوى."),
-    _maybe_ar("15. العطب: في حالة العطل يجب إبلاغ المؤجر. تتحمل التكاليف حسب سبب العطل (استعمال عادي أو سوء استعمال)."),
-    _maybe_ar("16. حادث/واقعة: يجب الإبلاغ فوراً مع صور ومكان الحادث وتفاصيل الأطراف. يفضل تقرير أو محضر عند الإمكان."),
-    _maybe_ar("17. السرقة: في حالة السرقة يجب تقديم شكوى فورية لدى الشرطة وتقديم الإثبات للمؤجر."),
-    _maybe_ar("18. المسؤولية: المستأجر مسؤول عن الأضرار الناتجة عن الإهمال أو سوء الاستعمال أو مخالفة شروط العقد."),
-    _maybe_ar("19. التأمين: تطبق شروط التأمين والفرانشيز حسب ما يحدده المؤجر، وقد توجد استثناءات (كحول/مخدرات/سرعة مفرطة/سائق غير مصرح)."),
-    _maybe_ar("20. التنظيف: يجب إرجاع السيارة بحالة نظافة مقبولة، والتنظيف الزائد (رمل/بقع/روائح/شعر) قد يتم احتسابه."),
-    _maybe_ar("21. الأغراض الشخصية: المؤجر غير مسؤول عن الأغراض المتروكة داخل السيارة."),
-    _maybe_ar("22. الاسترجاع: يتم الاسترجاع في المكان والوقت المتفق عليهما مع معاينة داخلية وخارجية."),
-    _maybe_ar("23. ضياع المفاتيح/الوثائق: أي ضياع للمفاتيح أو الوثائق أو المعدات يتم احتسابه على المستأجر."),
-    _maybe_ar("24. إنهاء العقد: يمكن للمؤجر استرجاع السيارة في حالة عدم الدفع أو مخالفة الشروط أو الاشتباه في الاحتيال أو الاستعمال الممنوع."),
-    _maybe_ar("25. البيانات: تستخدم المعلومات لإدارة الكراء ويمكن حفظها لأغراض الإثبات (عقد/حوادث/فواتير)."),
-    _maybe_ar("26. النزاعات: يُفضل الحل الودي أولاً، وإلا يتم اللجوء إلى الجهة القضائية المختصة (يُعدل حسب الحالة)."),
+    _maybe_ar("1. الموضوع: يضع المؤجر السيارة المذكورة في هذا العقد تحت تصرف المستأجر."),
+    _maybe_ar("2. الوثائق: يجب تقديم بطاقة هوية ورخصة سياقة ساريتين، وقد يُطلب إثبات عنوان."),
+    _maybe_ar("3. السائقون: يمنع قيادة السيارة إلا من طرف السائقين المصرح بهم. أي قيادة من طرف شخص آخر تكون على مسؤولية المستأجر."),
+    _maybe_ar("4. الأهلية: يمكن للمؤجر رفض الكراء حسب السن/الخبرة أو وضعية السائق."),
+    _maybe_ar("5. حالة السيارة عند التسليم: يقر المستأجر بحالة السيارة عند التسليم (ينصح بالصور). يجب تسجيل أي ملاحظة قبل الانطلاق."),
+    _maybe_ar("6. الاستعمال: يمنع الاستعمال خارج الطريق، السباقات، القطر (إلا باتفاق)، أو أي استعمال غير قانوني."),
+    _maybe_ar("7. مجال الاستعمال: الخروج من المجال/المدينة/البلد (إن وجد) يتطلب موافقة المؤجر."),
+    _maybe_ar("8. الوقود: تُسلم السيارة بمستوى وقود متفق عليه وتُعاد بنفس المستوى إلا باتفاق آخر."),
+    _maybe_ar("9. الكيلومترات: قد يتم احتساب فائض الكيلومترات حسب تسعيرة المؤجر."),
+    _maybe_ar("10. المدة: الكراء محدد بالمدة المذكورة وأي تجاوز قد يُدفع عنه."),
+    _maybe_ar("11. الدفع: يلتزم المستأجر بدفع المبلغ المتفق عليه (الكراء + الخيارات). وقد تُطلب كفالة."),
+    _maybe_ar("12. المخالفات والرسوم: المخالفات، الرسوم، مواقف السيارات والطرقات على عاتق المستأجر."),
+    _maybe_ar("13. حادث/ضرر: يجب الإبلاغ فورًا عن أي حادث أو ضرر مع صور ومعلومات إن أمكن."),
+    _maybe_ar("14. سرقة: في حالة السرقة يجب تقديم شكوى لدى الجهات المختصة وتسليم وصل الشكوى للمؤجر."),
+    _maybe_ar("15. التأمين: تطبق شروط التأمين/الفرانشيز حسب ما يحدده المؤجر مع احتمال وجود استثناءات."),
+    _maybe_ar("16. الأضرار: الأضرار غير المغطاة أو الناتجة عن الإهمال (مثل ضياع المفاتيح) تكون على عاتق المستأجر."),
+    _maybe_ar("17. العناية: يجب استعمال السيارة بشكل معقول والإبلاغ عن أي عطل وعدم مواصلة القيادة إن كان ذلك خطرًا."),
+    _maybe_ar("18. الاسترجاع: تُعاد السيارة في المكان/الوقت المتفق عليه مع كل التجهيزات والوثائق."),
+    _maybe_ar("19. التنظيف: قد تُفرض رسوم تنظيف إذا أُعيدت السيارة متسخة جدًا."),
+    _maybe_ar("20. الإنهاء: في حالة مخالفة الشروط يمكن للمؤجر طلب إرجاع السيارة فورًا."),
+    _maybe_ar("21. البيانات: يمكن الاحتفاظ ببيانات المستأجر لأغراض العقد والفوترة."),
+    _maybe_ar("22. النزاعات: يُفضل الحل الودي قبل اللجوء إلى القضاء."),
 ]
 
 
@@ -367,12 +353,15 @@ def _draw_company_box(c: canvas.Canvas, x: float, y: float, w: float, h: float, 
     c.drawString(x + 8, line_y - 12, f"✉ {COMPANY['email']}".strip())
 
 
-def _draw_kv(c: canvas.Canvas, x: float, y: float, label: str, value: str, w: float, h: float):
+def _draw_kv(c: canvas.Canvas, x: float, y: float, w: float, h: float, label: str, value: str):
+    """
+    Simple key/value rectangle.
+    """
     c.rect(x, y, w, h, stroke=1, fill=0)
     c.setFont(FONT_REG, 8)
     c.drawString(x + 6, y + h - 11, label)
     c.setFont(FONT_BOLD, 9.5)
-    c.drawString(x + 6, y + 6, _safe(value)[:60])
+    c.drawString(x + 6, y + 6, (value or "")[:60])
 
 
 def _draw_multiline(c: canvas.Canvas, x: float, y: float, w: float, h: float, label: str, lines: List[str]):
@@ -386,11 +375,14 @@ def _draw_multiline(c: canvas.Canvas, x: float, y: float, w: float, h: float, la
 
     c.setFont(FONT_REG, 9)
     for ln in lines[:6]:
-        c.drawString(x + 6, yy, _safe(ln)[:95])
+        c.drawString(x + 6, yy, (ln or "")[:90])
         yy -= 12
 
 
 def _fmt_dt_local(dt_str: str) -> str:
+    """
+    Accepts "2026-01-29T10:00" and returns "2026-01-29 10:00"
+    """
     s = _safe(dt_str)
     if "T" in s:
         return s.replace("T", " ")
@@ -432,8 +424,9 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     margin = 12 * mm
     top = H - margin
 
-    c.setStrokeColor(colors.white)
-    c.setFillColor(colors.white)
+    # ✅ IMPORTANT: black text (not white)
+    c.setStrokeColor(colors.black)
+    c.setFillColor(colors.black)
 
     # Outer frame
     c.setLineWidth(1)
@@ -473,7 +466,7 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     c.setFont(FONT_BOLD, 10.5)
     c.drawString(x0 + company_w + 120, ref_y + 16, _contract_ref(payload))
 
-    # Body: two big panels
+    # Body panels
     body_top = y0 - 8
     body_h = 112 * mm
     left_w = (W - 2 * margin) * 0.52
@@ -483,6 +476,7 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     right_x = margin + left_w + 6
     body_y = body_top - body_h
 
+    # Panel titles
     c.setFont(FONT_BOLD, 11)
     c.rect(left_x, body_y, left_w, body_h, stroke=1, fill=0)
     c.drawString(left_x + 8, body_y + body_h - 16, L["tenant"])
@@ -490,7 +484,7 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     c.rect(right_x, body_y, right_w, body_h, stroke=1, fill=0)
     c.drawString(right_x + 8, body_y + body_h - 16, L["vehicle"])
 
-    # Left fields
+    # Left panel fields
     p_client = _safe(payload.get("client_name"))
     p_phone = _safe(payload.get("client_phone"))
     p_addr = _safe(payload.get("client_address"))
@@ -506,20 +500,16 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     grid_top = body_y + body_h - 26
     row_h = 14 * mm
 
-    # ✅ FIX _draw_kv calls (no duplicate w/h)
-    _draw_kv(c, grid_x, grid_top - row_h, L["denomination"], p_client, left_w - 12, row_h)
-    _draw_kv(c, grid_x, grid_top - 2 * row_h, L["phone"], p_phone, (left_w - 12) * 0.52, row_h)
-    _draw_kv(
-        c,
-        grid_x + (left_w - 12) * 0.52 + 6,
-        grid_top - 2 * row_h,
-        L["doc"],
-        p_doc,
-        (left_w - 12) * 0.48 - 6,
-        row_h,
-    )
-    _draw_kv(c, grid_x, grid_top - 3 * row_h, L["address"], p_addr, left_w - 12, row_h)
-    _draw_kv(c, grid_x, grid_top - 4 * row_h, L["permit"], p_permit, left_w - 12, row_h)
+    # ✅ FIX: correct _draw_kv signature (no duplicated w/h)
+    _draw_kv(c, grid_x, grid_top - row_h, left_w - 12, row_h, L["denomination"], p_client)
+
+    w1 = (left_w - 12) * 0.52
+    w2 = (left_w - 12) * 0.48 - 6
+    _draw_kv(c, grid_x, grid_top - 2 * row_h, w1, row_h, L["phone"], p_phone)
+    _draw_kv(c, grid_x + w1 + 6, grid_top - 2 * row_h, w2, row_h, L["doc"], p_doc)
+
+    _draw_kv(c, grid_x, grid_top - 3 * row_h, left_w - 12, row_h, L["address"], p_addr)
+    _draw_kv(c, grid_x, grid_top - 4 * row_h, left_w - 12, row_h, L["permit"], p_permit)
 
     # Dates
     date_box_h = 16 * mm
@@ -545,7 +535,7 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
         [f"{L['pickup_place']}: {p_pick}", f"{L['return_place']}: {p_ret}"],
     )
 
-    # Right panel fields
+    # Right panel fields (vehicle)
     v_name = _safe(payload.get("vehicle_name"))
     v_plate = _safe(payload.get("vehicle_plate"))
     v_model = _safe(payload.get("vehicle_model")) or v_name
@@ -554,10 +544,9 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     rx = right_x + 6
     rt = body_y + body_h - 26
 
-    # ✅ FIX _draw_kv calls (no duplicate w/h)
-    _draw_kv(c, rx, rt - row_h, L["model"], v_model, right_w - 12, row_h)
-    _draw_kv(c, rx, rt - 2 * row_h, L["plate"], v_plate, right_w - 12, row_h)
-    _draw_kv(c, rx, rt - 3 * row_h, L["vin"], v_vin, right_w - 12, row_h)
+    _draw_kv(c, rx, rt - row_h, right_w - 12, row_h, L["model"], v_model)
+    _draw_kv(c, rx, rt - 2 * row_h, right_w - 12, row_h, L["plate"], v_plate)
+    _draw_kv(c, rx, rt - 3 * row_h, right_w - 12, row_h, L["vin"], v_vin)
 
     # Condition checkboxes
     c.setFont(FONT_BOLD, 10)
@@ -594,7 +583,7 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     _draw_checkbox(c, subx, opt_y, cb, checked=False)
     c.drawString(subx + cb + 6, opt_y + 2, L["other"])
 
-    # Options box + notes
+    # Options + notes
     options = payload.get("options") or {}
     gps = bool(options.get("gps"))
     chauffeur = bool(options.get("chauffeur"))
@@ -614,22 +603,25 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     notes = _safe(payload.get("notes"))
     _draw_multiline(c, rx, body_y + 6, right_w - 12, 26 * mm, L["notes"], [notes])
 
-    # Bottom area: return fill + signatures
+    # Bottom: return fill + signatures
+    bottom_top = body_y - 8
     bottom_y = margin + 10
 
+    # Return fill section
     c.rect(margin, bottom_y + 38 * mm, W - 2 * margin, 30 * mm, stroke=1, fill=0)
     c.setFont(FONT_BOLD, 10.5)
     c.drawString(margin + 8, bottom_y + 38 * mm + 30 * mm - 14, L["return_fill"])
 
+    # Odometer/fuel boxes
     bx = margin + 8
     by = bottom_y + 42 * mm
     bw = (W - 2 * margin - 24) / 2
     bh = 18 * mm
 
-    # ✅ FIX _draw_kv calls for km/fuel
-    _draw_kv(c, bx, by, L["km"], "", bw, bh)
-    _draw_kv(c, bx + bw + 8, by, L["fuel"], "", bw, bh)
+    _draw_kv(c, bx, by, bw, bh, L["km"], "")
+    _draw_kv(c, bx + bw + 8, by, bw, bh, L["fuel"], "")
 
+    # Signatures
     sig_y = bottom_y
     sig_h = 34 * mm
     sig_w = (W - 2 * margin - 10) / 2
@@ -641,16 +633,19 @@ def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, 
     c.drawString(margin + 8, sig_y + sig_h - 14, L["sign_renter"])
     c.drawString(margin + sig_w + 18, sig_y + sig_h - 14, L["sign_tenant"])
 
+    # Footer
     c.setFont(FONT_REG, 7.5)
     c.setFillColor(colors.grey)
     c.drawRightString(W - margin, margin - 2, f"{L['page']} 1/2")
-    c.setFillColor(colors.white)
+    c.setFillColor(colors.black)
 
 
 def _draw_contract_page_2_conditions(c: canvas.Canvas, lang: str, L: Dict[str, str], W: float, H: float):
     margin = 14 * mm
-    c.setStrokeColor(colors.white)
-    c.setFillColor(colors.white)
+
+    # ✅ IMPORTANT: black text (not white)
+    c.setStrokeColor(colors.black)
+    c.setFillColor(colors.black)
 
     c.setFont(FONT_BOLD, 15)
     c.drawString(margin, H - margin - 10, L["conditions"])
@@ -682,12 +677,12 @@ def _draw_contract_page_2_conditions(c: canvas.Canvas, lang: str, L: Dict[str, s
     c.setFont(FONT_REG, 9)
     c.setFillColor(colors.grey)
     c.drawString(margin, margin + 6, "Empreintes et Signature / Signatures")
-    c.setFillColor(colors.white)
+    c.setFillColor(colors.black)
 
     c.setFont(FONT_REG, 7.5)
     c.setFillColor(colors.grey)
     c.drawRightString(W - margin, margin - 2, f"{L['page']} 2/2")
-    c.setFillColor(colors.white)
+    c.setFillColor(colors.black)
 
 
 def _wrap_text(text: str, max_chars: int = 80) -> List[str]:
@@ -695,7 +690,7 @@ def _wrap_text(text: str, max_chars: int = 80) -> List[str]:
     if not s:
         return [""]
     words = s.split()
-    lines = []
+    lines: List[str] = []
     cur = ""
     for w in words:
         if len(cur) + len(w) + 1 <= max_chars:
