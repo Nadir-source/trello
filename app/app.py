@@ -1,3 +1,5 @@
+# app/app.py
+import os
 from flask import Flask, redirect, url_for
 from dotenv import load_dotenv
 
@@ -13,9 +15,15 @@ from app.contracts import contracts_bp
 
 load_dotenv()
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(BASE_DIR, "templates"),  # ✅ app/templates
+        static_folder=os.path.join(BASE_DIR, "static"),       # ✅ app/static
+    )
     app.secret_key = SECRET_KEY
 
     # Register blueprints safely (évite les doublons)

@@ -18,129 +18,154 @@
   </div>
 </div>
 
-<div class="grid2">
-  <section class="card">
-    <div class="card-h">
-      <h2>Nouvelle réservation</h2>
-    </div>
-
-    <form class="form" method="post" action="{{ url_for('bookings.create') }}">
-      <div class="form-grid">
-        <label>Client <input name="client_name" placeholder="Nom client" required /></label>
-        <label>Véhicule <input name="vehicle_name" placeholder="Nom véhicule" required /></label>
-
-        <label>Téléphone <input name="client_phone" placeholder="+213..." /></label>
-        <label>Adresse <input name="client_address" placeholder="Adresse..." /></label>
-
-        <label>Document (CNI/Passeport) <input name="doc_id" /></label>
-        <label>Permis <input name="driver_license" /></label>
-
-        <label>Départ (YYYY-MM-DDTHH:MM) <input name="start_date" placeholder="2026-02-20T10:00" /></label>
-        <label>Retour (YYYY-MM-DDTHH:MM) <input name="end_date" placeholder="2026-02-26T10:00" /></label>
-
-        <label>Lieu livraison <input name="pickup_location" /></label>
-        <label>Lieu restitution <input name="return_location" /></label>
-
-        <label>Plaque <input name="vehicle_plate" /></label>
-        <label>Modèle <input name="vehicle_model" /></label>
-
-        <label class="span2">Notes <textarea name="notes" rows="3"></textarea></label>
-      </div>
-
-      <div class="opts">
-        <label><input type="checkbox" name="opt_gps" /> GPS</label>
-        <label><input type="checkbox" name="opt_driver" /> Chauffeur</label>
-        <label><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
-      </div>
-
-      <button class="btn btn-primary" type="submit">Créer (Demande)</button>
-    </form>
-  </section>
-
-  <section class="card">
-    <div class="card-h">
-      <h2>Aide</h2>
-    </div>
-    <div class="help">
-      <p>✅ Clique sur une carte pour ouvrir le <b>popup</b>.</p>
-      <p>✅ FR/EN/AR : boutons de génération PDF.</p>
-      <p>✅ Supprimer = <b>archive</b> la carte Trello (pas de perte totale).</p>
-      <p>✅ Calendrier : menu à ajouter dans layout (voir plus bas).</p>
-    </div>
-  </section>
+<!-- ✅ Onglets -->
+<div class="tabs">
+  <button class="tab active" data-tab="kanban">Kanban</button>
+  <button class="tab" data-tab="calendar">Calendrier</button>
 </div>
 
-<div class="cols">
+<!-- ========================= -->
+<!-- TAB: KANBAN -->
+<!-- ========================= -->
+<div class="tab-panel" data-panel="kanban">
 
-  {% macro col(title, items, status) %}
-  <div class="col">
-    <div class="col-h">{{ title }}</div>
-    <div class="col-b">
-      {% for it in items %}
-        {% set p = it.payload %}
-        <div class="ticket js-open-modal" data-card-id="{{ it.id }}" data-status="{{ status }}">
-          <div class="ticket-title">{{ it.name }}</div>
-          <div class="ticket-meta">
-            {% if p and p._type == 'booking' %}
-              🕒 {{ (p.start_date or '') }} → {{ (p.end_date or '') }}
-            {% endif %}
-          </div>
+  <div class="grid2">
+    <section class="card">
+      <div class="card-h">
+        <h2>Nouvelle réservation</h2>
+      </div>
 
-          <div class="ticket-actions" onclick="event.stopPropagation();">
+      <form class="form" method="post" action="{{ url_for('bookings.create') }}">
+        <div class="form-grid">
+          <label>Client <input name="client_name" placeholder="Nom client" required /></label>
+          <label>Véhicule <input name="vehicle_name" placeholder="Nom véhicule" required /></label>
 
-            {% if status == 'demandes' %}
-              <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='reserved') }}">
-                <button class="btn btn-warn" type="submit">Passer en Réservé</button>
-              </form>
+          <label>Téléphone <input name="client_phone" placeholder="+213..." /></label>
+          <label>Adresse <input name="client_address" placeholder="Adresse..." /></label>
 
-              <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
-                <button class="btn btn-danger" type="submit">Annuler</button>
-              </form>
+          <label>Document (CNI/Passeport) <input name="doc_id" /></label>
+          <label>Permis <input name="driver_license" /></label>
 
-            {% elif status == 'reserved' %}
-              <form method="post" action="{{ url_for('bookings.contract_and_move') }}">
-                <input type="hidden" name="card_id" value="{{ it.id }}" />
-                <select name="lang" class="select">
-                  <option value="fr">FR</option>
-                  <option value="en">EN</option>
-                  <option value="ar">AR</option>
-                </select>
-                <button class="btn btn-primary" type="submit">Générer + En location</button>
-              </form>
+          <label>Départ (YYYY-MM-DDTHH:MM) <input name="start_date" placeholder="2026-02-20T10:00" /></label>
+          <label>Retour (YYYY-MM-DDTHH:MM) <input name="end_date" placeholder="2026-02-26T10:00" /></label>
 
-              <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
-                <button class="btn btn-danger" type="submit">Annuler</button>
-              </form>
+          <label>Lieu livraison <input name="pickup_location" /></label>
+          <label>Lieu restitution <input name="return_location" /></label>
 
-            {% elif status == 'ongoing' %}
-              <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='done') }}">
-                <button class="btn btn-ok" type="submit">Terminer</button>
-              </form>
-            {% endif %}
+          <label>Plaque <input name="vehicle_plate" /></label>
+          <label>Modèle <input name="vehicle_model" /></label>
 
-            <!-- PDF direct -->
-            <a class="btn btn-ghost" href="/contracts/{{ it.id }}.pdf?lang=fr" target="_blank">FR</a>
-            <a class="btn btn-ghost" href="/contracts/{{ it.id }}.pdf?lang=en" target="_blank">EN</a>
-            <a class="btn btn-ghost" href="/contracts/{{ it.id }}.pdf?lang=ar" target="_blank">AR</a>
-
-            <!-- Supprimer -->
-            <form method="post" action="{{ url_for('bookings.delete', card_id=it.id) }}" class="js-confirm-delete">
-              <button class="btn btn-outline" type="submit">Supprimer</button>
-            </form>
-
-          </div>
+          <label class="span2">Notes <textarea name="notes" rows="3"></textarea></label>
         </div>
-      {% endfor %}
-    </div>
+
+        <div class="opts">
+          <label><input type="checkbox" name="opt_gps" /> GPS</label>
+          <label><input type="checkbox" name="opt_driver" /> Chauffeur</label>
+          <label><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Créer (Demande)</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-h">
+        <h2>Raccourcis</h2>
+      </div>
+      <div class="help">
+        <p>✅ Clique sur une carte pour ouvrir le <b>popup</b>.</p>
+        <p>✅ FR/EN/AR : boutons de génération PDF.</p>
+        <p>✅ Supprimer = <b>archive</b> la carte Trello.</p>
+        <p>✅ Onglet Calendrier : clic sur un item = popup carte.</p>
+      </div>
+    </section>
   </div>
-  {% endmacro %}
 
-  {{ col("📥 DEMANDES", demandes, "demandes") }}
-  {{ col("📅 RÉSERVÉ", reserved, "reserved") }}
-  {{ col("🔑 EN LOCATION", ongoing, "ongoing") }}
-  {{ col("✅ TERMINÉ", done, "done") }}
-  {{ col("❌ ANNULÉ", canceled, "canceled") }}
+  <div class="cols">
 
+    {% macro col(title, items, status) %}
+    <div class="col">
+      <div class="col-h">{{ title }}</div>
+      <div class="col-b">
+        {% for it in items %}
+          {% set p = it.payload %}
+          <div class="ticket js-open-modal" data-card-id="{{ it.id }}" data-status="{{ status }}">
+            <div class="ticket-title">{{ it.name }}</div>
+            <div class="ticket-meta">
+              {% if p and p._type == 'booking' %}
+                🕒 {{ (p.start_date or '') }} → {{ (p.end_date or '') }}
+              {% endif %}
+            </div>
+
+            <div class="ticket-actions" onclick="event.stopPropagation();">
+
+              {% if status == 'demandes' %}
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='reserved') }}">
+                  <button class="btn btn-warn" type="submit">Passer en Réservé</button>
+                </form>
+
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
+                  <button class="btn btn-danger" type="submit">Annuler</button>
+                </form>
+
+              {% elif status == 'reserved' %}
+                <form method="post" action="{{ url_for('bookings.contract_and_move') }}">
+                  <input type="hidden" name="card_id" value="{{ it.id }}" />
+                  <select name="lang" class="select">
+                    <option value="fr">FR</option>
+                    <option value="en">EN</option>
+                    <option value="ar">AR</option>
+                  </select>
+                  <button class="btn btn-primary" type="submit">Générer + En location</button>
+                </form>
+
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
+                  <button class="btn btn-danger" type="submit">Annuler</button>
+                </form>
+
+              {% elif status == 'ongoing' %}
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='done') }}">
+                  <button class="btn btn-ok" type="submit">Terminer</button>
+                </form>
+              {% endif %}
+
+              <!-- PDF direct -->
+              <a class="btn btn-ghost" href="/contracts/{{ it.id }}.pdf?lang=fr" target="_blank">FR</a>
+              <a class="btn btn-ghost" href="/contracts/{{ it.id }}.pdf?lang=en" target="_blank">EN</a>
+              <a class="btn btn-ghost" href="/contracts/{{ it.id }}.pdf?lang=ar" target="_blank">AR</a>
+
+              <!-- Supprimer -->
+              <form method="post" action="{{ url_for('bookings.delete', card_id=it.id) }}" class="js-confirm-delete">
+                <button class="btn btn-outline" type="submit">Supprimer</button>
+              </form>
+
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endmacro %}
+
+    {{ col("📥 DEMANDES", demandes, "demandes") }}
+    {{ col("📅 RÉSERVÉES", reserved, "reserved") }}
+    {{ col("🔑 EN COURS", ongoing, "ongoing") }}
+    {{ col("✅ TERMINÉES", done, "done") }}
+    {{ col("❌ ANNULÉES", canceled, "canceled") }}
+
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- TAB: CALENDAR -->
+<!-- ========================= -->
+<div class="tab-panel" data-panel="calendar" style="display:none;">
+  <div class="card">
+    <div class="card-h" style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>Calendrier</h2>
+      <button class="btn btn-ghost" id="calRefresh" type="button">↻ Rafraîchir</button>
+    </div>
+    <div id="calendarList"></div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -161,6 +186,38 @@
     <div class="modal-f" id="modalFooter"></div>
   </div>
 </div>
+
+<!-- ✅ mini CSS (au cas où) -->
+<style>
+  .tabs{display:flex;gap:10px;margin:12px 0 18px}
+  .tab{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:inherit;cursor:pointer}
+  .tab.active{outline:2px solid rgba(59,130,246,.35);background:rgba(59,130,246,.08)}
+  .cal-day{border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px;margin:10px 0;background:rgba(255,255,255,.02)}
+  .cal-day-h{font-weight:800;margin-bottom:10px}
+  .cal-items{display:flex;flex-direction:column;gap:10px}
+  .cal-item{padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);cursor:pointer}
+  .cal-title{font-weight:700}
+  .cal-meta{opacity:.8;font-size:12px;margin-top:4px}
+  .cal-badge{display:inline-block;margin-top:8px;padding:4px 10px;border-radius:999px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);font-size:12px}
+</style>
+
+<!-- ✅ JS tabs -->
+<script>
+  (function(){
+    const tabs = document.querySelectorAll(".tab");
+    const panels = document.querySelectorAll(".tab-panel");
+    tabs.forEach(t=>{
+      t.addEventListener("click", ()=>{
+        const key = t.getAttribute("data-tab");
+        tabs.forEach(x=>x.classList.remove("active"));
+        t.classList.add("active");
+        panels.forEach(p=>{
+          p.style.display = (p.getAttribute("data-panel") === key) ? "" : "none";
+        });
+      });
+    });
+  })();
+</script>
 
 {% endblock %}
 

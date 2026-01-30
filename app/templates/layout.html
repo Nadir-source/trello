@@ -17,7 +17,7 @@
         <div class="logo">Z</div>
         <div class="brand-text">
           <div class="brand-title">Zohir Location Auto</div>
-          <div class="brand-sub">Trello-only • DZD • Contrat FR/AR</div>
+          <div class="brand-sub">Trello-only • DZD • Contrat FR/EN/AR</div>
         </div>
       </div>
 
@@ -29,7 +29,7 @@
           <span>Dashboard</span>
         </a>
 
-        <!-- ✅ Réservations (FIX) -->
+        <!-- Réservations -->
         <a class="nav-item {% if request.path.startswith('/bookings') %}active{% endif %}"
            href="{{ url_for('bookings.index') }}">
           <span class="ico">🗓️</span>
@@ -41,13 +41,6 @@
            href="{{ url_for('clients.index') }}">
           <span class="ico">👥</span>
           <span>Clients</span>
-        </a>
-
-	<!-- Calendrier -->
-        <a class="nav-item {% if request.path.startswith('/bookings/calendar') %}active{% endif %}"
-           href="{{ url_for('bookings.calendar_page') }}">
-          <span class="ico">📆</span>
-          <span>Calendrier</span>
         </a>
 
         <!-- Véhicules -->
@@ -66,7 +59,6 @@
       </nav>
 
       <div class="sidebar-footer">
-        <!-- ✅ Logout (auth.logout existe chez toi) -->
         <a class="nav-item logout" href="{{ url_for('auth.logout') }}">
           <span class="ico">⛔</span>
           <span>Logout</span>
@@ -75,7 +67,7 @@
         <div class="tips">
           <div class="tips-title">Tips</div>
           <ul>
-            <li>Crée Clients/Véhicules depuis Trello</li>
+            <li>Crée Clients/Véhicules depuis le site</li>
             <li>Tout se fait dans le site (ton ami touche que le site)</li>
           </ul>
         </div>
@@ -121,7 +113,10 @@
 
   </div>
 
-  <!-- CSS minimal de secours (si style.css n'existe pas / incomplet) -->
+  <!-- ✅ JS global -->
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+
+  <!-- CSS minimal de secours -->
   <style>
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#070a12; color:#e9eefc; }
     .app-shell { display:flex; min-height:100vh; }
