@@ -1,147 +1,312 @@
+{# app/templates/bookings.html #}
 {% extends "layout.html" %}
-{% block title %}Réservations{% endblock %}
 
 {% block content %}
-<div class="page">
-  <h1 style="margin:0 0 14px 0;">Réservations</h1>
 
-  <div class="stats-grid">
+<div class="page-head">
+  <h2>Réservations</h2>
+
+  <div class="stats-row">
     <div class="stat neon-cyan"><div class="n">{{ stats.demandes }}</div><div class="l">Demandes</div></div>
-    <div class="stat neon-green"><div class="n">{{ stats.reserved }}</div><div class="l">Réservées</div></div>
-    <div class="stat neon-purple"><div class="n">{{ stats.ongoing }}</div><div class="l">En cours</div></div>
-    <div class="stat neon-yellow"><div class="n">{{ stats.done }}</div><div class="l">Terminées</div></div>
-    <div class="stat"><div class="n">{{ stats.clients }}</div><div class="l">Clients</div></div>
-    <div class="stat"><div class="n">{{ stats.vehicles_available }}</div><div class="l">Véhicules dispo</div></div>
+    <div class="stat neon-yellow"><div class="n">{{ stats.reserved }}</div><div class="l">Réservé</div></div>
+    <div class="stat neon-green"><div class="n">{{ stats.ongoing }}</div><div class="l">En location</div></div>
+    <div class="stat neon-blue"><div class="n">{{ stats.done }}</div><div class="l">Terminé</div></div>
+    <div class="stat neon-red"><div class="n">{{ stats.canceled }}</div><div class="l">Annulé</div></div>
   </div>
+</div>
 
+<hr/>
+
+<div class="grid-2">
   <div class="card">
-    <h2 style="margin:0 0 10px 0;">Créer une réservation</h2>
+    <h3>Nouvelle réservation</h3>
 
-    <!-- ✅ IMPORTANT: method="POST" + action bookings.create -->
-    <form method="POST" action="{{ url_for('bookings.create') }}" class="grid">
+    <form method="post" action="{{ url_for('bookings.create') }}" class="form-grid">
       <div class="field">
-        <label>Client</label>
-        <select name="client_id" required>
-          <option value="">— Choisir un client —</option>
-          {% for c in clients %}
-            <option value="{{ c.id }}">{{ c.label }}{% if c.phone %} • {{ c.phone }}{% endif %}</option>
-          {% endfor %}
-        </select>
+        <label>Client (nom)</label>
+        <input name="client_name" placeholder="Nom client (ex: Nadir)" required />
+        <small>Astuce : tu peux choisir dans la liste juste en bas (optionnel).</small>
       </div>
 
       <div class="field">
-        <label>Véhicule</label>
-        <select name="vehicle_id" required>
-          <option value="">— Choisir un véhicule —</option>
-          {% for v in vehicles %}
-            {% if v.status == "AVAILABLE" %}
-              <option value="{{ v.id }}">{{ v.label }}</option>
-            {% endif %}
-          {% endfor %}
-        </select>
-        <div class="hint">Seuls les véhicules avec status <b>AVAILABLE</b> sont proposés.</div>
+        <label>Véhicule (nom)</label>
+        <input name="vehicle_name" placeholder="Véhicule (ex: Livan X3 Pro)" required />
+        <small>Astuce : tu peux choisir dans la liste juste en bas (optionnel).</small>
       </div>
 
       <div class="field">
-        <label>Date début</label>
-        <input type="datetime-local" name="start_date" required>
+        <label>Téléphone client</label>
+        <input name="client_phone" placeholder="+213..." />
       </div>
 
       <div class="field">
-        <label>Date fin</label>
-        <input type="datetime-local" name="end_date" required>
+        <label>Adresse client</label>
+        <input name="client_address" placeholder="Adresse..." />
       </div>
 
       <div class="field">
-        <label>Lieu remise</label>
-        <input type="text" name="pickup_location" required>
+        <label>Document (CNI / Passeport)</label>
+        <input name="doc_id" placeholder="N° document" />
       </div>
 
       <div class="field">
-        <label>Lieu retour</label>
-        <input type="text" name="return_location" required>
+        <label>Permis</label>
+        <input name="driver_license" placeholder="N° permis" />
       </div>
 
       <div class="field">
-        <label>Type document</label>
-        <select name="doc_type">
-          <option value="CNI">CNI</option>
-          <option value="Passeport">Passeport</option>
-          <option value="Permis">Permis</option>
-        </select>
+        <label>Date/heure départ</label>
+        <input type="datetime-local" name="start_date" required />
       </div>
 
       <div class="field">
-        <label>Options</label>
-        <div class="checks">
-          <label><input type="checkbox" name="opt_gps"> GPS</label>
-          <label><input type="checkbox" name="opt_chauffeur"> Chauffeur</label>
-          <label><input type="checkbox" name="opt_baby_seat"> Siège bébé</label>
-        </div>
+        <label>Date/heure retour</label>
+        <input type="datetime-local" name="end_date" required />
+      </div>
+
+      <div class="field">
+        <label>Lieu livraison</label>
+        <input name="pickup_location" placeholder="Aéroport / Centre ville..." />
+      </div>
+
+      <div class="field">
+        <label>Lieu restitution</label>
+        <input name="return_location" placeholder="Aéroport / Centre ville..." />
+      </div>
+
+      <div class="field">
+        <label>Plaque véhicule</label>
+        <input name="vehicle_plate" placeholder="123-AL-456" />
+      </div>
+
+      <div class="field">
+        <label>Modèle véhicule</label>
+        <input name="vehicle_model" placeholder="Marque + modèle" />
+      </div>
+
+      <div class="field">
+        <label>N° Série (VIN)</label>
+        <input name="vehicle_vin" placeholder="VIN..." />
       </div>
 
       <div class="field full">
         <label>Notes</label>
-        <textarea name="notes" rows="3"></textarea>
+        <textarea name="notes" rows="3" placeholder="Notes..."></textarea>
+      </div>
+
+      <div class="field full options-row">
+        <label>Options</label>
+        <label class="chk"><input type="checkbox" name="opt_gps" /> GPS</label>
+        <label class="chk"><input type="checkbox" name="opt_driver" /> Chauffeur</label>
+        <label class="chk"><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
       </div>
 
       <div class="field full">
-        <button class="btn" type="submit">✅ Créer</button>
+        <button class="btn btn-primary" type="submit">Créer (Demande)</button>
       </div>
     </form>
   </div>
 
-  <div class="columns">
-    <div class="col">
-      <h3>📥 Demandes</h3>
-      {% for c in demandes %}<div class="item">{{ c.name }}</div>{% else %}<div class="muted">Aucune</div>{% endfor %}
+  <div class="card">
+    <h3>Référentiels (pour t’aider à remplir vite)</h3>
+
+    <div class="split">
+      <div class="mini">
+        <h4>Clients disponibles</h4>
+        <div class="list">
+          {% for c in clients %}
+            <div class="pill">{{ c.name }}</div>
+          {% else %}
+            <div class="muted">Aucun client trouvé dans Trello.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mini">
+        <h4>Véhicules disponibles</h4>
+        <div class="list">
+          {% for v in vehicles %}
+            <div class="pill">{{ v.name }}</div>
+          {% else %}
+            <div class="muted">Aucun véhicule trouvé dans Trello.</div>
+          {% endfor %}
+        </div>
+      </div>
     </div>
 
-    <div class="col">
-      <h3>✅ Réservées</h3>
-      {% for c in reserved %}<div class="item">{{ c.name }}</div>{% else %}<div class="muted">Aucune</div>{% endfor %}
-    </div>
-
-    <div class="col">
-      <h3>🔑 En cours</h3>
-      {% for c in ongoing %}<div class="item">{{ c.name }}</div>{% else %}<div class="muted">Aucune</div>{% endfor %}
-    </div>
-
-    <div class="col">
-      <h3>🏁 Terminées</h3>
-      {% for c in done %}<div class="item">{{ c.name }}</div>{% else %}<div class="muted">Aucune</div>{% endfor %}
+    <div class="muted" style="margin-top:10px;">
+      Si la liste est vide, c’est que les cartes Trello “👤 CLIENTS” / “🚗 VÉHICULES” n’ont pas été chargées
+      (mauvais LIST_CLIENTS/LIST_VEHICLES dans config.py).
     </div>
   </div>
 </div>
 
+<hr/>
+
+<div class="board">
+  <div class="col">
+    <div class="col-head">📥 DEMANDES</div>
+    {% for b in demandes %}
+      <div class="ticket">
+        <div class="t-title">{{ b.name }}</div>
+        <div class="t-sub">
+          {% if b.payload.client_name %}<span>👤 {{ b.payload.client_name }}</span>{% endif %}
+          {% if b.payload.vehicle_name %}<span>🚗 {{ b.payload.vehicle_name }}</span>{% endif %}
+        </div>
+        <div class="t-sub muted">
+          {% if b.payload.start_date %}⏱ {{ b.payload.start_date }}{% endif %}
+          {% if b.payload.end_date %} → {{ b.payload.end_date }}{% endif %}
+        </div>
+
+        <div class="actions">
+          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='reserved') }}">
+            <button class="btn btn-small btn-warning" type="submit">Passer en Réservé</button>
+          </form>
+
+          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
+            <button class="btn btn-small btn-danger" type="submit">Annuler</button>
+          </form>
+
+          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
+            Télécharger contrat
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">Aucune demande.</div>
+    {% endfor %}
+  </div>
+
+  <div class="col">
+    <div class="col-head">📅 RÉSERVÉ</div>
+    {% for b in reserved %}
+      <div class="ticket">
+        <div class="t-title">{{ b.name }}</div>
+        <div class="t-sub">
+          {% if b.payload.client_name %}<span>👤 {{ b.payload.client_name }}</span>{% endif %}
+          {% if b.payload.vehicle_name %}<span>🚗 {{ b.payload.vehicle_name }}</span>{% endif %}
+        </div>
+
+        <div class="actions">
+          <form method="post" action="{{ url_for('bookings.contract_and_move', card_id=b.id) }}">
+            <button class="btn btn-small btn-primary" type="submit">Générer contrat + En location</button>
+          </form>
+
+          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
+            <button class="btn btn-small btn-danger" type="submit">Annuler</button>
+          </form>
+
+          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
+            Télécharger contrat
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">Aucune réservation.</div>
+    {% endfor %}
+  </div>
+
+  <div class="col">
+    <div class="col-head">🔑 EN LOCATION</div>
+    {% for b in ongoing %}
+      <div class="ticket">
+        <div class="t-title">{{ b.name }}</div>
+        <div class="t-sub">
+          {% if b.payload.client_name %}<span>👤 {{ b.payload.client_name }}</span>{% endif %}
+          {% if b.payload.vehicle_name %}<span>🚗 {{ b.payload.vehicle_name }}</span>{% endif %}
+        </div>
+
+        <div class="actions">
+          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='done') }}">
+            <button class="btn btn-small btn-success" type="submit">Terminer</button>
+          </form>
+
+          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
+            Contrat
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">Aucune location en cours.</div>
+    {% endfor %}
+  </div>
+
+  <div class="col">
+    <div class="col-head">✅ TERMINÉ</div>
+    {% for b in done %}
+      <div class="ticket">
+        <div class="t-title">{{ b.name }}</div>
+        <div class="t-sub muted">Terminé</div>
+        <div class="actions">
+          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
+            Contrat
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">Aucun terminé.</div>
+    {% endfor %}
+  </div>
+
+  <div class="col">
+    <div class="col-head">❌ ANNULÉ</div>
+    {% for b in canceled %}
+      <div class="ticket">
+        <div class="t-title">{{ b.name }}</div>
+        <div class="t-sub muted">Annulé</div>
+      </div>
+    {% else %}
+      <div class="empty">Aucun annulé.</div>
+    {% endfor %}
+  </div>
+</div>
+
 <style>
-  .stats-grid { display:grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap:10px; margin-bottom:16px; }
-  .stat { padding:12px; border-radius:14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
-  .stat .n { font-size:22px; font-weight:800; }
-  .stat .l { opacity:.75; margin-top:2px; font-size:12px; }
-  .neon-cyan { outline:2px solid rgba(34,211,238,.18); }
-  .neon-green { outline:2px solid rgba(34,197,94,.18); }
-  .neon-purple { outline:2px solid rgba(168,85,247,.18); }
-  .neon-yellow { outline:2px solid rgba(250,204,21,.18); }
-  .card { padding:14px; border-radius:16px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); margin-bottom:18px; }
-  .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
-  .field { display:flex; flex-direction:column; gap:6px; }
-  .field.full { grid-column: 1 / -1; }
-  label { font-size:12px; opacity:.8; }
-  input, select, textarea { padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.2); color:#e9eefc; }
-  .checks { display:flex; gap:12px; flex-wrap:wrap; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.15); }
-  .btn { padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(59,130,246,.18); color:#e9eefc; font-weight:800; cursor:pointer; }
-  .btn:hover { background:rgba(59,130,246,.25); }
-  .hint { font-size:12px; opacity:.65; }
-  .columns { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
-  .col { padding:12px; border-radius:16px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
-  .item { padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); margin-bottom:8px; }
-  .muted { opacity:.6; }
-  @media (max-width: 1100px) {
-    .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .grid { grid-template-columns: 1fr; }
-    .columns { grid-template-columns: 1fr; }
-  }
+  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .stats-row{display:flex;gap:10px;flex-wrap:wrap}
+  .stat{padding:10px 12px;border:1px solid rgba(255,255,255,.15);border-radius:14px;min-width:110px}
+  .stat .n{font-size:22px;font-weight:700}
+  .stat .l{font-size:12px;opacity:.8}
+  .neon-cyan{box-shadow:0 0 10px rgba(0,255,255,.12)}
+  .neon-yellow{box-shadow:0 0 10px rgba(255,255,0,.10)}
+  .neon-green{box-shadow:0 0 10px rgba(0,255,0,.10)}
+  .neon-blue{box-shadow:0 0 10px rgba(0,140,255,.10)}
+  .neon-red{box-shadow:0 0 10px rgba(255,0,0,.10)}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
+  .card{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.full{grid-column:1/-1}
+  input,textarea{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.15);color:inherit}
+  small{opacity:.75}
+  .options-row{display:flex;flex-direction:column}
+  .chk{display:inline-flex;align-items:center;gap:8px;margin-right:12px}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:900px){.split{grid-template-columns:1fr}}
+  .mini{border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:10px}
+  .list{display:flex;flex-wrap:wrap;gap:6px}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:12px;opacity:.9}
+  .muted{opacity:.7}
+  .board{display:grid;grid-template-columns:repeat(5, 1fr);gap:10px;align-items:start}
+  @media(max-width:1400px){.board{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:800px){.board{grid-template-columns:1fr}}
+  .col{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:10px}
+  .col-head{font-weight:700;margin-bottom:8px}
+  .ticket{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;margin-bottom:8px;background:rgba(255,255,255,.03)}
+  .t-title{font-weight:700}
+  .t-sub{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin-top:4px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);text-decoration:none;color:inherit;background:rgba(0,0,0,.12);cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .btn-small{padding:6px 9px;border-radius:10px;font-size:12px}
+  .btn-primary{background:rgba(0,140,255,.18);border-color:rgba(0,140,255,.30)}
+  .btn-warning{background:rgba(255,200,0,.16);border-color:rgba(255,200,0,.28)}
+  .btn-success{background:rgba(0,200,120,.16);border-color:rgba(0,200,120,.28)}
+  .btn-danger{background:rgba(255,0,70,.14);border-color:rgba(255,0,70,.26)}
+  .empty{opacity:.7;padding:10px}
 </style>
+
 {% endblock %}
 

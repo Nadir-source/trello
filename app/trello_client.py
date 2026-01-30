@@ -1,7 +1,7 @@
+# app/trello_client.py
 import os
 import re
 import json
-import unicodedata
 import requests
 
 BASE = "https://api.trello.com/1"
@@ -62,32 +62,6 @@ def resolve_board_id() -> str:
     return board_id
 
 
-def _strip_accents(s: str) -> str:
-    # NFKD splits accents; keep only non-combining chars
-    s = unicodedata.normalize("NFKD", s)
-    return "".join(ch for ch in s if not unicodedata.combining(ch))
-
-
-def _strong_norm(s: str) -> str:
-    """
-    Normalisation "forte" des noms de listes:
-    - trim + collapse spaces
-    - remove leading emojis/symbols/punctuation
-    - remove accents
-    - casefold
-    """
-    s = (s or "").strip()
-    s = re.sub(r"\s+", " ", s)
-
-    # supprime ce qui est "emoji/symbole/punct" au début, genre "✅ ", "📅 ", "💰 "
-    # on garde les lettres/chiffres dès qu'ils commencent
-    s = re.sub(r"^[^\w\d]+", "", s, flags=re.UNICODE).strip()
-
-    s = _strip_accents(s)
-    s = s.casefold()
-    return s
-
-
 def get_list_id_by_name(board_id: str, list_name: str) -> str:
     wanted = (list_name or "").strip()
     if not wanted:
@@ -95,38 +69,28 @@ def get_list_id_by_name(board_id: str, list_name: str) -> str:
 
     lists = _get(f"/boards/{board_id}/lists", {"fields": "name"})
 
-    # 1) exact
+    # exact
     for l in lists:
         if (l.get("name") or "").strip() == wanted:
             return l["id"]
 
-    # 2) case-insensitive
+    # case-insensitive
     w2 = wanted.casefold()
     for l in lists:
         if (l.get("name") or "").strip().casefold() == w2:
             return l["id"]
 
-    # 3) relaxed spaces
-    def norm_spaces(s: str) -> str:
+    # relaxed spaces
+    def norm(s: str) -> str:
         return re.sub(r"\s+", " ", (s or "").strip()).casefold()
 
-    w3 = norm_spaces(wanted)
+    w3 = norm(wanted)
     for l in lists:
-        if norm_spaces(l.get("name") or "") == w3:
+        if norm(l.get("name") or "") == w3:
             return l["id"]
 
-    # 4) strong normalization (emojis + accents + case)
-    w4 = _strong_norm(wanted)
-    for l in lists:
-        if _strong_norm(l.get("name") or "") == w4:
-            return l["id"]
-
-    available = ", ".join(
-        [(l.get("name") or "").strip() for l in lists if l.get("name")]
-    )
-    raise RuntimeError(
-        f"List not found on board: {wanted!r}. Available: {available}"
-    )
+    available = ", ".join([(l.get("name") or "").strip() for l in lists if l.get("name")])
+    raise RuntimeError(f"List not found on board: {wanted!r}. Available: {available}")
 
 
 class Trello:
@@ -171,7 +135,7 @@ class Trello:
     def archive_card(self, card_id: str):
         return _put(f"/cards/{card_id}", params={"closed": "true"})
 
-    # bookings helper (fix create_booking_card missing)
+    # bookings helper
     def create_booking_card(self, data: dict):
         import app.config as C
 
@@ -181,4 +145,16 @@ class Trello:
         desc = json.dumps(payload, ensure_ascii=False, indent=2)
 
         return self.create_card(C.LIST_DEMANDES, title, desc)
+
+    # ✅ NEW: attach file to Trello card
+    def attach_file_to_card(self, card_id: str, filename: str, file_bytes: bytes):
+        """
+        Upload un fichier en pièce jointe sur la carte Trello.
+        """
+        url = f"{BASE}/cards/{card_id}/attachments"
+        params = _params({})
+        files = {"file": (filename, file_bytes, "application/pdf")}
+        r = requests.post(url, params=params, files=files, timeout=60)
+        r.raise_for_status()
+        return r.json()
 
