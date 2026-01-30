@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block title %}Calendrier{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Calendrier</h1>
+    <div class="muted">Liste des réservations (Demandes / Réservé / En location)</div>
+  </div>
+  <button class="btn btn-ghost" id="calRefresh">Rafraîchir</button>
+</div>
+
+<div class="card">
+  <div id="calendarList" class="calendar-list">
+    <div class="skeleton">Chargement…</div>
+  </div>
+</div>
+{% endblock %}
+

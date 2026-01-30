@@ -43,6 +43,13 @@
           <span>Clients</span>
         </a>
 
+	<!-- Calendrier -->
+        <a class="nav-item {% if request.path.startswith('/bookings/calendar') %}active{% endif %}"
+           href="{{ url_for('bookings.calendar_page') }}">
+          <span class="ico">📆</span>
+          <span>Calendrier</span>
+        </a>
+
         <!-- Véhicules -->
         <a class="nav-item {% if request.path.startswith('/vehicles') %}active{% endif %}"
            href="{{ url_for('vehicles.index') }}">

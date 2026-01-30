@@ -23,7 +23,7 @@ def _parse_desc_json(desc: str) -> dict:
         end = s.rfind("}")
         if start >= 0 and end > start:
             try:
-                return json.loads(s[start:end + 1])
+                return json.loads(s[start : end + 1])
             except Exception:
                 return {}
         return {}
@@ -44,7 +44,6 @@ def contract_pdf(card_id: str):
     desc = card.get("desc", "")
     payload = _parse_desc_json(desc)
 
-    # fallback si pas de payload booking
     if payload.get("_type") != "booking":
         payload = {
             "_type": "booking",
@@ -75,6 +74,6 @@ def contract_pdf(card_id: str):
         io.BytesIO(pdf_bytes),
         mimetype="application/pdf",
         as_attachment=True,
-        download_name=filename
+        download_name=filename,
     )
 
