@@ -1,8 +1,8 @@
 # app/contracts.py
 from __future__ import annotations
 
-import io
 import json
+import io
 from flask import Blueprint, send_file, request
 
 from app.auth import login_required
@@ -13,6 +13,9 @@ contracts_bp = Blueprint("contracts", __name__, url_prefix="/contracts")
 
 
 def _parse_desc_json(desc: str) -> dict:
+    """
+    Desc Trello = JSON. Tolère texte autour mais tente JSON direct d'abord.
+    """
     s = (desc or "").strip()
     if not s:
         return {}
@@ -29,19 +32,25 @@ def _parse_desc_json(desc: str) -> dict:
         return {}
 
 
+def _normalize_lang(x: str | None) -> str:
+    v = (x or "fr").lower().strip()
+    if v in ("fr", "en", "ar"):
+        return v
+    return "fr"
+
+
 @contracts_bp.get("/<card_id>.pdf")
 @login_required
 def contract_pdf(card_id: str):
-    # ✅ langue via query string
-    lang = (request.args.get("lang", "fr") or "fr").lower().strip()
-    if lang not in ("fr", "en", "ar"):
-        lang = "fr"
+    # ✅ /contracts/<id>.pdf?lang=fr|en|ar
+    lang = _normalize_lang(request.args.get("lang"))
 
     t = Trello()
     card = t.get_card(card_id)
-    payload = _parse_desc_json(card.get("desc", ""))
+    desc = card.get("desc", "")
+    payload = _parse_desc_json(desc)
 
-    # fallback si pas booking
+    # fallback si pas un booking JSON
     if payload.get("_type") != "booking":
         payload = {
             "_type": "booking",

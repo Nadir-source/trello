@@ -1,8 +1,7 @@
 # app/bookings.py
 from __future__ import annotations
 
-from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from app.auth import login_required, admin_required, current_user
 from app.trello_client import Trello
@@ -23,60 +22,11 @@ def _as_booking(card: dict) -> dict:
     }
 
 
-def _safe_iso(dt_str: str) -> str:
-    """
-    Supporte:
-    - "2026-01-29T10:00"
-    - "2026-01-29 10:00"
-    Retourne ISO ou "".
-    """
-    s = (dt_str or "").strip()
-    if not s:
-        return ""
-    try:
-        # datetime-local -> déjà ISO
-        if "T" in s:
-            datetime.fromisoformat(s)
-            return s
-        # fallback "YYYY-MM-DD HH:MM"
-        d = datetime.strptime(s, "%Y-%m-%d %H:%M")
-        return d.strftime("%Y-%m-%dT%H:%M")
-    except Exception:
-        return ""
-
-
-def _build_calendar_events(cards: list[dict], status: str) -> list[dict]:
-    events = []
-    for c in cards:
-        p = parse_payload(c.get("desc", ""))
-        if p.get("_type") != "booking":
-            continue
-
-        start = _safe_iso(p.get("start_date", ""))
-        end = _safe_iso(p.get("end_date", ""))
-        title = (c.get("name") or "").strip() or f"Booking {c.get('id','')}"
-        vehicle = (p.get("vehicle_name") or "").strip()
-        client = (p.get("client_name") or "").strip()
-
-        # si on a vehicle/client, on enrichit le titre
-        if client or vehicle:
-            title = " — ".join([x for x in [client, vehicle] if x])
-
-        events.append(
-            {
-                "id": c.get("id"),
-                "title": title,
-                "start": start or None,
-                "end": end or None,
-                "extendedProps": {
-                    "status": status,
-                    "client": client,
-                    "vehicle": vehicle,
-                },
-            }
-        )
-    # On garde même si start est vide : FullCalendar ignorera, mais au moins on voit via "Détails"
-    return events
+def _normalize_lang(x: str | None) -> str:
+    v = (x or "fr").lower().strip()
+    if v in ("fr", "en", "ar"):
+        return v
+    return "fr"
 
 
 @bookings_bp.get("/")
@@ -84,17 +34,11 @@ def _build_calendar_events(cards: list[dict], status: str) -> list[dict]:
 def index():
     t = Trello()
 
-    demandes_cards = t.list_cards(C.LIST_DEMANDES)
-    reserved_cards = t.list_cards(C.LIST_RESERVED)
-    ongoing_cards = t.list_cards(C.LIST_ONGOING)
-    done_cards = t.list_cards(C.LIST_DONE)
-    canceled_cards = t.list_cards(C.LIST_CANCELED)
-
-    demandes = [_as_booking(c) for c in demandes_cards]
-    reserved = [_as_booking(c) for c in reserved_cards]
-    ongoing = [_as_booking(c) for c in ongoing_cards]
-    done = [_as_booking(c) for c in done_cards]
-    canceled = [_as_booking(c) for c in canceled_cards]
+    demandes = [_as_booking(c) for c in t.list_cards(C.LIST_DEMANDES)]
+    reserved = [_as_booking(c) for c in t.list_cards(C.LIST_RESERVED)]
+    ongoing = [_as_booking(c) for c in t.list_cards(C.LIST_ONGOING)]
+    done = [_as_booking(c) for c in t.list_cards(C.LIST_DONE)]
+    canceled = [_as_booking(c) for c in t.list_cards(C.LIST_CANCELED)]
 
     stats = {
         "demandes": len(demandes),
@@ -104,24 +48,21 @@ def index():
         "canceled": len(canceled),
     }
 
-    # ✅ Listes pour aider à remplir rapidement
+    # Dropdowns clients / véhicules
     clients_cards = t.list_cards(C.LIST_CLIENTS)
     vehicles_cards = t.list_cards(C.LIST_VEHICLES)
 
     clients = []
     for c in clients_cards:
         p = parse_payload(c.get("desc", ""))
-        clients.append({"id": c["id"], "name": c.get("name", ""), **p})
+        name = c.get("name", "")
+        clients.append({"id": c["id"], "name": name, **p})
 
     vehicles = []
     for c in vehicles_cards:
         p = parse_payload(c.get("desc", ""))
-        vehicles.append({"id": c["id"], "name": c.get("name", ""), **p})
-
-    # ✅ Calendrier: on affiche Réservé + En cours uniquement
-    events = []
-    events += _build_calendar_events(reserved_cards, "reserved")
-    events += _build_calendar_events(ongoing_cards, "ongoing")
+        name = c.get("name", "")
+        vehicles.append({"id": c["id"], "name": name, **p})
 
     return render_template(
         "bookings.html",
@@ -133,26 +74,6 @@ def index():
         stats=stats,
         clients=clients,
         vehicles=vehicles,
-        calendar_events=events,
-    )
-
-
-@bookings_bp.get("/api/card/<card_id>")
-@login_required
-def api_card(card_id: str):
-    """
-    Pour le popup "Détails" côté front.
-    """
-    t = Trello()
-    card = t.get_card(card_id)
-    payload = parse_payload(card.get("desc", ""))
-    return jsonify(
-        {
-            "id": card_id,
-            "name": card.get("name", ""),
-            "url": card.get("url", ""),
-            "payload": payload,
-        }
     )
 
 
@@ -160,9 +81,6 @@ def api_card(card_id: str):
 @login_required
 @admin_required
 def create():
-    """
-    Création réservation via formulaire -> carte Trello avec desc JSON _type=booking.
-    """
     t = Trello()
 
     client_name = request.form.get("client_name", "").strip()
@@ -175,26 +93,29 @@ def create():
         "client_address": request.form.get("client_address", "").strip(),
         "doc_id": request.form.get("doc_id", "").strip(),
         "driver_license": request.form.get("driver_license", "").strip(),
+
         "vehicle_name": vehicle_name,
         "vehicle_plate": request.form.get("vehicle_plate", "").strip(),
         "vehicle_model": request.form.get("vehicle_model", "").strip(),
         "vehicle_vin": request.form.get("vehicle_vin", "").strip(),
+
         "start_date": request.form.get("start_date", "").strip(),
         "end_date": request.form.get("end_date", "").strip(),
         "pickup_location": request.form.get("pickup_location", "").strip(),
         "return_location": request.form.get("return_location", "").strip(),
+
         "notes": request.form.get("notes", "").strip(),
         "options": {
             "gps": bool(request.form.get("opt_gps")),
             "chauffeur": bool(request.form.get("opt_driver")),
             "baby_seat": bool(request.form.get("opt_baby_seat")),
-        },
+        }
     }
 
     role, name = current_user()
     audit_add(payload, name, "booking_create", {"client_name": client_name, "vehicle_name": vehicle_name})
 
-    title = " — ".join([x for x in [client_name, vehicle_name] if x]).strip()
+    title = f"{client_name} — {vehicle_name}".strip(" —")
     t.create_card(C.LIST_DEMANDES, title or "Nouvelle réservation", dump_payload(payload))
 
     flash("Réservation créée dans DEMANDES ✅", "success")
@@ -205,10 +126,6 @@ def create():
 @login_required
 @admin_required
 def move(card_id: str, action: str):
-    """
-    Déplacer une réservation vers une liste Trello.
-    Actions: reserved / ongoing / done / cancel / canceled / demandes
-    """
     mapping = {
         "demandes": C.LIST_DEMANDES,
         "reserved": C.LIST_RESERVED,
@@ -228,28 +145,17 @@ def move(card_id: str, action: str):
     return redirect(url_for("bookings.index"))
 
 
-@bookings_bp.post("/archive/<card_id>")
-@login_required
-@admin_required
-def archive(card_id: str):
-    """
-    "Supprimer" = archiver la carte Trello (closed=true)
-    """
-    t = Trello()
-    t.archive_card(card_id)
-    flash("Carte archivée ✅", "success")
-    return redirect(url_for("bookings.index"))
-
-
 @bookings_bp.post("/contract_and_move/<card_id>")
 @login_required
 @admin_required
 def contract_and_move(card_id: str):
     """
-    1) générer contrat PDF
+    1) générer contrat PDF (lang au choix)
     2) attacher PDF à la carte Trello
-    3) déplacer vers EN LOCATION (LIST_ONGOING)
+    3) déplacer vers EN LOCATION
     """
+    lang = _normalize_lang(request.form.get("lang"))
+
     t = Trello()
     card = t.get_card(card_id)
     payload = parse_payload(card.get("desc", ""))
@@ -258,16 +164,19 @@ def contract_and_move(card_id: str):
         flash("La carte n'a pas une desc JSON _type=booking.", "error")
         return redirect(url_for("bookings.index"))
 
+    payload["trello_card_id"] = card_id
+    payload["trello_card_name"] = card.get("name", "")
+
     # 1) PDF
-    pdf_bytes = build_contract_pdf(payload)
+    pdf_bytes = build_contract_pdf(payload, lang=lang)
 
     # 2) attach Trello
-    filename = f"contrat_{card_id}.pdf"
+    filename = f"contrat_{card_id}_{lang}.pdf"
     t.attach_file_to_card(card_id, filename, pdf_bytes)
 
     # 3) move en location
     t.move_card(card_id, C.LIST_ONGOING)
 
-    flash("Contrat généré + attaché + passé en location ✅", "success")
+    flash(f"Contrat ({lang.upper()}) généré + attaché + passé en location ✅", "success")
     return redirect(url_for("bookings.index"))
 

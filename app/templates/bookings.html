@@ -1,427 +1,182 @@
-{# app/templates/bookings.html #}
-{% extends "layout.html" %}
+# app/bookings.py
+from __future__ import annotations
 
-{% block content %}
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-<div class="page-head">
-  <h2>Réservations</h2>
+from app.auth import login_required, admin_required, current_user
+from app.trello_client import Trello
+from app.trello_schema import parse_payload, dump_payload, audit_add
+from app.pdf_generator import build_contract_pdf
+from app import config as C
 
-  <div class="stats-row">
-    <div class="stat neon-cyan"><div class="n">{{ stats.demandes }}</div><div class="l">Demandes</div></div>
-    <div class="stat neon-yellow"><div class="n">{{ stats.reserved }}</div><div class="l">Réservé</div></div>
-    <div class="stat neon-green"><div class="n">{{ stats.ongoing }}</div><div class="l">En location</div></div>
-    <div class="stat neon-blue"><div class="n">{{ stats.done }}</div><div class="l">Terminé</div></div>
-    <div class="stat neon-red"><div class="n">{{ stats.canceled }}</div><div class="l">Annulé</div></div>
-  </div>
-</div>
+bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
 
-<hr/>
 
-<div class="grid-2">
-  <div class="card">
-    <h3>Nouvelle réservation</h3>
-
-    <form method="post" action="{{ url_for('bookings.create') }}" class="form-grid">
-
-      <div class="field">
-        <label>Client (nom)</label>
-        <input name="client_name" list="clients_list" placeholder="Nom client (ex: Nadir)" required />
-        <datalist id="clients_list">
-          {% for c in clients %}
-            <option value="{{ c.name }}"></option>
-          {% endfor %}
-        </datalist>
-        <small>Tu peux taper ou choisir.</small>
-      </div>
-
-      <div class="field">
-        <label>Véhicule (nom)</label>
-        <input name="vehicle_name" list="vehicles_list" placeholder="Véhicule (ex: Livan X3 Pro)" required />
-        <datalist id="vehicles_list">
-          {% for v in vehicles %}
-            <option value="{{ v.name }}"></option>
-          {% endfor %}
-        </datalist>
-        <small>Tu peux taper ou choisir.</small>
-      </div>
-
-      <div class="field">
-        <label>Téléphone client</label>
-        <input name="client_phone" placeholder="+213..." />
-      </div>
-
-      <div class="field">
-        <label>Adresse client</label>
-        <input name="client_address" placeholder="Adresse..." />
-      </div>
-
-      <div class="field">
-        <label>Document (CNI / Passeport)</label>
-        <input name="doc_id" placeholder="N° document" />
-      </div>
-
-      <div class="field">
-        <label>Permis</label>
-        <input name="driver_license" placeholder="N° permis" />
-      </div>
-
-      <div class="field">
-        <label>Date/heure départ</label>
-        <input type="datetime-local" name="start_date" required />
-      </div>
-
-      <div class="field">
-        <label>Date/heure retour</label>
-        <input type="datetime-local" name="end_date" required />
-      </div>
-
-      <div class="field">
-        <label>Lieu livraison</label>
-        <input name="pickup_location" placeholder="Aéroport / Centre ville..." />
-      </div>
-
-      <div class="field">
-        <label>Lieu restitution</label>
-        <input name="return_location" placeholder="Aéroport / Centre ville..." />
-      </div>
-
-      <div class="field">
-        <label>Plaque véhicule</label>
-        <input name="vehicle_plate" placeholder="123-AL-456" />
-      </div>
-
-      <div class="field">
-        <label>Modèle véhicule</label>
-        <input name="vehicle_model" placeholder="Marque + modèle" />
-      </div>
-
-      <div class="field">
-        <label>N° Série (VIN)</label>
-        <input name="vehicle_vin" placeholder="VIN..." />
-      </div>
-
-      <div class="field full">
-        <label>Notes</label>
-        <textarea name="notes" rows="3" placeholder="Notes..."></textarea>
-      </div>
-
-      <div class="field full options-row">
-        <label>Options</label>
-        <label class="chk"><input type="checkbox" name="opt_gps" /> GPS</label>
-        <label class="chk"><input type="checkbox" name="opt_driver" /> Chauffeur</label>
-        <label class="chk"><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
-      </div>
-
-      <div class="field full">
-        <button class="btn btn-primary" type="submit">Créer (Demande)</button>
-      </div>
-    </form>
-  </div>
-
-  <div class="card">
-    <h3>Calendrier</h3>
-    <div class="muted" style="margin-bottom:8px;">
-      Le calendrier affiche uniquement <b>Réservé</b> + <b>En cours</b>.  
-      Quand tu passes en <b>Terminé</b> ou <b>Annulé</b>, ça disparaît automatiquement.
-    </div>
-    <div id="calendar" style="min-height:520px;"></div>
-  </div>
-</div>
-
-<hr/>
-
-<div class="board">
-  <!-- DEMANDES -->
-  <div class="col">
-    <div class="col-head">📥 DEMANDES</div>
-    {% for b in demandes %}
-      <div class="ticket">
-        <div class="t-title">{{ b.name }}</div>
-        <div class="t-sub">
-          {% if b.payload.client_name %}<span>👤 {{ b.payload.client_name }}</span>{% endif %}
-          {% if b.payload.vehicle_name %}<span>🚗 {{ b.payload.vehicle_name }}</span>{% endif %}
-        </div>
-        <div class="t-sub muted">
-          {% if b.payload.start_date %}⏱ {{ b.payload.start_date }}{% endif %}
-          {% if b.payload.end_date %} → {{ b.payload.end_date }}{% endif %}
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-small" type="button" onclick="openDetails('{{ b.id }}')">Détails</button>
-
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='reserved') }}">
-            <button class="btn btn-small btn-warning" type="submit">Passer en Réservé</button>
-          </form>
-
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
-            <button class="btn btn-small btn-danger" type="submit">Annuler</button>
-          </form>
-
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
-            Télécharger contrat
-          </a>
-
-          <form method="post" action="{{ url_for('bookings.archive', card_id=b.id) }}">
-            <button class="btn btn-small" type="submit">Supprimer</button>
-          </form>
-        </div>
-      </div>
-    {% else %}
-      <div class="empty">Aucune demande.</div>
-    {% endfor %}
-  </div>
-
-  <!-- RÉSERVÉ -->
-  <div class="col">
-    <div class="col-head">📅 RÉSERVÉ</div>
-    {% for b in reserved %}
-      <div class="ticket">
-        <div class="t-title">{{ b.name }}</div>
-        <div class="t-sub">
-          {% if b.payload.client_name %}<span>👤 {{ b.payload.client_name }}</span>{% endif %}
-          {% if b.payload.vehicle_name %}<span>🚗 {{ b.payload.vehicle_name }}</span>{% endif %}
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-small" type="button" onclick="openDetails('{{ b.id }}')">Détails</button>
-
-          <form method="post" action="{{ url_for('bookings.contract_and_move', card_id=b.id) }}">
-            <button class="btn btn-small btn-primary" type="submit">Contrat + En location</button>
-          </form>
-
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='ongoing') }}">
-            <button class="btn btn-small btn-success" type="submit">En location (sans contrat)</button>
-          </form>
-
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
-            <button class="btn btn-small btn-danger" type="submit">Annuler</button>
-          </form>
-
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
-            Contrat
-          </a>
-
-          <form method="post" action="{{ url_for('bookings.archive', card_id=b.id) }}">
-            <button class="btn btn-small" type="submit">Supprimer</button>
-          </form>
-        </div>
-      </div>
-    {% else %}
-      <div class="empty">Aucune réservation.</div>
-    {% endfor %}
-  </div>
-
-  <!-- EN LOCATION -->
-  <div class="col">
-    <div class="col-head">🔑 EN LOCATION</div>
-    {% for b in ongoing %}
-      <div class="ticket">
-        <div class="t-title">{{ b.name }}</div>
-        <div class="t-sub">
-          {% if b.payload.client_name %}<span>👤 {{ b.payload.client_name }}</span>{% endif %}
-          {% if b.payload.vehicle_name %}<span>🚗 {{ b.payload.vehicle_name }}</span>{% endif %}
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-small" type="button" onclick="openDetails('{{ b.id }}')">Détails</button>
-
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='done') }}">
-            <button class="btn btn-small btn-success" type="submit">Terminer</button>
-          </form>
-
-          <form method="post" action="{{ url_for('bookings.move', card_id=b.id, action='cancel') }}">
-            <button class="btn btn-small btn-danger" type="submit">Annuler</button>
-          </form>
-
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
-            Contrat
-          </a>
-
-          <form method="post" action="{{ url_for('bookings.archive', card_id=b.id) }}">
-            <button class="btn btn-small" type="submit">Supprimer</button>
-          </form>
-        </div>
-      </div>
-    {% else %}
-      <div class="empty">Aucune location en cours.</div>
-    {% endfor %}
-  </div>
-
-  <!-- TERMINÉ -->
-  <div class="col">
-    <div class="col-head">✅ TERMINÉ</div>
-    {% for b in done %}
-      <div class="ticket">
-        <div class="t-title">{{ b.name }}</div>
-        <div class="t-sub muted">Terminé</div>
-        <div class="actions">
-          <button class="btn btn-small" type="button" onclick="openDetails('{{ b.id }}')">Détails</button>
-
-          <a class="btn btn-small" href="{{ url_for('contracts.contract_pdf', card_id=b.id) }}" target="_blank">
-            Contrat
-          </a>
-
-          <form method="post" action="{{ url_for('bookings.archive', card_id=b.id) }}">
-            <button class="btn btn-small" type="submit">Supprimer</button>
-          </form>
-        </div>
-      </div>
-    {% else %}
-      <div class="empty">Aucun terminé.</div>
-    {% endfor %}
-  </div>
-
-  <!-- ANNULÉ -->
-  <div class="col">
-    <div class="col-head">❌ ANNULÉ</div>
-    {% for b in canceled %}
-      <div class="ticket">
-        <div class="t-title">{{ b.name }}</div>
-        <div class="t-sub muted">Annulé</div>
-        <div class="actions">
-          <button class="btn btn-small" type="button" onclick="openDetails('{{ b.id }}')">Détails</button>
-
-          <form method="post" action="{{ url_for('bookings.archive', card_id=b.id) }}">
-            <button class="btn btn-small" type="submit">Supprimer</button>
-          </form>
-        </div>
-      </div>
-    {% else %}
-      <div class="empty">Aucun annulé.</div>
-    {% endfor %}
-  </div>
-</div>
-
-<!-- Modal détails -->
-<div class="modal-backdrop" id="detailsBackdrop" style="display:none;">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title" id="detailsTitle">Détails</div>
-      <button class="btn btn-small" type="button" onclick="closeDetails()">Fermer</button>
-    </div>
-    <div class="modal-body">
-      <div class="muted" id="detailsUrl"></div>
-      <pre id="detailsJson" class="jsonbox"></pre>
-    </div>
-  </div>
-</div>
-
-<!-- FullCalendar via CDN -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-
-<script>
-  const CAL_EVENTS = {{ calendar_events | tojson }};
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const el = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(el, {
-      initialView: 'dayGridMonth',
-      height: 520,
-      events: CAL_EVENTS,
-      eventClick: function(info) {
-        // popup détails au clic
-        openDetails(info.event.id);
-      }
-    });
-    calendar.render();
-  });
-
-  async function openDetails(cardId) {
-    const backdrop = document.getElementById('detailsBackdrop');
-    backdrop.style.display = 'flex';
-    document.getElementById('detailsTitle').textContent = 'Chargement...';
-    document.getElementById('detailsUrl').textContent = '';
-    document.getElementById('detailsJson').textContent = '';
-
-    try {
-      const res = await fetch(`/bookings/api/card/${cardId}`);
-      const data = await res.json();
-      document.getElementById('detailsTitle').textContent = data.name || ('Carte ' + cardId);
-      document.getElementById('detailsUrl').textContent = data.url ? ('Trello: ' + data.url) : '';
-      document.getElementById('detailsJson').textContent = JSON.stringify(data.payload || {}, null, 2);
-    } catch (e) {
-      document.getElementById('detailsTitle').textContent = 'Erreur';
-      document.getElementById('detailsJson').textContent = String(e);
+def _as_booking(card: dict) -> dict:
+    p = parse_payload(card.get("desc", ""))
+    return {
+        "id": card["id"],
+        "name": card.get("name", ""),
+        "desc": card.get("desc", ""),
+        "payload": p,
     }
-  }
 
-  function closeDetails() {
-    document.getElementById('detailsBackdrop').style.display = 'none';
-  }
-</script>
 
-<style>
-  .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-  .stats-row{display:flex;gap:10px;flex-wrap:wrap}
-  .stat{padding:10px 12px;border:1px solid rgba(255,255,255,.15);border-radius:14px;min-width:110px}
-  .stat .n{font-size:22px;font-weight:700}
-  .stat .l{font-size:12px;opacity:.8}
-  .neon-cyan{box-shadow:0 0 10px rgba(0,255,255,.12)}
-  .neon-yellow{box-shadow:0 0 10px rgba(255,255,0,.10)}
-  .neon-green{box-shadow:0 0 10px rgba(0,255,0,.10)}
-  .neon-blue{box-shadow:0 0 10px rgba(0,140,255,.10)}
-  .neon-red{box-shadow:0 0 10px rgba(255,0,0,.10)}
+def _normalize_lang(x: str | None) -> str:
+    v = (x or "fr").lower().strip()
+    if v in ("fr", "en", "ar"):
+        return v
+    return "fr"
 
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
-  .card{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px}
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .field{display:flex;flex-direction:column;gap:6px}
-  .field.full{grid-column:1/-1}
-  input,textarea{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.15);color:inherit}
-  small{opacity:.75}
-  .options-row{display:flex;flex-direction:column}
-  .chk{display:inline-flex;align-items:center;gap:8px;margin-right:12px}
-  .muted{opacity:.7}
 
-  .board{display:grid;grid-template-columns:repeat(5, 1fr);gap:10px;align-items:start}
-  @media(max-width:1400px){.board{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:800px){.board{grid-template-columns:1fr}}
-  .col{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:10px}
-  .col-head{font-weight:700;margin-bottom:8px}
-  .ticket{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;margin-bottom:8px;background:rgba(255,255,255,.03)}
-  .t-title{font-weight:700}
-  .t-sub{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin-top:4px}
-  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);text-decoration:none;color:inherit;background:rgba(0,0,0,.12);cursor:pointer}
-  .btn:hover{filter:brightness(1.08)}
-  .btn-small{padding:6px 9px;border-radius:10px;font-size:12px}
-  .btn-primary{background:rgba(0,140,255,.18);border-color:rgba(0,140,255,.30)}
-  .btn-warning{background:rgba(255,200,0,.16);border-color:rgba(255,200,0,.28)}
-  .btn-success{background:rgba(0,200,120,.16);border-color:rgba(0,200,120,.28)}
-  .btn-danger{background:rgba(255,0,70,.14);border-color:rgba(255,0,70,.26)}
-  .empty{opacity:.7;padding:10px}
+@bookings_bp.get("/")
+@login_required
+def index():
+    t = Trello()
 
-  /* Modal */
-  .modal-backdrop{
-    position:fixed; inset:0; background:rgba(0,0,0,.55);
-    display:flex; align-items:center; justify-content:center; padding:18px; z-index:9999;
-  }
-  .modal{
-    width:min(860px, 96vw);
-    border:1px solid rgba(255,255,255,.14);
-    border-radius:18px;
-    background:rgba(10,14,26,.92);
-    box-shadow:0 20px 60px rgba(0,0,0,.55);
-    overflow:hidden;
-  }
-  .modal-head{
-    display:flex; justify-content:space-between; align-items:center;
-    padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.10);
-  }
-  .modal-title{font-weight:800}
-  .modal-body{padding:12px 14px}
-  .jsonbox{
-    margin-top:10px;
-    padding:12px;
-    border-radius:14px;
-    background:rgba(0,0,0,.20);
-    border:1px solid rgba(255,255,255,.10);
-    max-height:55vh;
-    overflow:auto;
-  }
-</style>
+    demandes = [_as_booking(c) for c in t.list_cards(C.LIST_DEMANDES)]
+    reserved = [_as_booking(c) for c in t.list_cards(C.LIST_RESERVED)]
+    ongoing = [_as_booking(c) for c in t.list_cards(C.LIST_ONGOING)]
+    done = [_as_booking(c) for c in t.list_cards(C.LIST_DONE)]
+    canceled = [_as_booking(c) for c in t.list_cards(C.LIST_CANCELED)]
 
-{% endblock %}
+    stats = {
+        "demandes": len(demandes),
+        "reserved": len(reserved),
+        "ongoing": len(ongoing),
+        "done": len(done),
+        "canceled": len(canceled),
+    }
+
+    # Dropdowns clients / véhicules
+    clients_cards = t.list_cards(C.LIST_CLIENTS)
+    vehicles_cards = t.list_cards(C.LIST_VEHICLES)
+
+    clients = []
+    for c in clients_cards:
+        p = parse_payload(c.get("desc", ""))
+        name = c.get("name", "")
+        clients.append({"id": c["id"], "name": name, **p})
+
+    vehicles = []
+    for c in vehicles_cards:
+        p = parse_payload(c.get("desc", ""))
+        name = c.get("name", "")
+        vehicles.append({"id": c["id"], "name": name, **p})
+
+    return render_template(
+        "bookings.html",
+        demandes=demandes,
+        reserved=reserved,
+        ongoing=ongoing,
+        done=done,
+        canceled=canceled,
+        stats=stats,
+        clients=clients,
+        vehicles=vehicles,
+    )
+
+
+@bookings_bp.post("/create")
+@login_required
+@admin_required
+def create():
+    t = Trello()
+
+    client_name = request.form.get("client_name", "").strip()
+    vehicle_name = request.form.get("vehicle_name", "").strip()
+
+    payload = {
+        "_type": "booking",
+        "client_name": client_name,
+        "client_phone": request.form.get("client_phone", "").strip(),
+        "client_address": request.form.get("client_address", "").strip(),
+        "doc_id": request.form.get("doc_id", "").strip(),
+        "driver_license": request.form.get("driver_license", "").strip(),
+
+        "vehicle_name": vehicle_name,
+        "vehicle_plate": request.form.get("vehicle_plate", "").strip(),
+        "vehicle_model": request.form.get("vehicle_model", "").strip(),
+        "vehicle_vin": request.form.get("vehicle_vin", "").strip(),
+
+        "start_date": request.form.get("start_date", "").strip(),
+        "end_date": request.form.get("end_date", "").strip(),
+        "pickup_location": request.form.get("pickup_location", "").strip(),
+        "return_location": request.form.get("return_location", "").strip(),
+
+        "notes": request.form.get("notes", "").strip(),
+        "options": {
+            "gps": bool(request.form.get("opt_gps")),
+            "chauffeur": bool(request.form.get("opt_driver")),
+            "baby_seat": bool(request.form.get("opt_baby_seat")),
+        }
+    }
+
+    role, name = current_user()
+    audit_add(payload, name, "booking_create", {"client_name": client_name, "vehicle_name": vehicle_name})
+
+    title = f"{client_name} — {vehicle_name}".strip(" —")
+    t.create_card(C.LIST_DEMANDES, title or "Nouvelle réservation", dump_payload(payload))
+
+    flash("Réservation créée dans DEMANDES ✅", "success")
+    return redirect(url_for("bookings.index"))
+
+
+@bookings_bp.post("/move/<card_id>/<action>")
+@login_required
+@admin_required
+def move(card_id: str, action: str):
+    mapping = {
+        "demandes": C.LIST_DEMANDES,
+        "reserved": C.LIST_RESERVED,
+        "ongoing": C.LIST_ONGOING,
+        "done": C.LIST_DONE,
+        "cancel": C.LIST_CANCELED,
+        "canceled": C.LIST_CANCELED,
+    }
+    target = mapping.get(action)
+    if not target:
+        flash(f"Action inconnue: {action}", "error")
+        return redirect(url_for("bookings.index"))
+
+    t = Trello()
+    t.move_card(card_id, target)
+    flash("Carte déplacée ✅", "success")
+    return redirect(url_for("bookings.index"))
+
+
+@bookings_bp.post("/contract_and_move/<card_id>")
+@login_required
+@admin_required
+def contract_and_move(card_id: str):
+    """
+    1) générer contrat PDF (lang au choix)
+    2) attacher PDF à la carte Trello
+    3) déplacer vers EN LOCATION
+    """
+    lang = _normalize_lang(request.form.get("lang"))
+
+    t = Trello()
+    card = t.get_card(card_id)
+    payload = parse_payload(card.get("desc", ""))
+
+    if payload.get("_type") != "booking":
+        flash("La carte n'a pas une desc JSON _type=booking.", "error")
+        return redirect(url_for("bookings.index"))
+
+    payload["trello_card_id"] = card_id
+    payload["trello_card_name"] = card.get("name", "")
+
+    # 1) PDF
+    pdf_bytes = build_contract_pdf(payload, lang=lang)
+
+    # 2) attach Trello
+    filename = f"contrat_{card_id}_{lang}.pdf"
+    t.attach_file_to_card(card_id, filename, pdf_bytes)
+
+    # 3) move en location
+    t.move_card(card_id, C.LIST_ONGOING)
+
+    flash(f"Contrat ({lang.upper()}) généré + attaché + passé en location ✅", "success")
+    return redirect(url_for("bookings.index"))
 
