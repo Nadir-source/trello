@@ -1,4 +1,3 @@
-(.venv) nadir@N-GK5DL34:~/012026/trello-car-rental/trello-car-rental-v2/app$ cat bookings.py
 # app/bookings.py
 from __future__ import annotations
 
@@ -23,6 +22,38 @@ def _as_booking(card: dict) -> dict:
     }
 
 
+def _status_events(bookings: list[dict], status: str) -> list[dict]:
+    """
+    Transforme une liste de dict booking -> events FullCalendar.
+    On prend start_date/end_date du payload si dispo.
+    """
+    events = []
+    for b in bookings:
+        p = b.get("payload") or {}
+        start = p.get("start_date") or ""
+        end = p.get("end_date") or ""
+        if not start:
+            continue
+
+        client_name = p.get("client_name", "")
+        vehicle_name = p.get("vehicle_name", "")
+        title = b.get("name") or ""
+        if not title.strip():
+            title = " — ".join([x for x in [client_name, vehicle_name] if x]).strip() or "Réservation"
+
+        events.append(
+            {
+                "id": b["id"],
+                "title": title,
+                "start": start,
+                "end": end or None,
+                "url": url_for("contracts.contract_pdf", card_id=b["id"]),
+                "extendedProps": {"status": status},
+            }
+        )
+    return events
+
+
 @bookings_bp.get("/")
 @login_required
 def index():
@@ -42,7 +73,7 @@ def index():
         "canceled": len(canceled),
     }
 
-    # ✅ Dropdowns pour formulaire
+    # Dropdowns / référentiels
     clients_cards = t.list_cards(C.LIST_CLIENTS)
     vehicles_cards = t.list_cards(C.LIST_VEHICLES)
 
@@ -58,6 +89,14 @@ def index():
         name = c.get("name", "")
         vehicles.append({"id": c["id"], "name": name, **p})
 
+    # Events calendrier
+    calendar_events = []
+    calendar_events += _status_events(demandes, "demandes")
+    calendar_events += _status_events(reserved, "reserved")
+    calendar_events += _status_events(ongoing, "ongoing")
+    calendar_events += _status_events(done, "done")
+    calendar_events += _status_events(canceled, "canceled")
+
     return render_template(
         "bookings.html",
         demandes=demandes,
@@ -68,6 +107,7 @@ def index():
         stats=stats,
         clients=clients,
         vehicles=vehicles,
+        calendar_events=calendar_events,
     )
 
 
@@ -90,23 +130,20 @@ def create():
         "client_address": request.form.get("client_address", "").strip(),
         "doc_id": request.form.get("doc_id", "").strip(),
         "driver_license": request.form.get("driver_license", "").strip(),
-
         "vehicle_name": vehicle_name,
         "vehicle_plate": request.form.get("vehicle_plate", "").strip(),
         "vehicle_model": request.form.get("vehicle_model", "").strip(),
         "vehicle_vin": request.form.get("vehicle_vin", "").strip(),
-
         "start_date": request.form.get("start_date", "").strip(),
         "end_date": request.form.get("end_date", "").strip(),
         "pickup_location": request.form.get("pickup_location", "").strip(),
         "return_location": request.form.get("return_location", "").strip(),
-
         "notes": request.form.get("notes", "").strip(),
         "options": {
             "gps": bool(request.form.get("opt_gps")),
             "chauffeur": bool(request.form.get("opt_driver")),
             "baby_seat": bool(request.form.get("opt_baby_seat")),
-        }
+        },
     }
 
     role, name = current_user()
@@ -151,7 +188,6 @@ def move(card_id: str, action: str):
 @admin_required
 def contract_and_move(card_id: str):
     """
-    ✅ TON BESOIN :
     1) générer contrat PDF
     2) attacher PDF à la carte Trello
     3) déplacer vers EN LOCATION (LIST_ONGOING)
@@ -167,17 +203,13 @@ def contract_and_move(card_id: str):
     payload["trello_card_id"] = card_id
     payload["trello_card_name"] = card.get("name", "")
 
-    # 1) PDF
     pdf_bytes = build_contract_pdf(payload)
 
-    # 2) attach Trello
     filename = f"contrat_{card_id}.pdf"
     t.attach_file_to_card(card_id, filename, pdf_bytes)
 
-    # 3) move en location
     t.move_card(card_id, C.LIST_ONGOING)
 
     flash("Contrat généré + attaché + passé en location ✅", "success")
     return redirect(url_for("bookings.index"))
 
-(.venv) nadir@N-GK5DL34:~/012026/trello-car-rental/trello-car-rental-v2/app$
