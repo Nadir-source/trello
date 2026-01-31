@@ -12,6 +12,9 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
+// --------------------
+// Modal
+// --------------------
 function openModal() {
   const b = qs("#modalBackdrop");
   if (!b) return;
@@ -104,7 +107,11 @@ function bindModal() {
     if (e.key === "Escape") closeModal();
   });
 
+  // IMPORTANT: on rebind aussi après loadCalendar() car les items sont recréés.
   qsa(".js-open-modal").forEach((el) => {
+    if (el.__modalBound) return;
+    el.__modalBound = true;
+
     el.addEventListener("click", async () => {
       const cardId = el.getAttribute("data-card-id");
       if (!cardId) return;
@@ -125,6 +132,9 @@ function bindModal() {
 
 function bindConfirmDelete() {
   qsa(".js-confirm-delete").forEach((f) => {
+    if (f.__delBound) return;
+    f.__delBound = true;
+
     f.addEventListener("submit", (e) => {
       if (!confirm("Supprimer = archiver la carte Trello. Continuer ?")) {
         e.preventDefault();
@@ -133,6 +143,9 @@ function bindConfirmDelete() {
   });
 }
 
+// --------------------
+// Calendar
+// --------------------
 async function loadCalendar() {
   const list = qs("#calendarList");
   if (!list) return;
@@ -176,15 +189,90 @@ async function loadCalendar() {
   }
 
   list.innerHTML = html;
-  bindModal();
+  bindModal(); // rebind sur éléments recréés
+}
+
+// --------------------
+// New UI features (intelligent view)
+// --------------------
+function bindTabs() {
+  const tabs = qsa(".tab");
+  const panels = qsa(".tab-panel");
+  if (!tabs.length || !panels.length) return;
+
+  tabs.forEach(t => {
+    t.addEventListener("click", () => {
+      const key = t.getAttribute("data-tab");
+      tabs.forEach(x => x.classList.remove("active"));
+      t.classList.add("active");
+      panels.forEach(p => {
+        p.style.display = (p.getAttribute("data-panel") === key) ? "" : "none";
+      });
+
+      // si on ouvre calendar, on charge
+      if (key === "calendar" && qs("#calendarList")) loadCalendar();
+    });
+  });
+}
+
+function bindPanels() {
+  document.addEventListener("click", (e) => {
+    const openId = e.target?.getAttribute?.("data-open");
+    const closeId = e.target?.getAttribute?.("data-close");
+    if (openId) qs("#" + openId)?.classList.add("open");
+    if (closeId) qs("#" + closeId)?.classList.remove("open");
+  });
+}
+
+function bindSearchAndFilter() {
+  const q = qs("#q");
+  const statusFilter = qs("#statusFilter");
+
+  function apply() {
+    const term = (q?.value || "").trim().toLowerCase();
+    const st = (statusFilter?.value || "").trim();
+
+    qsa(".js-card").forEach(el => {
+      const s = (el.getAttribute("data-search") || "").toLowerCase();
+      const status = el.getAttribute("data-status") || "";
+      const okTerm = !term || s.includes(term);
+      const okStatus = !st || status === st;
+      el.style.display = (okTerm && okStatus) ? "" : "none";
+    });
+  }
+
+  q?.addEventListener("input", apply);
+  statusFilter?.addEventListener("change", apply);
+}
+
+function bindCompactMode() {
+  const board = qs("#board");
+  const btn = qs("#btnCompact");
+  if (!board || !btn) return;
+
+  btn.addEventListener("click", () => {
+    const current = board.getAttribute("data-mode") || "normal";
+    const next = (current === "compact") ? "normal" : "compact";
+    board.setAttribute("data-mode", next);
+    btn.textContent = (next === "compact") ? "Vue normale" : "Vue compacte";
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   bindModal();
   bindConfirmDelete();
 
+  bindTabs();
+  bindPanels();
+  bindSearchAndFilter();
+  bindCompactMode();
+
   const refresh = qs("#calRefresh");
   if (refresh) refresh.addEventListener("click", loadCalendar);
-  if (qs("#calendarList")) loadCalendar();
+
+  // si le calendrier est présent ET visible, on charge
+  if (qs("#calendarList") && qs('.tab.active')?.getAttribute("data-tab") === "calendar") {
+    loadCalendar();
+  }
 });
 

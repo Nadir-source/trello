@@ -17,7 +17,7 @@
   </div>
 </div>
 
-<!-- Top tools -->
+<!-- Toolbar -->
 <div class="toolbar">
   <div class="toolbar-left">
     <div class="searchbox">
@@ -34,7 +34,12 @@
       <option value="canceled">Annulé</option>
     </select>
 
-    <button class="btn btn-ghost" id="btnCompact" type="button" data-mode="compact">Vue compacte</button>
+    <button class="btn btn-ghost" id="btnCompact" type="button">Vue compacte</button>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="kanban" type="button">Kanban</button>
+      <button class="tab" data-tab="calendar" type="button">Calendrier</button>
+    </div>
   </div>
 
   <div class="toolbar-right">
@@ -43,7 +48,7 @@
   </div>
 </div>
 
-<!-- Panels (collapsible) -->
+<!-- Panels -->
 <div class="grid2">
   <section class="card panel" id="createPanel">
     <div class="card-h">
@@ -91,103 +96,125 @@
     </div>
     <div class="help">
       <p>✅ Clique sur une carte → <b>modal détails</b>.</p>
-      <p>✅ Boutons PDF FR/EN/AR.</p>
+      <p>✅ Actions rapides (réservé / annuler / terminer).</p>
       <p>✅ Supprimer = <b>archive</b> Trello.</p>
-      <p>✅ Recherche + filtres en haut.</p>
+      <p>✅ Recherche + filtre + mode compact.</p>
     </div>
   </section>
 </div>
 
-<!-- Kanban pro : scroll horizontal -->
-<div class="board" id="board" data-mode="normal">
-  {% macro col(title, items, status, badge_class) %}
-  <section class="lane" data-lane="{{ status }}">
-    <header class="lane-h">
-      <div class="lane-title">
-        <span class="badge {{ badge_class }}">{{ title }}</span>
-        <span class="lane-count">{{ items|length }}</span>
-      </div>
-      <div class="lane-sub muted">Glisse visuellement • Actions rapides</div>
-    </header>
+<!-- TAB: KANBAN -->
+<div class="tab-panel" data-panel="kanban">
+  <div class="board" id="board" data-mode="normal">
+    {% macro lane(title, items, status, badge_class) %}
+    <section class="lane" data-lane="{{ status }}">
+      <header class="lane-h">
+        <div class="lane-title">
+          <span class="badge {{ badge_class }}">{{ title }}</span>
+          <span class="lane-count">{{ items|length }}</span>
+        </div>
+        <div class="lane-sub muted">Clique pour détails • Actions rapides</div>
+      </header>
 
-    <div class="lane-b">
-      {% for it in items %}
-        {% set p = it.payload %}
-        <article class="cardx js-card"
-                 data-card-id="{{ it.id }}"
-                 data-status="{{ status }}"
-                 data-search="{{ (it.name or '')|lower }} {{ (p.client_phone or '')|lower }} {{ (p.vehicle_plate or '')|lower }} {{ (p.vehicle_model or '')|lower }}">
-          <div class="cardx-top">
-            <div class="cardx-title" title="{{ it.name }}">{{ it.name }}</div>
-            <div class="chip chip-status chip-{{ status }}">{{ status }}</div>
-          </div>
+      <div class="lane-b">
+        {% for it in items %}
+          {% set p = it.payload %}
+          {% set client = (p.client_name or '') %}
+          {% set vehicle = (p.vehicle_name or p.vehicle_model or '') %}
+          {% set phone = (p.client_phone or '') %}
+          {% set plate = (p.vehicle_plate or '') %}
+          {% set start = (p.start_date or '') %}
+          {% set end = (p.end_date or '') %}
 
-          <div class="cardx-mid">
-            {% if p and p._type == 'booking' %}
+          <article class="cardx js-card js-open-modal"
+                   data-card-id="{{ it.id }}"
+                   data-status="{{ status }}"
+                   data-search="{{ (it.name or '')|lower }} {{ client|lower }} {{ vehicle|lower }} {{ phone|lower }} {{ plate|lower }}">
+            <div class="cardx-top">
+              <div class="cardx-title" title="{{ it.name }}">{{ it.name }}</div>
+              <span class="chip chip-status chip-{{ status }}">{{ status }}</span>
+            </div>
+
+            <div class="cardx-mid">
               <div class="meta">
-                <span class="chip chip-date">🕒 {{ (p.start_date or '') }} → {{ (p.end_date or '') }}</span>
+                <span class="chip chip-main">👤 {{ client or "—" }}</span>
+                <span class="chip chip-main">🚗 {{ vehicle or "—" }}</span>
+                {% if plate %}<span class="chip chip-sub"># {{ plate }}</span>{% endif %}
               </div>
-            {% else %}
-              <div class="meta"><span class="chip chip-date">🕒 (dates non renseignées)</span></div>
-            {% endif %}
-          </div>
+              <div class="meta" style="margin-top:8px;">
+                <span class="chip chip-date">🕒 {{ start }} → {{ end }}</span>
+              </div>
+            </div>
 
-          <!-- Actions rapides -->
-          <div class="cardx-actions" onclick="event.stopPropagation();">
-            {% if status == 'demandes' %}
-              <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='reserved') }}">
-                <button class="iconbtn" title="Passer en Réservé" type="submit">✅</button>
-              </form>
-              <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
-                <button class="iconbtn danger" title="Annuler" type="submit">✖</button>
-              </form>
-            {% elif status == 'reserved' %}
-              <form method="post" action="{{ url_for('bookings.contract_and_move') }}">
-                <input type="hidden" name="card_id" value="{{ it.id }}" />
-                <select name="lang" class="select select-mini" title="Langue PDF">
-                  <option value="fr">FR</option>
-                  <option value="en">EN</option>
-                  <option value="ar">AR</option>
-                </select>
-                <button class="iconbtn primary" title="Générer + En location" type="submit">🚀</button>
-              </form>
+            <!-- Actions -->
+            <div class="cardx-actions" onclick="event.stopPropagation();">
+              {% if status == 'demandes' %}
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='reserved') }}">
+                  <button class="iconbtn ok" title="Passer en Réservé" type="submit">✅</button>
+                </form>
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
+                  <button class="iconbtn danger" title="Annuler" type="submit">✖</button>
+                </form>
 
-              <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
-                <button class="iconbtn danger" title="Annuler" type="submit">✖</button>
+              {% elif status == 'reserved' %}
+                <form method="post" action="{{ url_for('bookings.contract_and_move') }}" class="inline">
+                  <input type="hidden" name="card_id" value="{{ it.id }}" />
+                  <select name="lang" class="select select-mini" title="Langue PDF">
+                    <option value="fr">FR</option>
+                    <option value="en">EN</option>
+                    <option value="ar">AR</option>
+                  </select>
+                  <button class="iconbtn primary" title="Générer + En location" type="submit">🚀</button>
+                </form>
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
+                  <button class="iconbtn danger" title="Annuler" type="submit">✖</button>
+                </form>
+
+              {% elif status == 'ongoing' %}
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='done') }}">
+                  <button class="iconbtn ok" title="Terminer" type="submit">🏁</button>
+                </form>
+              {% endif %}
+
+              <a class="iconbtn ghost" title="PDF FR" href="/contracts/{{ it.id }}.pdf?lang=fr" target="_blank">FR</a>
+              <a class="iconbtn ghost" title="PDF EN" href="/contracts/{{ it.id }}.pdf?lang=en" target="_blank">EN</a>
+              <a class="iconbtn ghost" title="PDF AR" href="/contracts/{{ it.id }}.pdf?lang=ar" target="_blank">AR</a>
+
+              <form method="post" action="{{ url_for('bookings.delete', card_id=it.id) }}" class="js-confirm-delete">
+                <button class="iconbtn outline" title="Archiver (Supprimer)" type="submit">🗑</button>
               </form>
-            {% elif status == 'ongoing' %}
-              <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='done') }}">
-                <button class="iconbtn ok" title="Terminer" type="submit">🏁</button>
-              </form>
-            {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endmacro %}
 
-            <a class="iconbtn ghost" title="PDF FR" href="/contracts/{{ it.id }}.pdf?lang=fr" target="_blank">FR</a>
-            <a class="iconbtn ghost" title="PDF EN" href="/contracts/{{ it.id }}.pdf?lang=en" target="_blank">EN</a>
-            <a class="iconbtn ghost" title="PDF AR" href="/contracts/{{ it.id }}.pdf?lang=ar" target="_blank">AR</a>
-
-            <form method="post" action="{{ url_for('bookings.delete', card_id=it.id) }}" class="js-confirm-delete">
-              <button class="iconbtn outline" title="Archiver (Supprimer)" type="submit">🗑</button>
-            </form>
-          </div>
-        </article>
-      {% endfor %}
-    </div>
-  </section>
-  {% endmacro %}
-
-  {{ col("📥 Demandes", demandes, "demandes", "b-blue") }}
-  {{ col("📅 Réservé", reserved, "reserved", "b-violet") }}
-  {{ col("🔑 En cours", ongoing, "ongoing", "b-cyan") }}
-  {{ col("✅ Terminé", done, "done", "b-green") }}
-  {{ col("❌ Annulé", canceled, "canceled", "b-red") }}
+    {{ lane("📥 Demandes", demandes, "demandes", "b-blue") }}
+    {{ lane("📅 Réservé", reserved, "reserved", "b-violet") }}
+    {{ lane("🔑 En cours", ongoing, "ongoing", "b-cyan") }}
+    {{ lane("✅ Terminé", done, "done", "b-green") }}
+    {{ lane("❌ Annulé", canceled, "canceled", "b-red") }}
+  </div>
 </div>
 
-<!-- MODAL -->
+<!-- TAB: CALENDAR -->
+<div class="tab-panel" data-panel="calendar" style="display:none;">
+  <div class="card">
+    <div class="card-h" style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>Calendrier</h2>
+      <button class="btn btn-ghost" id="calRefresh" type="button">↻ Rafraîchir</button>
+    </div>
+    <div id="calendarList"></div>
+  </div>
+</div>
+
+<!-- MODAL (tu gardes le même HTML modal) -->
 <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-h">
       <div>
-        <div class="modal-title" id="modalTitle">Détails réservation</div>
+        <div class="modal-title" id="modalTitle">Détails</div>
         <div class="modal-sub" id="modalSub"></div>
       </div>
       <button class="btn btn-ghost" id="modalClose" type="button">✕</button>

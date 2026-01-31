@@ -1,159 +1,196 @@
-(function(){
-  // --- Panels open/close
-  document.addEventListener("click", (e) => {
-    const openId = e.target?.getAttribute?.("data-open");
-    const closeId = e.target?.getAttribute?.("data-close");
-    if(openId){
-      document.getElementById(openId)?.classList.add("open");
-    }
-    if(closeId){
-      document.getElementById(closeId)?.classList.remove("open");
-    }
-  });
+:root{
+  --bg:#070a12;
+  --panel: rgba(255,255,255,.03);
+  --panel2: rgba(255,255,255,.05);
+  --line: rgba(255,255,255,.08);
+  --text:#e9eefc;
+  --muted: rgba(233,238,252,.72);
 
-  // --- Confirm delete
-  document.querySelectorAll(".js-confirm-delete").forEach((f)=>{
-    f.addEventListener("submit", (e)=>{
-      if(!confirm("Archiver cette carte Trello (Supprimer) ?")){
-        e.preventDefault();
-      }
-    });
-  });
+  --blue: rgba(59,130,246,.18);
+  --violet: rgba(168,85,247,.18);
+  --cyan: rgba(34,211,238,.18);
+  --green: rgba(34,197,94,.18);
+  --red: rgba(239,68,68,.18);
+}
 
-  // --- Search + filter
-  const q = document.getElementById("q");
-  const statusFilter = document.getElementById("statusFilter");
-  const cards = () => Array.from(document.querySelectorAll(".js-card"));
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--text);}
 
-  function applyFilters(){
-    const term = (q?.value || "").trim().toLowerCase();
-    const st = (statusFilter?.value || "").trim();
+/* Helpers */
+.muted{color:var(--muted)}
+.page-head{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap}
+.stats{display:flex; gap:10px; flex-wrap:wrap}
+.stat{padding:10px 12px; border-radius:14px; border:1px solid var(--line); background:var(--panel)}
+.stat-n{font-weight:900; font-size:16px}
+.stat-l{font-size:12px; opacity:.75}
 
-    cards().forEach(el=>{
-      const s = el.getAttribute("data-search") || "";
-      const status = el.getAttribute("data-status") || "";
-      const okTerm = !term || s.includes(term);
-      const okStatus = !st || status === st;
-      el.style.display = (okTerm && okStatus) ? "" : "none";
-    });
-  }
+/* Layout bits */
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+@media (max-width:1100px){ .grid2{grid-template-columns:1fr} }
 
-  q?.addEventListener("input", applyFilters);
-  statusFilter?.addEventListener("change", applyFilters);
+.card{border:1px solid var(--line); background:var(--panel); border-radius:18px; box-shadow: 0 10px 30px rgba(0,0,0,.25)}
+.card-h{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line)}
+.help{padding:14px}
+.form{padding:14px}
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.form-grid label{display:flex; flex-direction:column; gap:6px; font-size:12px; opacity:.9}
+.form-grid input,.form-grid textarea{padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.02); color:inherit}
+.form-grid .span2{grid-column: span 2}
+.opts{display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 0}
 
-  // --- Compact mode
-  const board = document.getElementById("board");
-  const btnCompact = document.getElementById("btnCompact");
-  btnCompact?.addEventListener("click", ()=>{
-    const mode = board?.getAttribute("data-mode") === "compact" ? "normal" : "compact";
-    board?.setAttribute("data-mode", mode);
-    btnCompact.textContent = (mode === "compact") ? "Vue normale" : "Vue compacte";
-  });
+/* Toolbar */
+.toolbar{display:flex; justify-content:space-between; align-items:center; gap:12px; margin:14px 0; flex-wrap:wrap}
+.toolbar-left,.toolbar-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
 
-  // --- Modal open
-  const backdrop = document.getElementById("modalBackdrop");
-  const closeBtn = document.getElementById("modalClose");
-  const titleEl = document.getElementById("modalTitle");
-  const subEl = document.getElementById("modalSub");
-  const bodyEl = document.getElementById("modalBody");
-  const footEl = document.getElementById("modalFooter");
+.searchbox{
+  display:flex; align-items:center; gap:8px;
+  padding:10px 12px; border-radius:14px;
+  border:1px solid var(--line); background:var(--panel);
+}
+.searchbox input{background:transparent; border:0; outline:none; color:inherit; width:320px; max-width:70vw}
 
-  function closeModal(){
-    backdrop?.classList.remove("open");
-    backdrop?.setAttribute("aria-hidden","true");
-  }
-  closeBtn?.addEventListener("click", closeModal);
-  backdrop?.addEventListener("click", (e)=>{
-    if(e.target === backdrop) closeModal();
-  });
+.tabs{display:flex; gap:8px; align-items:center}
+.tab{padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:inherit; cursor:pointer}
+.tab.active{outline:2px solid rgba(59,130,246,.35); background:rgba(59,130,246,.08)}
 
-  async function openCard(cardId){
-    backdrop?.classList.add("open");
-    backdrop?.setAttribute("aria-hidden","false");
-    titleEl.textContent = "Détails réservation";
-    subEl.textContent = `Card ID: ${cardId}`;
-    bodyEl.innerHTML = `<div class="skeleton">Chargement…</div>`;
-    footEl.innerHTML = `<button class="btn btn-ghost" type="button" id="close2">Fermer</button>`;
-    document.getElementById("close2")?.addEventListener("click", closeModal);
+/* Buttons */
+.btn{
+  padding:10px 12px; border-radius:12px;
+  border:1px solid var(--line); background:var(--panel);
+  color:inherit; cursor:pointer; text-decoration:none;
+}
+.btn:hover{background:rgba(255,255,255,.06)}
+.btn-primary{background:rgba(59,130,246,.16); border-color:rgba(59,130,246,.25)}
+.btn-ghost{background:transparent}
+.btn-icon{padding:8px 10px}
 
-    // 👉 Ici, idéalement ton backend renvoie un JSON de la carte
-    // Si tu n'as pas encore d'endpoint, je te le donne juste après.
-    const urls = [
-      `/bookings/api/card/${cardId}`,
-      `/bookings/card/${cardId}`
-    ];
+/* Select */
+.select{padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:inherit}
+.select-mini{padding:6px 8px; border-radius:10px}
 
-    let data = null;
-    for(const u of urls){
-      try{
-        const r = await fetch(u, {headers: {"Accept":"application/json"}});
-        if(r.ok){
-          const ct = r.headers.get("content-type") || "";
-          data = ct.includes("application/json") ? await r.json() : {raw: await r.text()};
-          break;
-        }
-      }catch(_){}
-    }
+/* Panels */
+.panel{display:none}
+.panel.open{display:block}
 
-    if(!data){
-      bodyEl.innerHTML = `<div class="muted">Impossible de charger les détails (endpoint manquant). Dis-moi et je te donne la route Flask.</div>`;
-      return;
-    }
+/* Board */
+.board{
+  display:flex; gap:12px;
+  overflow:auto; padding-bottom:10px;
+  scroll-snap-type:x proximity;
+}
+.lane{
+  flex:0 0 360px;
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border-radius:18px;
+  scroll-snap-align:start;
+}
+.lane-h{
+  padding:12px 12px 10px;
+  border-bottom:1px solid var(--line);
+  position:sticky; top:0;
+  backdrop-filter: blur(8px);
+  background:rgba(7,10,18,.75);
+  border-top-left-radius:18px;
+  border-top-right-radius:18px;
+}
+.lane-title{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.lane-count{font-weight:900; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--panel)}
+.lane-b{padding:12px; display:flex; flex-direction:column; gap:10px; max-height:70vh; overflow:auto}
 
-    if(data.raw){
-      bodyEl.innerHTML = `<div>${data.raw}</div>`;
-      return;
-    }
+/* Badges */
+.badge{display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--panel); font-weight:900; font-size:12px}
+.b-blue{background:var(--blue); border-color:rgba(59,130,246,.25)}
+.b-violet{background:var(--violet); border-color:rgba(168,85,247,.25)}
+.b-cyan{background:var(--cyan); border-color:rgba(34,211,238,.25)}
+.b-green{background:var(--green); border-color:rgba(34,197,94,.25)}
+.b-red{background:var(--red); border-color:rgba(239,68,68,.25)}
 
-    const p = data.payload || {};
-    const lines = [
-      ["Client", p.client_name || ""],
-      ["Téléphone", p.client_phone || ""],
-      ["Adresse", p.client_address || ""],
-      ["Véhicule", p.vehicle_name || ""],
-      ["Plaque", p.vehicle_plate || ""],
-      ["Modèle", p.vehicle_model || ""],
-      ["Départ", p.start_date || ""],
-      ["Retour", p.end_date || ""],
-      ["Livraison", p.pickup_location || ""],
-      ["Restitution", p.return_location || ""],
-      ["Doc", p.doc_id || ""],
-      ["Permis", p.driver_license || ""],
-      ["Notes", p.notes || ""]
-    ];
+/* Card compact */
+.cardx{
+  padding:12px; border-radius:16px;
+  border:1px solid var(--line); background:var(--panel);
+  cursor:pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  transition: transform .12s ease, background .12s ease;
+}
+.cardx:hover{transform: translateY(-1px); background:rgba(255,255,255,.045)}
+.cardx-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px}
+.cardx-title{font-weight:900; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.meta{display:flex; gap:8px; flex-wrap:wrap}
+.cardx-actions{margin-top:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.inline{display:inline-flex; gap:8px; align-items:center}
 
-    bodyEl.innerHTML = `
-      <div class="grid2">
-        <div class="card" style="padding:14px;">
-          <div style="font-weight:900;margin-bottom:10px;">Résumé</div>
-          <div class="muted">${data.name || ""}</div>
-          <div class="row" style="margin-top:10px; flex-wrap:wrap;">
-            <span class="chip">Statut: <b>${data.status || ""}</b></span>
-            <span class="chip">Trello: <b>OK</b></span>
-          </div>
-        </div>
+/* Chips */
+.chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 10px; border-radius:999px;
+  border:1px solid var(--line); background:rgba(255,255,255,.02);
+  font-size:12px;
+}
+.chip-status{font-weight:900; text-transform:lowercase}
+.chip-demandes{background:var(--blue); border-color:rgba(59,130,246,.25)}
+.chip-reserved{background:var(--violet); border-color:rgba(168,85,247,.25)}
+.chip-ongoing{background:var(--cyan); border-color:rgba(34,211,238,.25)}
+.chip-done{background:var(--green); border-color:rgba(34,197,94,.25)}
+.chip-canceled{background:var(--red); border-color:rgba(239,68,68,.25)}
+.chip-date{opacity:.92}
+.chip-main{font-weight:800}
+.chip-sub{opacity:.85}
 
-        <div class="card" style="padding:14px;">
-          <div style="font-weight:900;margin-bottom:10px;">Détails</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            ${lines.map(([k,v]) => `
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <div style="width:120px;opacity:.75;font-size:12px;">${k}</div>
-                <div style="flex:1;font-weight:700;">${(v || "—")}</div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      </div>
-    `;
-  }
+/* Icon buttons */
+.iconbtn{
+  display:inline-flex; align-items:center; justify-content:center;
+  height:34px; min-width:34px; padding:0 10px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  color:inherit;
+  cursor:pointer;
+  text-decoration:none;
+  font-weight:900;
+}
+.iconbtn:hover{background:rgba(255,255,255,.06)}
+.iconbtn.primary{background:rgba(59,130,246,.16); border-color:rgba(59,130,246,.25)}
+.iconbtn.ok{background:rgba(34,197,94,.14); border-color:rgba(34,197,94,.25)}
+.iconbtn.danger{background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.25)}
+.iconbtn.ghost{background:transparent}
+.iconbtn.outline{background:transparent; border-style:dashed}
 
-  document.querySelectorAll(".js-card").forEach((el)=>{
-    el.addEventListener("click", ()=>{
-      const id = el.getAttribute("data-card-id");
-      if(id) openCard(id);
-    });
-  });
+/* Compact mode */
+.board[data-mode="compact"] .lane{flex-basis:320px}
+.board[data-mode="compact"] .cardx{padding:10px}
+.board[data-mode="compact"] .cardx-actions{gap:6px}
+.board[data-mode="compact"] .iconbtn{height:32px}
 
-})();
+/* Modal basics (ton app.js utilise modal-grid / modal-box) */
+.modal-backdrop{
+  position:fixed; inset:0; display:none;
+  background:rgba(0,0,0,.55);
+  align-items:center; justify-content:center;
+  padding:20px;
+}
+.modal-backdrop.open{display:flex}
+.modal{
+  width:min(920px, 96vw);
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:rgba(10,14,26,.92);
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+.modal-h{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line)}
+.modal-title{font-weight:900; font-size:16px}
+.modal-sub{font-size:12px; color:var(--muted); margin-top:4px}
+.modal-b{padding:16px}
+.modal-f{padding:14px 16px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:10px}
+.modal-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.modal-box{border:1px solid var(--line); background:rgba(255,255,255,.02); border-radius:14px; padding:12px}
+.modal-box.span2{grid-column: span 2}
+.modal-box .k{opacity:.7; font-size:12px; margin-top:6px}
+.modal-box .v{font-weight:800; margin-top:2px}
+.modal-actions{display:flex; gap:10px; align-items:center}
+.link{color:inherit; opacity:.9}
+.skeleton{opacity:.75}
+.errorbox{padding:12px; border-radius:14px; border:1px solid rgba(239,68,68,.25); background:rgba(239,68,68,.08)}
 
