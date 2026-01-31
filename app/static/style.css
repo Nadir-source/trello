@@ -286,3 +286,92 @@ body{background:var(--bg); color:var(--text);}
 .cal-badge.reserved{ background: var(--violet); border-color: rgba(168,85,247,.25); }
 .cal-badge.ongoing{ background: var(--cyan); border-color: rgba(34,211,238,.25); }
 
+/* =========================
+   Month Calendar (Grid)
+========================= */
+.cal-wrap{display:flex;flex-direction:column;gap:12px}
+.cal-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cal-title{font-weight:900;font-size:18px}
+.cal-btns{display:flex;gap:8px;align-items:center}
+
+.cal-grid{
+  display:grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap:10px;
+}
+
+.cal-dow{
+  font-size:12px;
+  opacity:.75;
+  font-weight:800;
+  padding:6px 8px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.02);
+  text-align:center;
+}
+
+.cal-cell{
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(255,255,255,.02);
+  min-height:120px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  overflow:hidden;
+}
+
+.cal-cell.muted{opacity:.45}
+.cal-cell.today{outline:2px solid rgba(59,130,246,.35); background:rgba(59,130,246,.06)}
+
+.cal-daynum{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-weight:900;
+}
+
+.cal-daynum span{opacity:.85;font-size:12px}
+
+.cal-items{display:flex;flex-direction:column;gap:6px}
+
+.cal-chip{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  cursor:pointer;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.cal-chip:hover{background:rgba(255,255,255,.06)}
+.cal-chip .tag{
+  padding:2px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  font-size:11px;
+  opacity:.9;
+}
+
+.cal-chip[data-status="demandes"]{border-color: rgba(59,130,246,.35)}
+.cal-chip[data-status="reserved"]{border-color: rgba(168,85,247,.35)}
+.cal-chip[data-status="ongoing"]{border-color: rgba(34,211,238,.35)}
+
+.cal-more{
+  font-size:12px;
+  opacity:.75;
+  padding:6px 10px;
+  border-radius:12px;
+  border:1px dashed var(--line);
+}
+
