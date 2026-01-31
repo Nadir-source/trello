@@ -12,9 +12,9 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
-// --------------------
-// Modal
-// --------------------
+/* =========================
+   MODAL
+========================= */
 function openModal() {
   const b = qs("#modalBackdrop");
   if (!b) return;
@@ -90,24 +90,33 @@ function renderCardModal(data) {
       <a class="btn btn-ghost" target="_blank" href="/contracts/${data.id}.pdf?lang=fr">Contrat FR</a>
       <a class="btn btn-ghost" target="_blank" href="/contracts/${data.id}.pdf?lang=en">EN</a>
       <a class="btn btn-ghost" target="_blank" href="/contracts/${data.id}.pdf?lang=ar">AR</a>
+      <button class="btn btn-ghost" type="button" id="modalClose2">Fermer</button>
     </div>
   `;
+
+  qs("#modalClose2")?.addEventListener("click", closeModal);
 }
 
 function bindModal() {
   const closeBtn = qs("#modalClose");
   const backdrop = qs("#modalBackdrop");
 
-  if (closeBtn) closeBtn.addEventListener("click", closeModal);
-  if (backdrop) backdrop.addEventListener("click", (e) => {
-    if (e.target === backdrop) closeModal();
-  });
+  if (closeBtn && !closeBtn.__bound) {
+    closeBtn.__bound = true;
+    closeBtn.addEventListener("click", closeModal);
+  }
+
+  if (backdrop && !backdrop.__bound) {
+    backdrop.__bound = true;
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closeModal();
+    });
+  }
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeModal();
   });
 
-  // IMPORTANT: on rebind aussi après loadCalendar() car les items sont recréés.
   qsa(".js-open-modal").forEach((el) => {
     if (el.__modalBound) return;
     el.__modalBound = true;
@@ -130,6 +139,9 @@ function bindModal() {
   });
 }
 
+/* =========================
+   CONFIRM DELETE
+========================= */
 function bindConfirmDelete() {
   qsa(".js-confirm-delete").forEach((f) => {
     if (f.__delBound) return;
@@ -143,9 +155,9 @@ function bindConfirmDelete() {
   });
 }
 
-// --------------------
-// Calendar
-// --------------------
+/* =========================
+   CALENDAR (AGENDA VIEW PRO)
+========================= */
 async function loadCalendar() {
   const list = qs("#calendarList");
   if (!list) return;
@@ -159,6 +171,7 @@ async function loadCalendar() {
 
   const events = await r.json();
 
+  // group by day
   const groups = {};
   for (const ev of events) {
     const d = (ev.start || "").substring(0, 10) || "????-??-??";
@@ -174,47 +187,69 @@ async function loadCalendar() {
 
   let html = "";
   for (const d of days) {
+    const items = groups[d].sort((a, b) => (a.start || "").localeCompare(b.start || ""));
+
     html += `<div class="cal-day">
-      <div class="cal-day-h">${escapeHtml(d)}</div>
+      <div class="cal-day-h">
+        <div>${escapeHtml(d)}</div>
+        <div class="cal-day-count">${items.length}</div>
+      </div>
       <div class="cal-items">`;
-    for (const ev of groups[d]) {
+
+    for (const ev of items) {
+      const s = (ev.start || "").replace("T", " ");
+      const e = (ev.end || "").replace("T", " ");
+      const st = (ev.status || "").toLowerCase();
+
       html += `
-        <div class="cal-item js-open-modal" data-card-id="${escapeHtml(ev.id)}">
-          <div class="cal-title">${escapeHtml(ev.title)}</div>
-          <div class="cal-meta">${escapeHtml((ev.start || "").replace("T"," "))} → ${escapeHtml((ev.end || "").replace("T"," "))}</div>
-          <div class="cal-badge">${escapeHtml(ev.status || "")}</div>
+        <div class="cal-item js-open-modal"
+             data-card-id="${escapeHtml(ev.id)}"
+             data-status="${escapeHtml(st)}">
+          <div class="cal-row">
+            <div>
+              <div class="cal-title">${escapeHtml(ev.title)}</div>
+              <div class="cal-meta">🕒 ${escapeHtml(s)} → ${escapeHtml(e)}</div>
+            </div>
+            <div class="cal-badge ${escapeHtml(st)}">${escapeHtml(st || "—")}</div>
+          </div>
         </div>`;
     }
+
     html += `</div></div>`;
   }
 
   list.innerHTML = html;
-  bindModal(); // rebind sur éléments recréés
+  bindModal(); // rebinding after re-render
 }
 
-// --------------------
-// New UI features (intelligent view)
-// --------------------
+/* =========================
+   TABS (KANBAN / CALENDAR)
+========================= */
 function bindTabs() {
   const tabs = qsa(".tab");
   const panels = qsa(".tab-panel");
   if (!tabs.length || !panels.length) return;
 
-  tabs.forEach(t => {
+  tabs.forEach((t) => {
     t.addEventListener("click", () => {
       const key = t.getAttribute("data-tab");
-      tabs.forEach(x => x.classList.remove("active"));
+      tabs.forEach((x) => x.classList.remove("active"));
       t.classList.add("active");
-      panels.forEach(p => {
+
+      panels.forEach((p) => {
         p.style.display = (p.getAttribute("data-panel") === key) ? "" : "none";
       });
 
-      // si on ouvre calendar, on charge
-      if (key === "calendar" && qs("#calendarList")) loadCalendar();
+      if (key === "calendar" && qs("#calendarList")) {
+        loadCalendar();
+      }
     });
   });
 }
 
+/* =========================
+   PANELS (OPEN/CLOSE)
+========================= */
 function bindPanels() {
   document.addEventListener("click", (e) => {
     const openId = e.target?.getAttribute?.("data-open");
@@ -224,6 +259,9 @@ function bindPanels() {
   });
 }
 
+/* =========================
+   SEARCH + FILTER
+========================= */
 function bindSearchAndFilter() {
   const q = qs("#q");
   const statusFilter = qs("#statusFilter");
@@ -232,7 +270,7 @@ function bindSearchAndFilter() {
     const term = (q?.value || "").trim().toLowerCase();
     const st = (statusFilter?.value || "").trim();
 
-    qsa(".js-card").forEach(el => {
+    qsa(".js-card").forEach((el) => {
       const s = (el.getAttribute("data-search") || "").toLowerCase();
       const status = el.getAttribute("data-status") || "";
       const okTerm = !term || s.includes(term);
@@ -245,6 +283,9 @@ function bindSearchAndFilter() {
   statusFilter?.addEventListener("change", apply);
 }
 
+/* =========================
+   COMPACT MODE
+========================= */
 function bindCompactMode() {
   const board = qs("#board");
   const btn = qs("#btnCompact");
@@ -258,6 +299,9 @@ function bindCompactMode() {
   });
 }
 
+/* =========================
+   INIT
+========================= */
 document.addEventListener("DOMContentLoaded", () => {
   bindModal();
   bindConfirmDelete();
@@ -270,8 +314,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const refresh = qs("#calRefresh");
   if (refresh) refresh.addEventListener("click", loadCalendar);
 
-  // si le calendrier est présent ET visible, on charge
-  if (qs("#calendarList") && qs('.tab.active')?.getAttribute("data-tab") === "calendar") {
+  // If calendar is visible by default (rare)
+  if (qs("#calendarList") && qs(".tab.active")?.getAttribute("data-tab") === "calendar") {
     loadCalendar();
   }
 });

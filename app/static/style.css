@@ -194,3 +194,95 @@ body{background:var(--bg); color:var(--text);}
 .skeleton{opacity:.75}
 .errorbox{padding:12px; border-radius:14px; border:1px solid rgba(239,68,68,.25); background:rgba(239,68,68,.08)}
 
+/* =========================
+   Calendar (Agenda) UI
+========================= */
+#calendarList{display:flex; flex-direction:column; gap:12px}
+
+.cal-day{
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  overflow:hidden;
+}
+
+.cal-day-h{
+  padding:12px 14px;
+  font-weight:900;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid var(--line);
+  background:rgba(7,10,18,.55);
+  backdrop-filter: blur(8px);
+}
+
+.cal-day-count{
+  font-weight:900;
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--panel);
+}
+
+.cal-items{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+}
+
+.cal-item{
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(255,255,255,.03);
+  padding:12px;
+  cursor:pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  transition: transform .12s ease, background .12s ease;
+  position:relative;
+}
+
+.cal-item:hover{transform: translateY(-1px); background:rgba(255,255,255,.05)}
+
+.cal-item::before{
+  content:"";
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width:4px;
+  border-top-left-radius:16px;
+  border-bottom-left-radius:16px;
+  background: rgba(59,130,246,.55); /* default */
+}
+
+.cal-item[data-status="reserved"]::before{ background: rgba(168,85,247,.65); }
+.cal-item[data-status="ongoing"]::before{ background: rgba(34,211,238,.65); }
+.cal-item[data-status="demandes"]::before{ background: rgba(59,130,246,.65); }
+
+.cal-title{font-weight:900; margin-bottom:6px}
+.cal-meta{opacity:.8; font-size:12px}
+
+.cal-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.cal-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.02);
+  font-size:12px;
+  font-weight:900;
+  text-transform:lowercase;
+}
+
+.cal-badge.demandes{ background: var(--blue); border-color: rgba(59,130,246,.25); }
+.cal-badge.reserved{ background: var(--violet); border-color: rgba(168,85,247,.25); }
+.cal-badge.ongoing{ background: var(--cyan); border-color: rgba(34,211,238,.25); }
+
