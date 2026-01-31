@@ -4,7 +4,7 @@ from __future__ import annotations
 import io
 import os
 from datetime import datetime
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -26,6 +26,10 @@ UNICODE_FONT_BOLD = os.getenv("PDF_UNICODE_FONT_BOLD", "DejaVuSans-Bold")
 
 
 def _try_register_unicode_fonts() -> Tuple[str, str]:
+    """
+    Best-effort font registration for Unicode/Arabic.
+    If not found, falls back to Helvetica.
+    """
     candidates = [
         ("app/static/fonts/DejaVuSans.ttf", "app/static/fonts/DejaVuSans-Bold.ttf"),
         ("static/fonts/DejaVuSans.ttf", "static/fonts/DejaVuSans-Bold.ttf"),
@@ -59,8 +63,12 @@ def _maybe_ar(text: str) -> str:
         return text
 
 
+def _is_ar(lang: str) -> bool:
+    return (lang or "").lower().strip() == "ar"
+
+
 # ============================================================
-# Company
+# Company (env-driven)
 # ============================================================
 
 COMPANY = {
@@ -81,206 +89,162 @@ COMPANY = {
 LABELS = {
     "fr": {
         "title": "CONTRAT DE LOCATION VÉHICULE",
-        "enterprise": "Entreprise",
-        "individual": "Particulier",
-        "ref": "Référence de contrat",
-        "tenant": "Le Locataire",
-        "vehicle": "Informations véhicule",
+        "ref": "Référence",
+        "date": "Date",
+        "company": "Société",
+        "summary": "Résumé de la location",
+        "client": "Le Locataire",
+        "vehicle": "Véhicule",
+        "rental": "Location",
         "denomination": "Nom / Prénom",
         "phone": "Téléphone",
         "address": "Adresse",
         "doc": "Document (CNI/Passeport)",
         "permit": "Permis",
-        "pickup_date": "Durée de location",
-        "from": "du",
-        "to": "au",
-        "pickup_place": "Lieu de livraison",
-        "return_place": "Lieu de restitution",
         "model": "Modèle",
         "plate": "Immatriculation",
         "vin": "N° série (VIN)",
-        "state": "État du véhicule",
-        "ok": "Aucun problème",
-        "damaged": "Véhicule endommagé",
-        "other_pb": "Autres problèmes",
-        "dirt": "Salissures",
-        "missing": "Équipement manquant",
-        "burns": "Brûlures des sièges",
-        "other": "Autres",
-        "return_fill": "À remplir au retour",
-        "km": "Km compteur",
-        "fuel": "Niveau carburant",
-        "sign_renter": "Signature du loueur",
-        "sign_tenant": "Signature du locataire",
-        "conditions": "CONDITIONS GÉNÉRALES",
-        "page": "Page",
+        "from": "Du",
+        "to": "Au",
+        "pickup_place": "Lieu de livraison",
+        "return_place": "Lieu de restitution",
         "options": "Options",
         "gps": "GPS",
         "chauffeur": "Chauffeur",
         "baby": "Siège bébé",
         "notes": "Notes",
+        "terms": "CONDITIONS GÉNÉRALES",
+        "sign": "Signatures",
+        "lessor": "Loueur",
+        "lessee": "Locataire",
+        "read_approved": "Lu et approuvé",
+        "page": "Page",
+        "trello": "Carte Trello",
+        "open": "Ouvrir",
     },
     "en": {
         "title": "VEHICLE RENTAL CONTRACT",
-        "enterprise": "Company",
-        "individual": "Individual",
-        "ref": "Contract reference",
-        "tenant": "Renter",
-        "vehicle": "Vehicle details",
+        "ref": "Reference",
+        "date": "Date",
+        "company": "Company",
+        "summary": "Rental summary",
+        "client": "Renter",
+        "vehicle": "Vehicle",
+        "rental": "Rental",
         "denomination": "Full name",
         "phone": "Phone",
         "address": "Address",
         "doc": "Document (ID/Passport)",
         "permit": "Driving license",
-        "pickup_date": "Rental period",
-        "from": "from",
-        "to": "to",
-        "pickup_place": "Pickup place",
-        "return_place": "Return place",
         "model": "Model",
         "plate": "Plate",
         "vin": "Serial number (VIN)",
-        "state": "Vehicle condition",
-        "ok": "No issues",
-        "damaged": "Damaged vehicle",
-        "other_pb": "Other issues",
-        "dirt": "Dirt",
-        "missing": "Missing equipment",
-        "burns": "Seat burns",
-        "other": "Other",
-        "return_fill": "To be filled on return",
-        "km": "Odometer (Km)",
-        "fuel": "Fuel level",
-        "sign_renter": "Owner signature",
-        "sign_tenant": "Renter signature",
-        "conditions": "GENERAL TERMS",
-        "page": "Page",
+        "from": "From",
+        "to": "To",
+        "pickup_place": "Pickup place",
+        "return_place": "Return place",
         "options": "Options",
         "gps": "GPS",
         "chauffeur": "Driver",
         "baby": "Baby seat",
         "notes": "Notes",
+        "terms": "GENERAL TERMS",
+        "sign": "Signatures",
+        "lessor": "Owner",
+        "lessee": "Renter",
+        "read_approved": "Read and approved",
+        "page": "Page",
+        "trello": "Trello card",
+        "open": "Open",
     },
     "ar": {
         "title": _maybe_ar("عقد كراء سيارة"),
-        "enterprise": _maybe_ar("شركة"),
-        "individual": _maybe_ar("شخص"),
-        "ref": _maybe_ar("مرجع العقد"),
-        "tenant": _maybe_ar("المستأجر"),
-        "vehicle": _maybe_ar("معلومات السيارة"),
+        "ref": _maybe_ar("مرجع"),
+        "date": _maybe_ar("التاريخ"),
+        "company": _maybe_ar("الشركة"),
+        "summary": _maybe_ar("ملخص الكراء"),
+        "client": _maybe_ar("المستأجر"),
+        "vehicle": _maybe_ar("السيارة"),
+        "rental": _maybe_ar("الكراء"),
         "denomination": _maybe_ar("الاسم و اللقب"),
         "phone": _maybe_ar("الهاتف"),
         "address": _maybe_ar("العنوان"),
         "doc": _maybe_ar("وثيقة (بطاقة/جواز)"),
         "permit": _maybe_ar("رخصة السياقة"),
-        "pickup_date": _maybe_ar("مدة الكراء"),
+        "model": _maybe_ar("الطراز"),
+        "plate": _maybe_ar("الترقيم"),
+        "vin": _maybe_ar("الرقم التسلسلي"),
         "from": _maybe_ar("من"),
         "to": _maybe_ar("إلى"),
         "pickup_place": _maybe_ar("مكان التسليم"),
         "return_place": _maybe_ar("مكان الاسترجاع"),
-        "model": _maybe_ar("الطراز"),
-        "plate": _maybe_ar("الترقيم"),
-        "vin": _maybe_ar("الرقم التسلسلي"),
-        "state": _maybe_ar("حالة السيارة"),
-        "ok": _maybe_ar("لا مشاكل"),
-        "damaged": _maybe_ar("السيارة متضررة"),
-        "other_pb": _maybe_ar("مشاكل أخرى"),
-        "dirt": _maybe_ar("اتساخ"),
-        "missing": _maybe_ar("نقص في التجهيزات"),
-        "burns": _maybe_ar("حروق المقاعد"),
-        "other": _maybe_ar("أخرى"),
-        "return_fill": _maybe_ar("يملأ عند الرجوع"),
-        "km": _maybe_ar("عداد الكيلومترات"),
-        "fuel": _maybe_ar("مستوى الوقود"),
-        "sign_renter": _maybe_ar("إمضاء المؤجر"),
-        "sign_tenant": _maybe_ar("إمضاء المستأجر"),
-        "conditions": _maybe_ar("الشروط العامة"),
-        "page": _maybe_ar("صفحة"),
         "options": _maybe_ar("الخيارات"),
         "gps": _maybe_ar("GPS"),
         "chauffeur": _maybe_ar("سائق"),
         "baby": _maybe_ar("مقعد طفل"),
         "notes": _maybe_ar("ملاحظات"),
+        "terms": _maybe_ar("الشروط العامة"),
+        "sign": _maybe_ar("الإمضاءات"),
+        "lessor": _maybe_ar("المؤجر"),
+        "lessee": _maybe_ar("المستأجر"),
+        "read_approved": _maybe_ar("قرأت ووافقت"),
+        "page": _maybe_ar("صفحة"),
+        "trello": _maybe_ar("بطاقة Trello"),
+        "open": _maybe_ar("فتح"),
     },
 }
 
 # ============================================================
-# Conditions (MAX) – FR/EN/AR
+# Conditions – FR/EN/AR
+# (tu peux éditer ces textes plus tard)
 # ============================================================
 
 CONDITIONS_FR = [
     "1. Objet : le loueur met à disposition le véhicule identifié au contrat.",
     "2. Documents : pièce d’identité + permis valides requis (originaux).",
     "3. Conducteurs : seuls les conducteurs déclarés sont autorisés à conduire.",
-    "4. Éligibilité : le loueur peut refuser une location (âge, permis, situation).",
-    "5. État du véhicule : le locataire reconnaît l’état au départ (photos conseillées).",
-    "6. Usage : interdiction off-road, course, remorquage sans accord, usage illégal.",
-    "7. Zone d’utilisation : sortie de wilaya/pays uniquement avec accord écrit.",
-    "8. Carburant : restitution au niveau convenu ; sinon facturation du complément.",
-    "9. Kilométrage : forfait/limite selon accord ; dépassement facturable.",
-    "10. Durée : retard/extension facturés (heures/jours supplémentaires).",
-    "11. Paiement : montant convenu + options + dépôt de garantie si demandé.",
-    "12. Dépôt : restitué après contrôle (dommages, amendes, carburant, nettoyage).",
-    "13. Amendes / péages / stationnement : à la charge du locataire.",
-    "14. Accident / incident : déclaration immédiate (photos + constat si possible).",
-    "15. Interdiction de continuer si danger : le locataire doit prévenir le loueur.",
-    "16. Vol : plainte obligatoire + remise du récépissé ; clés à restituer si possible.",
-    "17. Assurance : conditions/franchise selon loueur ; exclusions possibles.",
-    "18. Dommages : non couverts par assurance ou faute → charge du locataire.",
-    "19. Entretien : le locataire veille aux niveaux/alertes ; stop si alerte critique.",
-    "20. Restitution : véhicule + clés + équipements (gilet, triangle, etc.).",
-    "21. Données : les informations peuvent être conservées pour gestion du contrat.",
-    "22. Litiges : priorité à l’amiable ; tribunal compétent selon lieu du loueur.",
+    "4. Usage : interdiction off-road, course, remorquage sans accord, usage illégal.",
+    "5. Zone : sortie de wilaya/pays uniquement avec accord écrit.",
+    "6. Carburant : restitution au niveau convenu ; sinon facturation du complément.",
+    "7. Kilométrage : forfait/limite selon accord ; dépassement facturable.",
+    "8. Durée : retard/extension facturés (heures/jours supplémentaires).",
+    "9. Dépôt : restitué après contrôle (dommages, amendes, carburant, nettoyage).",
+    "10. Accident/incident : déclaration immédiate (photos + constat si possible).",
+    "11. Amendes / péages / stationnement : à la charge du locataire.",
+    "12. Restitution : véhicule + clés + équipements (gilet, triangle, etc.).",
+    "13. Litiges : priorité à l’amiable ; tribunal compétent selon lieu du loueur.",
 ]
 
 CONDITIONS_EN = [
     "1. Purpose: the owner provides the vehicle identified in the contract.",
     "2. Documents: valid ID + driving license required (originals).",
-    "3. Drivers: only declared/authorized drivers may operate the vehicle.",
-    "4. Eligibility: the owner may refuse rental (age, license, situation).",
-    "5. Condition at pickup: renter acknowledges condition (photos recommended).",
-    "6. Use: no off-road, racing, towing without consent, or unlawful use.",
-    "7. Area of use: leaving the authorized area/city/country requires written approval.",
-    "8. Fuel: return with agreed fuel level; otherwise fuel difference is charged.",
-    "9. Mileage: package/limit per agreement; extra mileage may be billed.",
-    "10. Duration: late return/extensions may be billed (extra hours/days).",
-    "11. Payment: agreed price + options + security deposit if required.",
-    "12. Deposit: refunded after inspection (damages, fines, fuel, cleaning).",
-    "13. Fines/tolls/parking: renter is responsible.",
-    "14. Accident/incident: must be reported immediately (photos + report when applicable).",
-    "15. Safety: do not keep driving if unsafe; inform owner immediately.",
-    "16. Theft: police report required + provide proof; return keys when possible.",
-    "17. Insurance: terms/excess per owner; exclusions may apply.",
-    "18. Damages: not covered by insurance or renter fault → renter bears the cost.",
-    "19. Maintenance: renter monitors alerts/levels; stop if critical warning appears.",
-    "20. Return: vehicle + keys + mandatory equipment (safety kit, etc.).",
-    "21. Data: information may be stored for contract management/legal purposes.",
-    "22. Disputes: parties seek amicable solution first; jurisdiction as per owner location.",
+    "3. Drivers: only authorized drivers may operate the vehicle.",
+    "4. Use: no off-road, racing, towing without consent, or unlawful use.",
+    "5. Area: leaving authorized area/city/country requires written approval.",
+    "6. Fuel: return with agreed fuel level; otherwise fuel difference is charged.",
+    "7. Mileage: package/limit per agreement; extra mileage may be billed.",
+    "8. Duration: late return/extensions may be billed (extra hours/days).",
+    "9. Deposit: refunded after inspection (damages, fines, fuel, cleaning).",
+    "10. Accident/incident: must be reported immediately (photos + report if possible).",
+    "11. Fines/tolls/parking: renter is responsible.",
+    "12. Return: vehicle + keys + mandatory equipment (safety kit, etc.).",
+    "13. Disputes: amicable solution first; jurisdiction per owner location.",
 ]
 
 CONDITIONS_AR = [
     _maybe_ar("1. الغرض: يضع المؤجر السيارة المحددة في العقد تحت تصرف المستأجر."),
     _maybe_ar("2. الوثائق: بطاقة هوية + رخصة سياقة ساريتان (الأصول)."),
     _maybe_ar("3. السائقون: لا يقود السيارة إلا السائقون المصرح بهم."),
-    _maybe_ar("4. الأهلية: يمكن للمؤجر رفض الكراء حسب الحالة/السن/الرخصة."),
-    _maybe_ar("5. حالة السيارة عند التسليم: يقر المستأجر بالحالة (صور مستحسنة)."),
-    _maybe_ar("6. الاستعمال: يمنع الطرق الوعرة، السباق، السحب دون موافقة، أو استعمال غير قانوني."),
-    _maybe_ar("7. مجال الاستعمال: الخروج من المنطقة/الولاية/البلد يتطلب موافقة كتابية."),
-    _maybe_ar("8. الوقود: ترجع السيارة بمستوى الوقود المتفق عليه وإلا تُحسب التكلفة."),
-    _maybe_ar("9. الكيلومترات: حسب الاتفاق، والزيادة قد تُفوتر."),
-    _maybe_ar("10. المدة: التأخير/التمديد قد يُحسب (ساعات/أيام إضافية)."),
-    _maybe_ar("11. الدفع: المبلغ المتفق عليه + الخيارات + تأمين/ضمان عند الطلب."),
-    _maybe_ar("12. الضمان: يُسترجع بعد المعاينة (أضرار، مخالفات، وقود، تنظيف)."),
-    _maybe_ar("13. المخالفات/الرسوم/التوقف: على عاتق المستأجر."),
-    _maybe_ar("14. حادث/واقعة: يجب الإبلاغ فورًا (صور + محضر إن أمكن)."),
-    _maybe_ar("15. السلامة: يمنع مواصلة القيادة إن كانت خطرة ويجب إبلاغ المؤجر."),
-    _maybe_ar("16. السرقة: شكوى إلزامية وتقديم الإثبات وإرجاع المفاتيح إن أمكن."),
-    _maybe_ar("17. التأمين: حسب شروط المؤجر والفرانشيز، وقد توجد استثناءات."),
-    _maybe_ar("18. الأضرار: غير المغطاة أو بسبب خطأ المستأجر على عاتقه."),
-    _maybe_ar("19. الصيانة: مراقبة التنبيهات/السوائل والتوقف عند إنذار خطير."),
-    _maybe_ar("20. الاسترجاع: السيارة + المفاتيح + التجهيزات الإلزامية."),
-    _maybe_ar("21. البيانات: قد تُحفظ المعلومات لتسيير العقد ولأسباب قانونية."),
-    _maybe_ar("22. النزاعات: يُفضل الحل الودي أولاً والاختصاص حسب مقر المؤجر."),
+    _maybe_ar("4. الاستعمال: يمنع الطرق الوعرة، السباق، السحب دون موافقة، أو استعمال غير قانوني."),
+    _maybe_ar("5. المجال: الخروج من المنطقة/الولاية/البلد يتطلب موافقة كتابية."),
+    _maybe_ar("6. الوقود: ترجع السيارة بمستوى الوقود المتفق عليه وإلا تُحسب التكلفة."),
+    _maybe_ar("7. الكيلومترات: حسب الاتفاق، والزيادة قد تُفوتر."),
+    _maybe_ar("8. المدة: التأخير/التمديد قد يُحسب (ساعات/أيام إضافية)."),
+    _maybe_ar("9. الضمان: يُسترجع بعد المعاينة (أضرار، مخالفات، وقود، تنظيف)."),
+    _maybe_ar("10. حادث/واقعة: يجب الإبلاغ فورًا (صور + محضر إن أمكن)."),
+    _maybe_ar("11. المخالفات/الرسوم/التوقف: على عاتق المستأجر."),
+    _maybe_ar("12. الاسترجاع: السيارة + المفاتيح + التجهيزات الإلزامية."),
+    _maybe_ar("13. النزاعات: يُفضل الحل الودي أولاً والاختصاص حسب مقر المؤجر."),
 ]
 
 
@@ -293,7 +257,7 @@ def _conditions_for_lang(lang: str) -> List[str]:
 
 
 # ============================================================
-# Helpers
+# Small helpers
 # ============================================================
 
 def _safe(v: Any) -> str:
@@ -314,29 +278,23 @@ def _contract_ref(payload: Dict[str, Any]) -> str:
     return f"{datetime.now().strftime('%Y%m%d')}-{short}".strip("-")
 
 
-def _is_ar(lang: str) -> bool:
-    return (lang or "").lower().strip() == "ar"
+def _sw(text: str, font: str, size: float) -> float:
+    return pdfmetrics.stringWidth(text or "", font, size)
 
 
-def _set_text_color(c: canvas.Canvas):
-    c.setFillColor(colors.black)
-    c.setStrokeColor(colors.black)
-
-
-def _truncate_to_width(text: str, font: str, size: float, max_w: float) -> str:
+def _truncate(text: str, font: str, size: float, max_w: float) -> str:
     t = _safe(text)
     if not t:
         return ""
-    if pdfmetrics.stringWidth(t, font, size) <= max_w:
+    if _sw(t, font, size) <= max_w:
         return t
     ell = "…"
-    # shrink until fits
-    while t and pdfmetrics.stringWidth(t + ell, font, size) > max_w:
+    while t and _sw(t + ell, font, size) > max_w:
         t = t[:-1]
     return (t + ell) if t else ell
 
 
-def _wrap_to_width(text: str, font: str, size: float, max_w: float) -> List[str]:
+def _wrap(text: str, font: str, size: float, max_w: float) -> List[str]:
     s = _safe(text)
     if not s:
         return [""]
@@ -345,7 +303,7 @@ def _wrap_to_width(text: str, font: str, size: float, max_w: float) -> List[str]
     cur = ""
     for w in words:
         test = (cur + " " + w).strip()
-        if pdfmetrics.stringWidth(test, font, size) <= max_w:
+        if _sw(test, font, size) <= max_w:
             cur = test
         else:
             if cur:
@@ -356,467 +314,409 @@ def _wrap_to_width(text: str, font: str, size: float, max_w: float) -> List[str]
     return lines
 
 
-def _draw_checkbox(c: canvas.Canvas, x: float, y: float, size: float, checked: bool = False):
-    c.rect(x, y, size, size, stroke=1, fill=0)
-    if checked:
-        c.setLineWidth(2)
-        c.line(x + 2, y + size / 2, x + size / 2, y + 2)
-        c.line(x + size / 2, y + 2, x + size - 2, y + size - 2)
-        c.setLineWidth(1)
+def _set_fill_stroke(c: canvas.Canvas, fill=colors.black, stroke=colors.black):
+    c.setFillColor(fill)
+    c.setStrokeColor(stroke)
 
 
-def _draw_kv(
+def _draw_text(c: canvas.Canvas, x: float, y: float, txt: str, font: str, size: float, rtl: bool = False):
+    c.setFont(font, size)
+    if rtl:
+        c.drawRightString(x, y, txt)
+    else:
+        c.drawString(x, y, txt)
+
+
+def _draw_pill(c: canvas.Canvas, x: float, y: float, w: float, h: float, txt: str, rtl: bool = False):
+    # pill background
+    c.roundRect(x, y, w, h, 6, stroke=0, fill=1)
+    # text
+    _set_fill_stroke(c, colors.white, colors.white)
+    c.setFont(FONT_BOLD, 9)
+    if rtl:
+        c.drawRightString(x + w - 8, y + (h - 9) / 2 + 1, txt)
+    else:
+        c.drawString(x + 8, y + (h - 9) / 2 + 1, txt)
+
+
+def _kv_box(
     c: canvas.Canvas,
-    x: float,
-    y: float,
-    w: float,
-    h: float,
-    label: str,
-    value: str,
-    lang: str,
+    x: float, y: float, w: float, h: float,
+    label: str, value: str,
+    rtl: bool = False,
+    accent: Optional[colors.Color] = None,
 ):
-    # box
-    c.rect(x, y, w, h, stroke=1, fill=0)
+    # border + subtle fill
+    c.setLineWidth(1)
+    c.setStrokeColor(colors.Color(0, 0, 0, alpha=0.12))
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.03))
+    c.roundRect(x, y, w, h, 10, stroke=1, fill=1)
+
+    # accent bar
+    if accent is not None:
+        c.setFillColor(accent)
+        c.roundRect(x, y, 4, h, 2, stroke=0, fill=1)
 
     # label
+    _set_fill_stroke(c, colors.Color(0, 0, 0, alpha=0.65), colors.black)
     c.setFont(FONT_REG, 8)
-    _set_text_color(c)
-
-    lbl = label or ""
-    val = value or ""
-    if _is_ar(lang):
+    lbl = label
+    val = value
+    if rtl:
         lbl = _maybe_ar(lbl)
-        # label right aligned
-        c.drawRightString(x + w - 6, y + h - 11, _truncate_to_width(lbl, FONT_REG, 8, w - 12))
-        c.setFont(FONT_BOLD, 10)
-        c.drawRightString(x + w - 6, y + 6, _truncate_to_width(_maybe_ar(val) if any("\u0600" <= ch <= "\u06FF" for ch in val) else val, FONT_BOLD, 10, w - 12))
+        val = _maybe_ar(val) if any("\u0600" <= ch <= "\u06FF" for ch in val) else val
+        c.drawRightString(x + w - 10, y + h - 14, _truncate(lbl, FONT_REG, 8, w - 20))
+        c.setFont(FONT_BOLD, 10.5)
+        _set_fill_stroke(c, colors.black, colors.black)
+        c.drawRightString(x + w - 10, y + 12, _truncate(val, FONT_BOLD, 10.5, w - 20))
     else:
-        c.drawString(x + 6, y + h - 11, _truncate_to_width(lbl, FONT_REG, 8, w - 12))
-        c.setFont(FONT_BOLD, 10)
-        c.drawString(x + 6, y + 6, _truncate_to_width(val, FONT_BOLD, 10, w - 12))
+        c.drawString(x + 10, y + h - 14, _truncate(lbl, FONT_REG, 8, w - 20))
+        c.setFont(FONT_BOLD, 10.5)
+        _set_fill_stroke(c, colors.black, colors.black)
+        c.drawString(x + 10, y + 12, _truncate(val, FONT_BOLD, 10.5, w - 20))
 
 
-def _draw_multiline(
-    c: canvas.Canvas,
-    x: float,
-    y: float,
-    w: float,
-    h: float,
-    label: str,
-    lines: List[str],
-    lang: str,
-):
-    c.rect(x, y, w, h, stroke=1, fill=0)
-    _set_text_color(c)
+def _section_title(c: canvas.Canvas, x: float, y: float, txt: str, rtl: bool = False):
+    c.setLineWidth(0)
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.08))
+    c.roundRect(x, y - 2, 120 * mm, 10 * mm, 8, stroke=0, fill=1)
+    _set_fill_stroke(c, colors.black, colors.black)
+    c.setFont(FONT_BOLD, 11)
+    if rtl:
+        c.drawRightString(x + 120 * mm - 10, y + 2, txt)
+    else:
+        c.drawString(x + 10, y + 2, txt)
+
+
+def _draw_footer(c: canvas.Canvas, page_num: int, rtl: bool, L: Dict[str, str], W: float, margin: float):
+    c.setLineWidth(1)
+    c.setStrokeColor(colors.Color(0, 0, 0, alpha=0.10))
+    c.line(margin, 18 * mm, W - margin, 18 * mm)
 
     c.setFont(FONT_REG, 8)
-    if label:
-        if _is_ar(lang):
-            c.drawRightString(x + w - 6, y + h - 11, _truncate_to_width(_maybe_ar(label), FONT_REG, 8, w - 12))
-        else:
-            c.drawString(x + 6, y + h - 11, _truncate_to_width(label, FONT_REG, 8, w - 12))
-
-    c.setFont(FONT_REG, 9)
-    yy = y + h - 24
-    for raw in lines[:10]:
-        for ln in _wrap_to_width(raw, FONT_REG, 9, w - 12):
-            if yy < y + 8:
-                break
-            if _is_ar(lang):
-                c.drawRightString(x + w - 6, yy, _maybe_ar(ln))
-            else:
-                c.drawString(x + 6, yy, ln)
-            yy -= 12
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.65))
+    left = f"{COMPANY['name']} • {COMPANY['phone1']} • {COMPANY['email']}".strip(" •")
+    right = f"{L['page']} {page_num}"
+    if rtl:
+        c.drawRightString(W - margin, 8 * mm, _maybe_ar(left))
+        c.drawString(margin, 8 * mm, _maybe_ar(right))
+    else:
+        c.drawString(margin, 8 * mm, left)
+        c.drawRightString(W - margin, 8 * mm, right)
 
 
 # ============================================================
-# Main PDF
+# Main public function
 # ============================================================
 
 def build_contract_pdf(payload: Dict[str, Any], lang: str = "fr") -> bytes:
     lang = (lang or "fr").lower().strip()
     if lang not in ("fr", "en", "ar"):
         lang = "fr"
-
+    rtl = _is_ar(lang)
     L = LABELS[lang]
-    buf = io.BytesIO()
-    c = canvas.Canvas(buf, pagesize=A4)
-    W, H = A4
 
-    _draw_contract_page_1(c, payload, lang, L, W, H)
-    c.showPage()
-    _draw_contract_page_2_conditions(c, lang, L, W, H)
+    # -------- extract data
+    client_name = _safe(payload.get("client_name"))
+    client_phone = _safe(payload.get("client_phone"))
+    client_address = _safe(payload.get("client_address"))
+    doc_id = _safe(payload.get("doc_id"))
+    driver_license = _safe(payload.get("driver_license"))
 
-    c.save()
-    return buf.getvalue()
+    vehicle_name = _safe(payload.get("vehicle_name")) or _safe(payload.get("vehicle_model"))
+    vehicle_model = _safe(payload.get("vehicle_model"))
+    vehicle_plate = _safe(payload.get("vehicle_plate"))
+    vehicle_vin = _safe(payload.get("vehicle_vin"))
 
-
-def _draw_contract_page_1(c: canvas.Canvas, payload: Dict[str, Any], lang: str, L: Dict[str, str], W: float, H: float):
-    margin = 12 * mm
-    top = H - margin
-
-    _set_text_color(c)
-    c.setLineWidth(1)
-
-    # Outer frame
-    c.rect(margin, margin, W - 2 * margin, H - 2 * margin, stroke=1, fill=0)
-
-    # Header
-    header_h = 38 * mm
-    company_w = (W - 2 * margin) * 0.34
-    title_w = (W - 2 * margin) - company_w - 6
-
-    x0 = margin
-    y0 = top - header_h
-
-    # company box
-    c.rect(x0, y0, company_w, header_h, stroke=1, fill=0)
-    c.setFont(FONT_BOLD, 12)
-    c.drawString(x0 + 8, y0 + header_h - 18, COMPANY["name"])
-
-    c.setFont(FONT_REG, 9)
-    tagline = COMPANY["tagline_fr"] if lang == "fr" else COMPANY["tagline_en"] if lang == "en" else COMPANY["tagline_ar"]
-    c.drawString(x0 + 8, y0 + header_h - 32, _safe(tagline))
-
-    c.setFont(FONT_REG, 9)
-    c.drawString(x0 + 8, y0 + header_h - 46, f"☎ {COMPANY['phone1']}".strip())
-    yy = y0 + header_h - 60
-    if COMPANY["phone2"]:
-        c.drawString(x0 + 8, yy, f"☎ {COMPANY['phone2']}".strip())
-        yy -= 14
-    c.drawString(x0 + 8, yy, f"📍 {COMPANY['address']}".strip())
-    c.drawString(x0 + 8, yy - 14, f"✉ {COMPANY['email']}".strip())
-
-    # title box
-    tx = x0 + company_w + 6
-    c.rect(tx, y0, title_w, header_h, stroke=1, fill=0)
-
-    c.setFont(FONT_BOLD, 14)
-    if _is_ar(lang):
-        c.drawRightString(tx + title_w - 10, y0 + header_h - 18, L["title"])
-    else:
-        c.drawString(tx + 10, y0 + header_h - 18, L["title"])
-
-    # checkboxes + ref
-    cb_size = 10
-    c.setFont(FONT_REG, 10)
-
-    # row
-    cy = y0 + header_h - 34
-    if _is_ar(lang):
-        # right side
-        cx2 = tx + title_w - 150
-        _draw_checkbox(c, cx2, cy, cb_size, checked=True)
-        c.drawRightString(cx2 - 6, cy + 2, L["individual"])
-
-        cx1 = cx2 - 120
-        _draw_checkbox(c, cx1, cy, cb_size, checked=False)
-        c.drawRightString(cx1 - 6, cy + 2, L["enterprise"])
-    else:
-        cx = tx + 10
-        _draw_checkbox(c, cx, cy, cb_size, checked=False)
-        c.drawString(cx + cb_size + 6, cy + 2, L["enterprise"])
-
-        cx2 = cx + 130
-        _draw_checkbox(c, cx2, cy, cb_size, checked=True)
-        c.drawString(cx2 + cb_size + 6, cy + 2, L["individual"])
-
-    # ref line
-    ref = _contract_ref(payload)
-    c.setFont(FONT_REG, 10)
-    if _is_ar(lang):
-        c.drawRightString(tx + title_w - 10, y0 + 14, f"{L['ref']} : {ref}")
-    else:
-        c.drawString(tx + 10, y0 + 14, f"{L['ref']} : {ref}")
-
-    # Body panels
-    body_top = y0 - 8
-    body_h = 112 * mm
-    left_w = (W - 2 * margin) * 0.52
-    right_w = (W - 2 * margin) - left_w - 6
-
-    left_x = margin
-    right_x = margin + left_w + 6
-    body_y = body_top - body_h
-
-    c.setFont(FONT_BOLD, 11)
-    c.rect(left_x, body_y, left_w, body_h, stroke=1, fill=0)
-    c.rect(right_x, body_y, right_w, body_h, stroke=1, fill=0)
-
-    if _is_ar(lang):
-        c.drawRightString(left_x + left_w - 8, body_y + body_h - 16, L["tenant"])
-        c.drawRightString(right_x + right_w - 8, body_y + body_h - 16, L["vehicle"])
-    else:
-        c.drawString(left_x + 8, body_y + body_h - 16, L["tenant"])
-        c.drawString(right_x + 8, body_y + body_h - 16, L["vehicle"])
-
-    # payload fields
-    p_client = _safe(payload.get("client_name"))
-    p_phone = _safe(payload.get("client_phone"))
-    p_addr = _safe(payload.get("client_address"))
-    p_doc = _safe(payload.get("doc_id"))
-    p_permit = _safe(payload.get("driver_license"))
-
-    p_start = _fmt_dt_local(_safe(payload.get("start_date")))
-    p_end = _fmt_dt_local(_safe(payload.get("end_date")))
-    p_pick = _safe(payload.get("pickup_location"))
-    p_ret = _safe(payload.get("return_location"))
-
-    v_plate = _safe(payload.get("vehicle_plate"))
-    v_model = _safe(payload.get("vehicle_model")) or _safe(payload.get("vehicle_name"))
-    v_vin = _safe(payload.get("vehicle_vin"))
-
-    row_h = 14 * mm
-
-    # left grid
-    grid_x = left_x + 6
-    grid_top = body_y + body_h - 26
-
-    _draw_kv(c, grid_x, grid_top - row_h, left_w - 12, row_h, L["denomination"], p_client, lang)
-
-    w1 = (left_w - 12) * 0.52
-    w2 = (left_w - 12) - w1 - 6
-    _draw_kv(c, grid_x, grid_top - 2 * row_h, w1, row_h, L["phone"], p_phone, lang)
-    _draw_kv(c, grid_x + w1 + 6, grid_top - 2 * row_h, w2, row_h, L["doc"], p_doc, lang)
-
-    _draw_kv(c, grid_x, grid_top - 3 * row_h, left_w - 12, row_h, L["address"], p_addr, lang)
-    _draw_kv(c, grid_x, grid_top - 4 * row_h, left_w - 12, row_h, L["permit"], p_permit, lang)
-
-    _draw_multiline(
-        c,
-        grid_x,
-        grid_top - 5 * row_h - 2,
-        left_w - 12,
-        16 * mm,
-        L["pickup_date"],
-        [f"{L['from']} {p_start}", f"{L['to']} {p_end}"],
-        lang,
-    )
-
-    _draw_multiline(
-        c,
-        grid_x,
-        body_y + 18 * mm,
-        left_w - 12,
-        22 * mm,
-        "",
-        [f"{L['pickup_place']}: {p_pick}", f"{L['return_place']}: {p_ret}"],
-        lang,
-    )
-
-    # right grid
-    rx = right_x + 6
-    rt = body_y + body_h - 26
-
-    _draw_kv(c, rx, rt - row_h, right_w - 12, row_h, L["model"], v_model, lang)
-    _draw_kv(c, rx, rt - 2 * row_h, right_w - 12, row_h, L["plate"], v_plate, lang)
-    _draw_kv(c, rx, rt - 3 * row_h, right_w - 12, row_h, L["vin"], v_vin, lang)
-
-    # vehicle condition
-    c.setFont(FONT_BOLD, 10)
-    if _is_ar(lang):
-        c.drawRightString(rx + right_w - 12, rt - 3 * row_h - 16, L["state"])
-    else:
-        c.drawString(rx, rt - 3 * row_h - 16, L["state"])
-
-    c.setFont(FONT_REG, 9)
-    cb = 10
-    opt_y = rt - 3 * row_h - 34
-
-    def _row(label: str, checked: bool):
-        nonlocal opt_y
-        if _is_ar(lang):
-            # checkbox on right
-            bx = rx + (right_w - 12) - cb
-            _draw_checkbox(c, bx, opt_y, cb, checked=checked)
-            c.drawRightString(bx - 6, opt_y + 2, label)
-        else:
-            _draw_checkbox(c, rx, opt_y, cb, checked=checked)
-            c.drawString(rx + cb + 6, opt_y + 2, label)
-        opt_y -= 14
-
-    _row(L["ok"], True)
-    _row(L["damaged"], False)
-    _row(L["other_pb"], False)
-
-    # sub items
-    sub_labels = [L["dirt"], L["missing"], L["burns"], L["other"]]
-    for s in sub_labels:
-        _row("  - " + s if not _is_ar(lang) else s, False)
-
-    # options
-    options = payload.get("options") or {}
-    gps = bool(options.get("gps"))
-    chauffeur = bool(options.get("chauffeur"))
-    baby = bool(options.get("baby_seat"))
-
-    c.setFont(FONT_BOLD, 10)
-    if _is_ar(lang):
-        c.drawRightString(rx + right_w - 12, body_y + 52, L["options"])
-    else:
-        c.drawString(rx, body_y + 52, L["options"])
-
-    c.setFont(FONT_REG, 9)
-    oy = body_y + 38
-
-    if _is_ar(lang):
-        # align right, checkboxes on right
-        bx = rx + (right_w - 12) - cb
-        _draw_checkbox(c, bx, oy, cb, checked=gps)
-        c.drawRightString(bx - 6, oy + 2, L["gps"])
-
-        bx2 = bx - 90
-        _draw_checkbox(c, bx2, oy, cb, checked=chauffeur)
-        c.drawRightString(bx2 - 6, oy + 2, L["chauffeur"])
-
-        _draw_checkbox(c, bx, oy - 14, cb, checked=baby)
-        c.drawRightString(bx - 6, oy - 12, L["baby"])
-    else:
-        _draw_checkbox(c, rx, oy, cb, checked=gps)
-        c.drawString(rx + cb + 6, oy + 2, L["gps"])
-        _draw_checkbox(c, rx + 90, oy, cb, checked=chauffeur)
-        c.drawString(rx + 90 + cb + 6, oy + 2, L["chauffeur"])
-        _draw_checkbox(c, rx, oy - 14, cb, checked=baby)
-        c.drawString(rx + cb + 6, oy - 12, L["baby"])
+    start_date = _fmt_dt_local(_safe(payload.get("start_date")))
+    end_date = _fmt_dt_local(_safe(payload.get("end_date")))
+    pickup_location = _safe(payload.get("pickup_location"))
+    return_location = _safe(payload.get("return_location"))
 
     notes = _safe(payload.get("notes"))
-    _draw_multiline(c, rx, body_y + 6, right_w - 12, 26 * mm, L["notes"], [notes], lang)
+    options = payload.get("options") or {}
+    opt_gps = bool(options.get("gps"))
+    opt_driver = bool(options.get("chauffeur"))
+    opt_baby = bool(options.get("baby_seat"))
 
-    # bottom: return fill + signatures
-    bottom_y = margin + 10
+    trello_url = _safe(payload.get("trello_card_url") or payload.get("trello_url") or payload.get("card_url") or "")
 
-    c.rect(margin, bottom_y + 38 * mm, W - 2 * margin, 30 * mm, stroke=1, fill=0)
-    c.setFont(FONT_BOLD, 10.5)
-    if _is_ar(lang):
-        c.drawRightString(W - margin - 8, bottom_y + 38 * mm + 30 * mm - 14, L["return_fill"])
-    else:
-        c.drawString(margin + 8, bottom_y + 38 * mm + 30 * mm - 14, L["return_fill"])
+    ref = _contract_ref(payload)
+    today_str = datetime.now().strftime("%Y-%m-%d")
 
-    bx = margin + 8
-    by = bottom_y + 42 * mm
-    bw = (W - 2 * margin - 24) / 2
-    bh = 18 * mm
-    _draw_kv(c, bx, by, bw, bh, L["km"], "", lang)
-    _draw_kv(c, bx + bw + 8, by, bw, bh, L["fuel"], "", lang)
-
-    # signatures
-    sig_y = bottom_y
-    sig_h = 34 * mm
-    sig_w = (W - 2 * margin - 10) / 2
-
-    c.rect(margin, sig_y, sig_w, sig_h, stroke=1, fill=0)
-    c.rect(margin + sig_w + 10, sig_y, sig_w, sig_h, stroke=1, fill=0)
-
-    c.setFont(FONT_REG, 9)
-    if _is_ar(lang):
-        c.drawRightString(margin + sig_w - 8, sig_y + sig_h - 14, L["sign_renter"])
-        c.drawRightString(margin + sig_w + 10 + sig_w - 8, sig_y + sig_h - 14, L["sign_tenant"])
-    else:
-        c.drawString(margin + 8, sig_y + sig_h - 14, L["sign_renter"])
-        c.drawString(margin + sig_w + 18, sig_y + sig_h - 14, L["sign_tenant"])
-
-    # footer
-    c.setFont(FONT_REG, 8)
-    c.setFillColor(colors.grey)
-    c.drawRightString(W - margin, margin - 2, f"{L['page']} 1/2")
-    c.setFillColor(colors.black)
-
-
-def _draw_contract_page_2_conditions(c: canvas.Canvas, lang: str, L: Dict[str, str], W: float, H: float):
-    margin = 14 * mm
-    _set_text_color(c)
-
-    c.setFont(FONT_BOLD, 16)
-    if _is_ar(lang):
-        c.drawRightString(W - margin, H - margin - 10, L["conditions"])
-    else:
-        c.drawString(margin, H - margin - 10, L["conditions"])
-
-    items = _conditions_for_lang(lang)
-
-    # For AR: keep it simple (1 column, right aligned) to avoid ugly overlap
-    if _is_ar(lang):
-        x = W - margin
-        y = H - margin - 35
-        line_h = 13
-        c.setFont(FONT_REG, 11)
-        max_w = W - 2 * margin
-        for p in items:
-            lines = _wrap_to_width(_maybe_ar(p), FONT_REG, 11, max_w)
-            for ln in lines:
-                if y < margin + 20:
-                    c.showPage()
-                    _set_text_color(c)
-                    c.setFont(FONT_BOLD, 16)
-                    c.drawRightString(W - margin, H - margin - 10, L["conditions"])
-                    c.setFont(FONT_REG, 11)
-                    y = H - margin - 35
-                c.drawRightString(x, y, ln)
-                y -= line_h
-            y -= 6
-    else:
-        # Two columns FR/EN
-        col_gap = 10 * mm
-        col_w = (W - 2 * margin - col_gap) / 2
-        top_y = H - margin - 35
-        bottom_y = margin + 18
-        line_h = 12.5
-
-        mid = (len(items) + 1) // 2
-        cols = [items[:mid], items[mid:]]
-
-        c.setFont(FONT_REG, 10.5)
-
-        for ci in range(2):
-            x = margin + ci * (col_w + col_gap)
-            y = top_y
-            max_w = col_w
-            for paragraph in cols[ci]:
-                # wrap by width, not max chars
-                wrapped = _wrap_to_width(paragraph, FONT_REG, 10.5, max_w)
-                for ln in wrapped:
-                    if y < bottom_y:
-                        break
-                    c.drawString(x, y, ln)
-                    y -= line_h
-                y -= 6
-
-    c.setFont(FONT_REG, 8)
-    c.setFillColor(colors.grey)
-    c.drawRightString(W - margin, margin - 2, f"{L['page']} 2/2")
-    c.setFillColor(colors.black)
-
-
-# ============================================================
-# Finance PDF (kept for compatibility)
-# ============================================================
-
-def build_month_report_pdf(title: str, lines: List[str]) -> bytes:
+    # -------- pdf init
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
     W, H = A4
 
-    margin = 18 * mm
-    y = H - margin
+    margin = 14 * mm
+    x0 = margin
+    x1 = W - margin
+    y_top = H - margin
 
-    c.setFont(FONT_BOLD, 16)
+    # Theme colors (soft pro)
+    ACCENT = colors.HexColor("#2563EB")  # blue
+    ACCENT2 = colors.HexColor("#7C3AED")  # violet
+    ACCENT3 = colors.HexColor("#14B8A6")  # teal
+
+    def new_page(page_num: int):
+        # background subtle
+        c.setFillColor(colors.white)
+        c.rect(0, 0, W, H, stroke=0, fill=1)
+        _draw_footer(c, page_num, rtl, L, W, margin)
+
+    # ============================================================
+    # PAGE 1
+    # ============================================================
+    page = 1
+    new_page(page)
+
+    # Header block
+    header_h = 34 * mm
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.02))
+    c.roundRect(x0, y_top - header_h, x1 - x0, header_h, 14, stroke=0, fill=1)
+
+    # Accent bar
+    c.setFillColor(ACCENT)
+    c.roundRect(x0, y_top - header_h, 6, header_h, 3, stroke=0, fill=1)
+
+    # Company name + contacts
     c.setFillColor(colors.black)
-    c.drawString(margin, y, _safe(title))
-    y -= 22
+    c.setFont(FONT_BOLD, 14)
+    company_name = COMPANY["name"]
+    tagline = COMPANY["tagline_ar"] if rtl else (COMPANY["tagline_en"] if lang == "en" else COMPANY["tagline_fr"])
+    tagline = _maybe_ar(tagline) if rtl else tagline
 
-    c.setFont(FONT_REG, 11)
-    for ln in lines:
-        if y < margin:
-            c.showPage()
-            y = H - margin
-            c.setFont(FONT_REG, 11)
-        c.drawString(margin, y, _safe(ln))
-        y -= 14
+    left_x = x0 + 14
+    right_x = x1 - 12
 
+    if rtl:
+        c.drawRightString(right_x, y_top - 16, _maybe_ar(company_name))
+        c.setFont(FONT_REG, 9)
+        c.setFillColor(colors.Color(0, 0, 0, alpha=0.75))
+        c.drawRightString(right_x, y_top - 30, tagline)
+    else:
+        c.drawString(left_x, y_top - 16, company_name)
+        c.setFont(FONT_REG, 9)
+        c.setFillColor(colors.Color(0, 0, 0, alpha=0.75))
+        c.drawString(left_x, y_top - 30, tagline)
+
+    # Title + ref/date on the right
+    title = L["title"]
+    if rtl:
+        title = _maybe_ar(title)
+
+    c.setFont(FONT_BOLD, 15)
+    c.setFillColor(colors.black)
+
+    if rtl:
+        c.drawString(x0 + 14, y_top - 18, title)
+    else:
+        c.drawRightString(x1 - 12, y_top - 18, title)
+
+    # Pills: ref and date
+    c.setFillColor(ACCENT2)
+    pill_w = 62 * mm
+    pill_h = 10 * mm
+    pill_y = y_top - header_h + 10
+
+    ref_txt = f"{L['ref']}: {ref}"
+    date_txt = f"{L['date']}: {today_str}"
+    if rtl:
+        ref_txt = _maybe_ar(f"{L['ref']}: {ref}")
+        date_txt = _maybe_ar(f"{L['date']}: {today_str}")
+
+    _draw_pill(c, x0 + 14, pill_y, pill_w, pill_h, ref_txt, rtl=False)
+    c.setFillColor(ACCENT3)
+    _draw_pill(c, x0 + 14 + pill_w + 8, pill_y, pill_w, pill_h, date_txt, rtl=False)
+
+    # Contacts bottom in header
+    c.setFont(FONT_REG, 9)
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.65))
+    contacts = " • ".join([x for x in [COMPANY["phone1"], COMPANY["phone2"], COMPANY["email"], COMPANY["address"]] if x]).strip(" •")
+    if rtl:
+        c.drawRightString(right_x, y_top - header_h + 12, _maybe_ar(contacts))
+    else:
+        c.drawString(left_x, y_top - header_h + 12, contacts)
+
+    # Layout positions
+    y = y_top - header_h - 10 * mm
+
+    # Summary section
+    _section_title(c, x0, y - 6, L["summary"], rtl=rtl)
+    y -= 16 * mm
+
+    # Summary boxes (3 columns)
+    box_h = 18 * mm
+    gap = 8 * mm
+    col_w = (x1 - x0 - 2 * gap) / 3
+
+    _kv_box(c, x0, y - box_h, col_w, box_h, L["from"], start_date, rtl=rtl, accent=ACCENT)
+    _kv_box(c, x0 + col_w + gap, y - box_h, col_w, box_h, L["to"], end_date, rtl=rtl, accent=ACCENT2)
+
+    # options quick text
+    opt_txt = []
+    if opt_gps: opt_txt.append(L["gps"])
+    if opt_driver: opt_txt.append(L["chauffeur"])
+    if opt_baby: opt_txt.append(L["baby"])
+    opt_value = ", ".join(opt_txt) if opt_txt else ("-" if not rtl else _maybe_ar("-"))
+    _kv_box(c, x0 + 2 * (col_w + gap), y - box_h, col_w, box_h, L["options"], opt_value, rtl=rtl, accent=ACCENT3)
+
+    y -= box_h + 10 * mm
+
+    # Two columns: Client / Vehicle
+    col2_gap = 10 * mm
+    col2_w = (x1 - x0 - col2_gap) / 2
+    left_col_x = x0
+    right_col_x = x0 + col2_w + col2_gap
+
+    _section_title(c, left_col_x, y - 6, L["client"], rtl=rtl)
+    _section_title(c, right_col_x, y - 6, L["vehicle"], rtl=rtl)
+    y -= 16 * mm
+
+    # Client fields (stack)
+    field_h = 16 * mm
+    _kv_box(c, left_col_x, y - field_h, col2_w, field_h, L["denomination"], client_name, rtl=rtl, accent=ACCENT)
+    y1c = y - field_h - 6 * mm
+    _kv_box(c, left_col_x, y1c - field_h, col2_w, field_h, L["phone"], client_phone, rtl=rtl)
+    y1c2 = y1c - field_h - 6 * mm
+    _kv_box(c, left_col_x, y1c2 - field_h, col2_w, field_h, L["doc"], doc_id, rtl=rtl)
+    y1c3 = y1c2 - field_h - 6 * mm
+    _kv_box(c, left_col_x, y1c3 - field_h, col2_w, field_h, L["permit"], driver_license, rtl=rtl)
+
+    # Address bigger
+    addr_h = 22 * mm
+    _kv_box(c, left_col_x, y1c3 - field_h - 6 * mm - addr_h, col2_w, addr_h, L["address"], client_address, rtl=rtl)
+
+    # Vehicle fields (stack)
+    yv = y
+    _kv_box(c, right_col_x, yv - field_h, col2_w, field_h, L["model"], vehicle_model or vehicle_name, rtl=rtl, accent=ACCENT2)
+    yv1 = yv - field_h - 6 * mm
+    _kv_box(c, right_col_x, yv1 - field_h, col2_w, field_h, L["plate"], vehicle_plate, rtl=rtl)
+    yv2 = yv1 - field_h - 6 * mm
+    _kv_box(c, right_col_x, yv2 - field_h, col2_w, field_h, L["vin"], vehicle_vin, rtl=rtl)
+
+    # Rental info boxes under vehicle
+    place_h = 18 * mm
+    yv3 = yv2 - field_h - 8 * mm
+    _kv_box(c, right_col_x, yv3 - place_h, col2_w, place_h, L["pickup_place"], pickup_location, rtl=rtl, accent=ACCENT3)
+    yv4 = yv3 - place_h - 6 * mm
+    _kv_box(c, right_col_x, yv4 - place_h, col2_w, place_h, L["return_place"], return_location, rtl=rtl)
+
+    # Notes (full width)
+    y_notes = (y1c3 - field_h - 6 * mm - addr_h) - 12 * mm
+    notes_h = 22 * mm
+    if y_notes - notes_h < 45 * mm:
+        # not enough space => push to next page
+        c.showPage()
+        page += 1
+        new_page(page)
+        y_notes = H - margin - 18 * mm
+
+    _section_title(c, x0, y_notes - 6, L["notes"], rtl=rtl)
+    y_notes -= 16 * mm
+    _kv_box(c, x0, y_notes - notes_h, x1 - x0, notes_h, L["notes"], notes or "-", rtl=rtl)
+
+    # ============================================================
+    # PAGE 2+ : Terms
+    # ============================================================
+    c.showPage()
+    page += 1
+    new_page(page)
+
+    y = H - margin - 10 * mm
+    _section_title(c, x0, y - 6, L["terms"], rtl=rtl)
+    y -= 18 * mm
+
+    terms = _conditions_for_lang(lang)
+
+    c.setFont(FONT_REG, 10)
+    c.setFillColor(colors.black)
+
+    line_h = 5.2 * mm
+    max_w = (x1 - x0)
+
+    def draw_term_line(line: str, y: float) -> float:
+        nonlocal c
+        # wrap
+        parts = _wrap(line, FONT_REG, 10, max_w)
+        for p in parts:
+            if y < 35 * mm:
+                # next page
+                c.showPage()
+                nonlocal_page_inc()
+                y = H - margin - 10 * mm
+                _section_title(c, x0, y - 6, L["terms"], rtl=rtl)
+                y -= 18 * mm
+                c.setFont(FONT_REG, 10)
+                c.setFillColor(colors.black)
+
+            if rtl:
+                c.drawRightString(x1, y, p)
+            else:
+                c.drawString(x0, y, p)
+            y -= line_h
+        y -= 1.5 * mm
+        return y
+
+    def nonlocal_page_inc():
+        nonlocal page
+        page += 1
+        new_page(page)
+
+    for t in terms:
+        t = t if not rtl else _maybe_ar(t)
+        y = draw_term_line(t, y)
+
+    # ============================================================
+    # Signatures page (same page if place)
+    # ============================================================
+    if y < 95 * mm:
+        c.showPage()
+        page += 1
+        new_page(page)
+        y = H - margin - 10 * mm
+
+    _section_title(c, x0, y - 6, L["sign"], rtl=rtl)
+    y -= 18 * mm
+
+    sig_h = 38 * mm
+    sig_w = (x1 - x0 - 10 * mm) / 2
+
+    # boxes
+    c.setStrokeColor(colors.Color(0, 0, 0, alpha=0.12))
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.02))
+    c.roundRect(x0, y - sig_h, sig_w, sig_h, 12, stroke=1, fill=1)
+    c.roundRect(x0 + sig_w + 10 * mm, y - sig_h, sig_w, sig_h, 12, stroke=1, fill=1)
+
+    c.setFillColor(colors.black)
+    c.setFont(FONT_BOLD, 11)
+    if rtl:
+        c.drawRightString(x0 + sig_w - 10, y - 14, _maybe_ar(L["lessor"]))
+        c.drawRightString(x0 + sig_w + 10 * mm + sig_w - 10, y - 14, _maybe_ar(L["lessee"]))
+    else:
+        c.drawString(x0 + 10, y - 14, L["lessor"])
+        c.drawString(x0 + sig_w + 10 * mm + 10, y - 14, L["lessee"])
+
+    c.setFont(FONT_REG, 9)
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.65))
+    ra = L["read_approved"]
+    if rtl:
+        ra = _maybe_ar(ra)
+        c.drawRightString(x0 + sig_w - 10, y - 28, ra)
+        c.drawRightString(x0 + sig_w + 10 * mm + sig_w - 10, y - 28, ra)
+    else:
+        c.drawString(x0 + 10, y - 28, ra)
+        c.drawString(x0 + sig_w + 10 * mm + 10, y - 28, ra)
+
+    # signature lines
+    c.setStrokeColor(colors.Color(0, 0, 0, alpha=0.25))
+    c.setLineWidth(1)
+    c.line(x0 + 12, y - sig_h + 12, x0 + sig_w - 12, y - sig_h + 12)
+    c.line(x0 + sig_w + 10 * mm + 12, y - sig_h + 12, x0 + sig_w + 10 * mm + sig_w - 12, y - sig_h + 12)
+
+    # finalize
+    c.showPage()
     c.save()
     return buf.getvalue()
-
-
-def build_month_report_pdf_bytes(title: str, lines: List[str]) -> bytes:
-    return build_month_report_pdf(title, lines)
 
