@@ -459,6 +459,112 @@ def build_contract_pdf(payload: Dict[str, Any], lang: str = "fr") -> bytes:
     ACCENT2 = colors.HexColor("#7C3AED")  # violet
     ACCENT3 = colors.HexColor("#14B8A6")  # teal
 
+def build_month_report_pdf(totals: Dict[str, Any], items: List[Dict[str, Any]] | None = None, lang: str = "fr") -> bytes:
+    """
+    PDF simple et propre pour le rapport mensuel Finance.
+    - totals: dict avec keys possibles: paid, open, expenses, profit_est
+    - items: liste optionnelle de lignes (factures/dépenses) si tu veux plus tard
+    """
+    lang = (lang or "fr").lower().strip()
+    if lang not in ("fr", "en", "ar"):
+        lang = "fr"
+    rtl = _is_ar(lang)
+
+    title = "Rapport mensuel" if lang == "fr" else ("Monthly report" if lang == "en" else _maybe_ar("تقرير شهري"))
+
+    paid = _safe(totals.get("paid"))
+    open_ = _safe(totals.get("open"))
+    expenses = _safe(totals.get("expenses"))
+    profit = _safe(totals.get("profit_est"))
+
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    W, H = A4
+    margin = 16 * mm
+
+    # background
+    c.setFillColor(colors.white)
+    c.rect(0, 0, W, H, stroke=0, fill=1)
+
+    # header band
+    ACCENT = colors.HexColor("#2563EB")
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.02))
+    c.roundRect(margin, H - margin - 30 * mm, W - 2 * margin, 30 * mm, 12, stroke=0, fill=1)
+    c.setFillColor(ACCENT)
+    c.roundRect(margin, H - margin - 30 * mm, 6, 30 * mm, 3, stroke=0, fill=1)
+
+    c.setFillColor(colors.black)
+    c.setFont(FONT_BOLD, 16)
+    if rtl:
+        c.drawRightString(W - margin - 10, H - margin - 16, _maybe_ar(title))
+    else:
+        c.drawString(margin + 14, H - margin - 16, title)
+
+    c.setFont(FONT_REG, 9)
+    sub = f"{COMPANY['name']} • {datetime.now().strftime('%Y-%m-%d')}"
+    if rtl:
+        c.setFillColor(colors.Color(0, 0, 0, alpha=0.7))
+        c.drawRightString(W - margin - 10, H - margin - 28, _maybe_ar(sub))
+    else:
+        c.setFillColor(colors.Color(0, 0, 0, alpha=0.7))
+        c.drawString(margin + 14, H - margin - 28, sub)
+
+    # totals cards
+    y = H - margin - 46 * mm
+    card_h = 22 * mm
+    gap = 8 * mm
+    card_w = (W - 2 * margin - 3 * gap) / 4
+
+    def card(ix: int, label: str, value: str):
+        x = margin + ix * (card_w + gap)
+        c.setStrokeColor(colors.Color(0, 0, 0, alpha=0.12))
+        c.setFillColor(colors.Color(0, 0, 0, alpha=0.03))
+        c.roundRect(x, y - card_h, card_w, card_h, 10, stroke=1, fill=1)
+        c.setFillColor(colors.Color(0, 0, 0, alpha=0.65))
+        c.setFont(FONT_REG, 8)
+        if rtl:
+            c.drawRightString(x + card_w - 10, y - 12, _maybe_ar(label))
+            c.setFillColor(colors.black)
+            c.setFont(FONT_BOLD, 12)
+            c.drawRightString(x + card_w - 10, y - card_h + 9, _maybe_ar(value))
+        else:
+            c.drawString(x + 10, y - 12, label)
+            c.setFillColor(colors.black)
+            c.setFont(FONT_BOLD, 12)
+            c.drawString(x + 10, y - card_h + 9, value)
+
+    if lang == "fr":
+        card(0, "Payé", paid or "0")
+        card(1, "Ouvert", open_ or "0")
+        card(2, "Dépenses", expenses or "0")
+        card(3, "Profit estimé", profit or "0")
+    elif lang == "en":
+        card(0, "Paid", paid or "0")
+        card(1, "Open", open_ or "0")
+        card(2, "Expenses", expenses or "0")
+        card(3, "Estimated profit", profit or "0")
+    else:
+        card(0, "مدفوع", paid or "0")
+        card(1, "مفتوح", open_ or "0")
+        card(2, "مصاريف", expenses or "0")
+        card(3, "ربح تقديري", profit or "0")
+
+    # footer
+    c.setStrokeColor(colors.Color(0, 0, 0, alpha=0.10))
+    c.line(margin, 18 * mm, W - margin, 18 * mm)
+    c.setFont(FONT_REG, 8)
+    c.setFillColor(colors.Color(0, 0, 0, alpha=0.65))
+    foot = f"{COMPANY['name']} • {COMPANY['phone1']} • {COMPANY['email']}".strip(" •")
+    if rtl:
+        c.drawRightString(W - margin, 8 * mm, _maybe_ar(foot))
+    else:
+        c.drawString(margin, 8 * mm, foot)
+
+    c.showPage()
+    c.save()
+    return buf.getvalue()
+
+
     def new_page(page_num: int):
         # background subtle
         c.setFillColor(colors.white)
