@@ -16,11 +16,14 @@ def dump_payload(payload: dict) -> str:
 def now_iso() -> str:
     return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
-def audit_add(payload: dict, by: str, action: str, meta: dict | None = None):
-    payload.setdefault("audit", [])
-    payload["audit"].append({
-        "at": now_iso(),
-        "by": by,
+def audit_add(payload: dict, role: str, name: str, action: str = "event", meta: dict | None = None):
+    meta = meta or {}
+    payload.setdefault("_audit", [])
+    payload["_audit"].append({
+        "ts": datetime.utcnow().isoformat(),
+        "role": role,
+        "name": name,
         "action": action,
-        "meta": meta or {}
+        "meta": meta,
     })
+
