@@ -1,0 +1,122 @@
+# app/contract_renderer.py
+from __future__ import annotations
+
+import os
+from datetime import datetime
+from typing import Any, Dict
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from weasyprint import HTML, CSS
+
+
+def _safe(v: Any) -> str:
+    return ("" if v is None else str(v)).strip()
+
+
+def _fmt_dt_local(s: str) -> str:
+    s = _safe(s)
+    return s.replace("T", " ") if "T" in s else s
+
+
+def _contract_ref(payload: Dict[str, Any]) -> str:
+    ref = _safe(payload.get("contract_ref"))
+    if ref:
+        return ref
+    cid = _safe(payload.get("trello_card_id"))
+    short = cid[-6:] if len(cid) >= 6 else cid
+    return f"{datetime.now().strftime('%Y%m%d')}-{short}".strip("-")
+
+
+def render_contract_pdf(payload: Dict[str, Any], lang: str = "fr") -> bytes:
+    """
+    Render rental contract PDF using WeasyPrint (HTML/CSS).
+    lang: fr | en | ar
+    """
+    lang = (lang or "fr").lower().strip()
+    if lang not in ("fr", "en", "ar"):
+        lang = "fr"
+
+    base_dir = os.path.dirname(__file__)
+    tpl_dir = os.path.join(base_dir, "templates", "contracts")
+    static_dir = os.path.join(base_dir, "static")
+
+    env = Environment(
+        loader=FileSystemLoader(tpl_dir),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
+
+    options = payload.get("options") or {}
+    pricing = payload.get("pricing") or {}
+    mileage = payload.get("mileage") or {}
+    fuel = payload.get("fuel") or {}
+
+    ref = _contract_ref(payload)
+
+    ctx = {
+        "lang": lang,
+        "dir": "rtl" if lang == "ar" else "ltr",
+        "now_date": datetime.now().strftime("%Y-%m-%d"),
+        "ref": ref,
+        "company": {
+            "name": os.getenv("COMPANY_NAME", "Zohir Location Auto"),
+            "phone1": os.getenv("COMPANY_PHONE_1", "+213 ..."),
+            "phone2": os.getenv("COMPANY_PHONE_2", ""),
+            "email": os.getenv("COMPANY_EMAIL", "contact@..."),
+            "address": os.getenv("COMPANY_ADDRESS", "Alger"),
+            "website": os.getenv("COMPANY_WEBSITE", ""),
+        },
+        "client": {
+            "name": _safe(payload.get("client_name")),
+            "phone": _safe(payload.get("client_phone")),
+            "address": _safe(payload.get("client_address")),
+            "doc_id": _safe(payload.get("doc_id")),
+            "permit": _safe(payload.get("driver_license")),
+        },
+        "vehicle": {
+            "name": _safe(payload.get("vehicle_name")),
+            "model": _safe(payload.get("vehicle_model")),
+            "plate": _safe(payload.get("vehicle_plate")),
+            "vin": _safe(payload.get("vehicle_vin")),
+        },
+        "rental": {
+            "from": _fmt_dt_local(_safe(payload.get("start_date"))),
+            "to": _fmt_dt_local(_safe(payload.get("end_date"))),
+            "pickup": _safe(payload.get("pickup_location")),
+            "return": _safe(payload.get("return_location")),
+        },
+        "pricing": {
+            "currency": _safe(pricing.get("currency") or "DZD"),
+            "daily_price": _safe(pricing.get("daily_price")),
+            "deposit": _safe(pricing.get("deposit")),
+            "total": _safe(pricing.get("total")),
+        },
+        "mileage": {
+            "km_out": _safe(mileage.get("km_out")),
+            "km_in": _safe(mileage.get("km_in")),
+        },
+        "fuel": {
+            "out": _safe(fuel.get("out")),
+            "in": _safe(fuel.get("in")),
+        },
+        "options": {
+            "gps": bool(options.get("gps")),
+            "chauffeur": bool(options.get("chauffeur")),
+            "baby_seat": bool(options.get("baby_seat")),
+        },
+        "notes": _safe(payload.get("notes")),
+        "sign": {
+            "place": _safe(payload.get("sign_place") or _safe(payload.get("pickup_location")) or "—"),
+            "date": _safe(payload.get("sign_date") or datetime.now().strftime("%Y-%m-%d")),
+        },
+    }
+
+    template_name = f"contract_{lang}.html"
+    html_content = env.get_template(template_name).render(**ctx)
+
+    css_path = os.path.join(static_dir, "contracts", "contract.css")
+    base_url = base_dir  # allow relative paths to static/fonts
+
+    return HTML(string=html_content, base_url=base_url).write_pdf(
+        stylesheets=[CSS(filename=css_path)]
+    )
+

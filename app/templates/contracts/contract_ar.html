@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"></head>
+
+<body style="string-set: footer_left '{{ company.name }} • {{ ref }}';">
+
+  <div class="header">
+    <div class="brand">
+      <div class="company">{{ company.name }}</div>
+      <div class="meta">
+        {{ company.phone1 }}{% if company.phone2 %} • {{ company.phone2 }}{% endif %}
+        {% if company.email %} • {{ company.email }}{% endif %}
+        {% if company.address %} • {{ company.address }}{% endif %}
+      </div>
+    </div>
+    <div class="refbox">
+      <div class="pill">المرجع : <b>{{ ref }}</b></div>
+      <div class="pill">التاريخ : <b>{{ now_date }}</b></div>
+    </div>
+  </div>
+
+  <h1 class="title">عقد كراء سيارة</h1>
+  <p class="subtitle">وثيقة تعاقدية — احتفظ بنسخة</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h2 class="section-title">المستأجر (الزبون)</h2>
+      <div class="kv">
+        <div class="v">{{ client.name or "—" }}</div><div class="k">الاسم</div>
+        <div class="v">{{ client.phone or "—" }}</div><div class="k">الهاتف</div>
+        <div class="v">{{ client.address or "—" }}</div><div class="k">العنوان</div>
+        <div class="v">{{ client.doc_id or "—" }}</div><div class="k">وثيقة</div>
+        <div class="v">{{ client.permit or "—" }}</div><div class="k">رخصة السياقة</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">السيارة</h2>
+      <div class="kv">
+        <div class="v">{{ vehicle.name or vehicle.model or "—" }}</div><div class="k">الطراز</div>
+        <div class="v">{{ vehicle.model or "—" }}</div><div class="k">التفاصيل</div>
+        <div class="v">{{ vehicle.plate or "—" }}</div><div class="k">الترقيم</div>
+        <div class="v">{{ vehicle.vin or "—" }}</div><div class="k">VIN</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2 class="section-title">المدة والأماكن</h2>
+      <div class="kv">
+        <div class="v">{{ rental.from or "—" }}</div><div class="k">من</div>
+        <div class="v">{{ rental.to or "—" }}</div><div class="k">إلى</div>
+        <div class="v">{{ rental.pickup or "—" }}</div><div class="k">التسليم</div>
+        <div class="v">{{ rental.return or "—" }}</div><div class="k">الاسترجاع</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">السعر / الضمان</h2>
+      <div class="kv">
+        <div class="v">{{ pricing.daily_price or "—" }} {{ pricing.currency }}</div><div class="k">السعر/اليوم</div>
+        <div class="v">{{ pricing.deposit or "—" }} {{ pricing.currency }}</div><div class="k">الضمان</div>
+        <div class="v">{{ pricing.total or "—" }} {{ pricing.currency }}</div><div class="k">المجموع</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2 class="section-title">الخيارات</h2>
+      <div class="badges">
+        <div class="badge">GPS : <b>{{ "نعم" if options.gps else "لا" }}</b></div>
+        <div class="badge">سائق : <b>{{ "نعم" if options.chauffeur else "لا" }}</b></div>
+        <div class="badge">مقعد طفل : <b>{{ "نعم" if options.baby_seat else "لا" }}</b></div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2 class="section-title">العداد / الوقود</h2>
+      <table class="table">
+        <tr><th></th><th>عند التسليم</th><th>عند الاسترجاع</th></tr>
+        <tr><td>KM</td><td><b>{{ mileage.km_out or "—" }}</b></td><td><b>{{ mileage.km_in or "—" }}</b></td></tr>
+        <tr><td>الوقود</td><td><b>{{ fuel.out or "—" }}</b></td><td><b>{{ fuel.in or "—" }}</b></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">حالة السيارة (ضع علامة)</h2>
+      <table class="table">
+        <tr><td>☐ البطاقة الرمادية / التأمين</td></tr>
+        <tr><td>☐ مثلث + سترة + رافعة</td></tr>
+        <tr><td>☐ الإطارات جيدة</td></tr>
+        <tr><td>☐ تم تسجيل الخدوش/الأضرار</td></tr>
+        <tr><td>☐ تم تسجيل مستوى الوقود</td></tr>
+        <tr><td>☐ الملحقات (GPS / مقعد طفل)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="card">
+    <h2 class="section-title">ملاحظات</h2>
+    <div class="note">{{ notes or "—" }}</div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="sig">
+    <div class="sigbox">
+      <b>المؤجر</b><div class="small">قرأت ووافقت</div>
+      <div class="small">المكان: {{ sign.place }}</div>
+      <div class="small">التاريخ: {{ sign.date }}</div>
+      <div class="line"></div>
+    </div>
+
+    <div class="sigbox">
+      <b>المستأجر</b><div class="small">قرأت ووافقت</div>
+      <div class="small">المكان: {{ sign.place }}</div>
+      <div class="small">التاريخ: {{ sign.date }}</div>
+      <div class="line"></div>
+    </div>
+  </div>
+
+  <p class="small" style="margin-top:6mm;">
+    ملاحظة: المستأجر مسؤول عن المخالفات والتأخير والأضرار والاستعمال غير القانوني.
+  </p>
+</body>
+</html>
+

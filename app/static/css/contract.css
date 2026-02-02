@@ -1,0 +1,247 @@
+/* app/static/css/contract.css */
+
+/* Page setup */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+:root {
+  --ink: #0f2f45;
+  --muted: #6b7280;
+  --line: #d7dee7;
+  --soft: #f4f7fb;
+  --accent: #0f2f45;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  color: #111;
+}
+
+/* Brand header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 3px solid var(--accent);
+}
+
+.brand {
+  font-weight: 800;
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 1.1;
+}
+.brand small {
+  display: block;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.meta {
+  text-align: right;
+  font-size: 11px;
+  color: #111;
+}
+.meta .refline { font-weight: 700; }
+.meta .muted { color: var(--muted); font-weight: 600; }
+
+.title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: #111;
+  margin: 12px 0 10px;
+  letter-spacing: 0.2px;
+}
+
+/* Sections */
+.section {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 10px 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.section-h {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.section-b {
+  padding: 10px;
+}
+
+/* Tables */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.tbl td, .tbl th {
+  border: 1px solid var(--line);
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+.tbl th {
+  background: var(--soft);
+  font-weight: 800;
+  color: #111;
+}
+
+.key {
+  width: 28%;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.val {
+  width: 22%;
+  font-weight: 800;
+  color: #111;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: #fff;
+}
+
+/* Notes */
+.notes {
+  min-height: 42px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+/* Conditions page (page 2) */
+.page2 {
+  break-before: page;
+}
+
+.conditions-wrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.cond-block {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cond-h {
+  background: #0b2233;
+  color: #fff;
+  font-weight: 900;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.cond-b {
+  padding: 10px 12px;
+  line-height: 1.45;
+}
+
+.cond-b ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.cond-b li { margin: 3px 0; }
+
+/* Signatures — IMPORTANT: no extra page */
+.signatures {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+
+  /* Prevent split and prevent accidental overflow */
+  break-inside: avoid;
+}
+
+.sign-h {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 900;
+  padding: 8px 10px;
+}
+
+.sign-b {
+  padding: 10px;
+}
+
+.sign-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.sign-box {
+  border: 1px dashed #b8c6d6;
+  border-radius: 10px;
+  padding: 10px;
+  height: 90px;              /* <= keep it compact */
+  position: relative;
+  background: #fff;
+}
+
+.sign-role {
+  font-weight: 900;
+  color: #111;
+  font-size: 12px;
+}
+
+.sign-line {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 18px;
+  border-top: 1px solid #111;
+}
+
+.sign-hint {
+  position: absolute;
+  left: 10px;
+  bottom: 2px;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* Footer */
+.footer {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 10.5px;
+  text-align: center;
+}
+

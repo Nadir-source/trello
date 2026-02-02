@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Contrat de location</title>
+  <link rel="stylesheet" href="static/css/contract.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="brand">
+      <div class="logo">{{ payload.company.logo_text }}</div>
+      <div class="brand-title">
+        LOCATION <span>{{ payload.company.name }}</span>
+        <div class="small muted">{{ payload.company.address }}</div>
+      </div>
+    </div>
+    <div class="contact">
+      📞 {{ payload.company.phone1 }}{% if payload.company.phone2 %} • {{ payload.company.phone2 }}{% endif %}<br>
+      ✉️ {{ payload.company.email }}{% if payload.company.website %}<br>🌐 {{ payload.company.website }}{% endif %}
+    </div>
+  </div>
+
+  <div class="title">CONTRAT DE LOCATION DE VÉHICULE</div>
+  <div class="subtitle">Document contractuel — à conserver</div>
+
+  <div class="meta">
+    <div class="pill">
+      <div class="k">Référence</div>
+      <div class="v">{{ payload.contract_ref or "-" }}</div>
+    </div>
+    <div class="pill">
+      <div class="k">Date</div>
+      <div class="v">{{ payload.date_now }}</div>
+    </div>
+  </div>
+
+  <!-- PAGE 1 (FR) -->
+  <div class="card">
+    <div class="section-title">Informations client</div>
+    <table>
+      <tr>
+        <td><div class="k">Nom</div><div class="v">{{ payload.client_name or "-" }}</div></td>
+        <td><div class="k">Téléphone</div><div class="v">{{ payload.client_phone or "-" }}</div></td>
+      </tr>
+      <tr>
+        <td><div class="k">Document</div><div class="v">{{ payload.doc_id or "-" }}</div></td>
+        <td><div class="k">Permis</div><div class="v">{{ payload.driver_license or "-" }}</div></td>
+      </tr>
+      <tr>
+        <td colspan="2"><div class="k">Adresse</div><div class="v">{{ payload.client_address or "-" }}</div></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title">Véhicule</div>
+      <table>
+        <tr>
+          <td><div class="k">Véhicule</div><div class="v">{{ payload.vehicle_name or "-" }}</div></td>
+          <td><div class="k">Modèle</div><div class="v">{{ payload.vehicle_model or "-" }}</div></td>
+        </tr>
+        <tr>
+          <td><div class="k">Immatriculation</div><div class="v">{{ payload.vehicle_plate or "-" }}</div></td>
+          <td><div class="k">VIN</div><div class="v">{{ payload.vehicle_vin or "-" }}</div></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Période & lieux</div>
+      <table>
+        <tr>
+          <td><div class="k">Début</div><div class="v">{{ payload.start_date or "-" }}</div></td>
+          <td><div class="k">Fin</div><div class="v">{{ payload.end_date or "-" }}</div></td>
+        </tr>
+        <tr>
+          <td><div class="k">Retrait</div><div class="v">{{ payload.pickup_location or "-" }}</div></td>
+          <td><div class="k">Retour</div><div class="v">{{ payload.return_location or "-" }}</div></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title">Tarifs</div>
+      <table>
+        <tr>
+          <td><div class="k">Devise</div><div class="v">{{ payload.pricing.currency if payload.pricing else "DZD" }}</div></td>
+          <td><div class="k">Prix/jour</div><div class="v">{{ payload.pricing.daily_price if payload.pricing else "-" }}</div></td>
+        </tr>
+        <tr>
+          <td><div class="k">Caution</div><div class="v">{{ payload.pricing.deposit if payload.pricing else "-" }}</div></td>
+          <td><div class="k">Total estimé</div><div class="v">{{ payload.pricing.total if payload.pricing else "-" }}</div></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Options</div>
+      <table>
+        <tr>
+          <td><span class="check {% if payload.options and payload.options.gps %}checked{% endif %}"></span> GPS</td>
+          <td><span class="check {% if payload.options and payload.options.chauffeur %}checked{% endif %}"></span> Chauffeur</td>
+          <td><span class="check {% if payload.options and payload.options.baby_seat %}checked{% endif %}"></span> Siège bébé</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">État du véhicule</div>
+    <table>
+      <tr><th>Départ</th><th>Retour</th></tr>
+      <tr>
+        <td>
+          <div class="k">Km</div><div class="v">{{ payload.mileage.km_out if payload.mileage else "-" }}</div>
+          <div class="k">Carburant</div><div class="v">{{ payload.fuel.out if payload.fuel else "-" }}</div>
+        </td>
+        <td>
+          <div class="k">Km</div><div class="v">{{ payload.mileage.km_in if payload.mileage else "" }}</div>
+          <div class="k">Carburant</div><div class="v">{{ payload.fuel.in if payload.fuel else "" }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Notes</div>
+    <div>{{ payload.notes or "—" }}</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Signatures</div>
+    <div class="small muted">Lu et approuvé</div>
+    <div class="signature">
+      <div class="sigbox">
+        <div class="bold">Loueur</div>
+        <div class="sigline"></div>
+      </div>
+      <div class="sigbox">
+        <div class="bold">Locataire</div>
+        <div class="sigline"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>{{ payload.company.name }} • {{ payload.contract_ref }}</div>
+    <div>Page 1</div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page-break"></div>
+
+  <div class="title">CONDITIONS GÉNÉRALES</div>
+  <div class="subtitle">FR / EN / AR — à lire avant signature</div>
+
+  <!-- FR -->
+  <div class="card">
+    <div class="section-title">🇫🇷 Conditions (Français)</div>
+    <ol>
+      <li>Le locataire fournit une pièce d’identité et un permis valides (originaux) et garantit l’exactitude des informations.</li>
+      <li>Seuls les conducteurs déclarés sont autorisés à conduire le véhicule.</li>
+      <li>Usage interdit : course, off-road, sous-location, transport illégal, remorquage sans accord écrit.</li>
+      <li>Le locataire est responsable des amendes, péages, stationnement, infractions et frais associés.</li>
+      <li>Carburant : restitution au même niveau qu’au départ, sinon facturation du complément + frais.</li>
+      <li>Retard : facturation possible (heures/jours supplémentaires) et/ou récupération du véhicule.</li>
+      <li>Dommages : toute casse, rayure, intérieur sali, accessoires manquants est facturable.</li>
+      <li>Accident/incident : déclaration immédiate + photos + constat/rapport si possible, coopération obligatoire.</li>
+      <li>Assurance/Franchise : dépôt de garantie et franchises applicables selon l’offre choisie, hors exclusions.</li>
+      <li>Interdictions : fumer à bord, transporter animaux sans accord (sinon frais de nettoyage).</li>
+      <li>Le loueur peut immobiliser/récupérer le véhicule en cas d’usage interdit, impayé, fraude ou risque.</li>
+      <li>Litiges : résolution à l’amiable prioritaire, sinon juridiction du lieu du loueur.</li>
+    </ol>
+  </div>
+
+  <!-- EN -->
+  <div class="card">
+    <div class="section-title">🇬🇧 Terms (English)</div>
+    <ol>
+      <li>The renter provides valid ID and driving license (originals) and warrants all information is accurate.</li>
+      <li>Only declared/authorized drivers may operate the vehicle.</li>
+      <li>Prohibited use: racing, off-road, sub-rental, illegal transport, towing without written consent.</li>
+      <li>The renter is responsible for all fines, tolls, parking tickets and related fees.</li>
+      <li>Fuel: vehicle must be returned with the same fuel level, otherwise fuel difference + fees apply.</li>
+      <li>Late return may be billed (extra hours/days) and the vehicle may be recovered.</li>
+      <li>Damages: any damage, scratches, excessive dirt, missing accessories may be charged.</li>
+      <li>Accident/incident: must be reported immediately with photos and a report if possible.</li>
+      <li>Insurance/excess: deposit and deductible apply depending on the selected plan and exclusions.</li>
+      <li>No smoking. No pets without approval (cleaning fees may apply).</li>
+      <li>The owner may immobilize/recover the vehicle in case of prohibited use, non-payment or fraud/risk.</li>
+      <li>Disputes: amicable settlement first; otherwise jurisdiction of the owner’s location.</li>
+    </ol>
+  </div>
+
+  <!-- AR -->
+  <div class="ar-block">
+    <div class="ar-title">🇸🇦 الشروط العامة (العربية)</div>
+    <ol>
+      <li>يقدّم المستأجر بطاقة هوية ورخصة سياقة ساريتين (الأصول) ويتحمل مسؤولية صحة المعلومات.</li>
+      <li>يسمح فقط للسائقين المصرّح بهم في العقد بقيادة السيارة.</li>
+      <li>يمنع الاستعمال التالي: السباق، الطرق الوعرة، التأجير من الباطن، النقل غير القانوني، السحب دون موافقة كتابية.</li>
+      <li>جميع المخالفات والرسوم (الدفع، الوقوف، الطرقات) على عاتق المستأجر.</li>
+      <li>الوقود: تُرجع السيارة بنفس مستوى الوقود، وإلا تُحسب تكلفة الفرق مع رسوم إضافية.</li>
+      <li>التأخير: قد يتم احتساب ساعات/أيام إضافية ويمكن للمؤجر استرجاع السيارة.</li>
+      <li>الأضرار: تُحسب أي أضرار/خدوش/اتساخ زائد/نقص في الملحقات على المستأجر.</li>
+      <li>حادث/واقعة: يجب الإبلاغ فوراً مع صور ومحضر/تصريح إن أمكن.</li>
+      <li>التأمين/التحمل: تطبق الكفالة ونسبة التحمل حسب العرض المختار والاستثناءات.</li>
+      <li>يمنع التدخين داخل السيارة ويمنع اصطحاب الحيوانات دون موافقة (قد تُحسب رسوم تنظيف).</li>
+      <li>يحق للمؤجر حجز/استرجاع السيارة عند الاستعمال الممنوع أو عدم الدفع أو الاحتيال/الخطر.</li>
+      <li>النزاعات: الحل الودي أولاً، وإلا الاختصاص حسب مقر المؤجر.</li>
+    </ol>
+  </div>
+
+  <div class="footer">
+    <div>{{ payload.company.name }} • {{ payload.contract_ref }}</div>
+    <div>Page 2</div>
+  </div>
+
+</body>
+</html>
+

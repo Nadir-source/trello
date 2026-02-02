@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head><meta charset="utf-8"></head>
+
+<body style="string-set: footer_left '{{ company.name }} • Ref: {{ ref }}';">
+
+  <div class="header">
+    <div class="brand">
+      <div class="company">{{ company.name }}</div>
+      <div class="meta">
+        {{ company.phone1 }}{% if company.phone2 %} • {{ company.phone2 }}{% endif %}
+        {% if company.email %} • {{ company.email }}{% endif %}
+        {% if company.address %} • {{ company.address }}{% endif %}
+      </div>
+    </div>
+    <div class="refbox">
+      <div class="pill">Reference: <b>{{ ref }}</b></div>
+      <div class="pill">Date: <b>{{ now_date }}</b></div>
+    </div>
+  </div>
+
+  <h1 class="title">VEHICLE RENTAL CONTRACT</h1>
+  <p class="subtitle">Contract document — keep a copy</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h2 class="section-title">RENTER (Customer)</h2>
+      <div class="kv">
+        <div class="k">Name</div><div class="v">{{ client.name or "—" }}</div>
+        <div class="k">Phone</div><div class="v">{{ client.phone or "—" }}</div>
+        <div class="k">Address</div><div class="v">{{ client.address or "—" }}</div>
+        <div class="k">Document (ID/Passport)</div><div class="v">{{ client.doc_id or "—" }}</div>
+        <div class="k">Driving license</div><div class="v">{{ client.permit or "—" }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">VEHICLE</h2>
+      <div class="kv">
+        <div class="k">Model</div><div class="v">{{ vehicle.name or vehicle.model or "—" }}</div>
+        <div class="k">Details</div><div class="v">{{ vehicle.model or "—" }}</div>
+        <div class="k">Plate</div><div class="v">{{ vehicle.plate or "—" }}</div>
+        <div class="k">VIN</div><div class="v">{{ vehicle.vin or "—" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2 class="section-title">PERIOD & LOCATIONS</h2>
+      <div class="kv">
+        <div class="k">From</div><div class="v">{{ rental.from or "—" }}</div>
+        <div class="k">To</div><div class="v">{{ rental.to or "—" }}</div>
+        <div class="k">Pickup</div><div class="v">{{ rental.pickup or "—" }}</div>
+        <div class="k">Return</div><div class="v">{{ rental.return or "—" }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">PRICING / DEPOSIT</h2>
+      <div class="kv">
+        <div class="k">Daily rate</div><div class="v">{{ pricing.daily_price or "—" }} {{ pricing.currency }}</div>
+        <div class="k">Deposit</div><div class="v">{{ pricing.deposit or "—" }} {{ pricing.currency }}</div>
+        <div class="k">Estimated total</div><div class="v">{{ pricing.total or "—" }} {{ pricing.currency }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2 class="section-title">OPTIONS</h2>
+      <div class="badges">
+        <div class="badge">GPS: <b>{{ "Yes" if options.gps else "No" }}</b></div>
+        <div class="badge">Driver: <b>{{ "Yes" if options.chauffeur else "No" }}</b></div>
+        <div class="badge">Baby seat: <b>{{ "Yes" if options.baby_seat else "No" }}</b></div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2 class="section-title">MILEAGE / FUEL</h2>
+      <table class="table">
+        <tr><th></th><th>Out</th><th>Back</th></tr>
+        <tr><td>KM</td><td><b>{{ mileage.km_out or "—" }}</b></td><td><b>{{ mileage.km_in or "—" }}</b></td></tr>
+        <tr><td>Fuel</td><td><b>{{ fuel.out or "—" }}</b></td><td><b>{{ fuel.in or "—" }}</b></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">VEHICLE CONDITION (check)</h2>
+      <table class="table">
+        <tr><td>☐ Registration / insurance</td></tr>
+        <tr><td>☐ Triangle + safety vest + jack</td></tr>
+        <tr><td>☐ Tires OK</td></tr>
+        <tr><td>☐ Scratches/damages noted</td></tr>
+        <tr><td>☐ Fuel level noted</td></tr>
+        <tr><td>☐ Accessories (GPS / baby seat)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="card">
+    <h2 class="section-title">NOTES</h2>
+    <div class="note">{{ notes or "—" }}</div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="sig">
+    <div class="sigbox">
+      <b>Owner</b><div class="small">Read and approved</div>
+      <div class="small">Place: {{ sign.place }}</div>
+      <div class="small">Date: {{ sign.date }}</div>
+      <div class="line"></div>
+    </div>
+
+    <div class="sigbox">
+      <b>Renter</b><div class="small">Read and approved</div>
+      <div class="small">Place: {{ sign.place }}</div>
+      <div class="small">Date: {{ sign.date }}</div>
+      <div class="line"></div>
+    </div>
+  </div>
+
+  <p class="small" style="margin-top:6mm;">
+    Note: The renter is responsible for fines, late return, damages, and improper/unlawful use.
+  </p>
+</body>
+</html>
+

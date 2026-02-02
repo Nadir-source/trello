@@ -1,0 +1,193 @@
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  color: #222;
+  font-size: 13px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  border-bottom: 3px solid #0b2d4a;
+  margin-bottom: 10px;
+}
+
+.brand-name {
+  font-weight: 800;
+  font-size: 18px;
+  color: #0b2d4a;
+}
+
+.brand-sub {
+  margin-top: 4px;
+  color: #444;
+  font-size: 12px;
+}
+
+.meta {
+  text-align: right;
+  font-size: 12px;
+  color: #222;
+}
+
+.title {
+  text-align: center;
+  font-size: 18px;
+  margin: 12px 0 8px;
+  color: #0b2d4a;
+}
+
+.page-title {
+  text-align: center;
+  color: #0b2d4a;
+  margin: 0 0 8px;
+}
+
+.section {
+  border: 2px solid #0b2d4a;
+  border-radius: 10px;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.section-title {
+  background: #0b2d4a;
+  color: #fff;
+  padding: 7px 10px;
+  border-radius: 8px 8px 0 0;
+  margin: -10px -10px 10px -10px;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.grid td, .grid th {
+  border: 1px solid #c9c9c9;
+  padding: 7px;
+  vertical-align: top;
+}
+
+.grid th {
+  background: #f2f4f7;
+  font-weight: 800;
+}
+
+.k {
+  width: 22%;
+  background: #f7f7f7;
+  font-weight: 700;
+  color: #222;
+}
+
+.v {
+  width: 28%;
+  font-weight: 600;
+}
+
+.notes {
+  padding: 8px;
+  border: 1px solid #d5d5d5;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+/* WeasyPrint page break */
+.page-break {
+  page-break-before: always;
+}
+
+/* CONDITIONS in 2 columns to keep space for signatures */
+.conditions {
+  column-count: 2;
+  column-gap: 12mm;
+  font-size: 12px;
+  line-height: 1.25;
+  margin-top: 8px;
+}
+
+.conditions h3 {
+  color: #0b2d4a;
+  margin: 6px 0 4px;
+  break-after: avoid;
+}
+
+.conditions ol {
+  margin: 0 0 10px 16px;
+  padding: 0;
+}
+
+.conditions li {
+  margin: 0 0 5px 0;
+}
+
+/* RTL Arabic */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+/* =========================
+   SIGNATURES FIX (2 blocks only)
+========================= */
+.signatures {
+  margin-top: 8px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.signature-grid {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-spacing: 12px;
+}
+
+.signature-cell {
+  display: table-cell;
+  vertical-align: top;
+  border: 1px dashed #9aa9c4;
+  border-radius: 10px;
+  padding: 14px;
+  height: 95mm; /* ✅ fixed height keeps it stable */
+}
+
+.signature-title {
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: #0b2d4a;
+}
+
+.signature-sub {
+  font-size: 12px;
+  color: #444;
+  margin-bottom: 12px;
+}
+
+.signature-line {
+  margin-top: 70mm;
+  border-top: 1px solid #222;
+  height: 1px;
+}
+
+.footer {
+  margin-top: 6mm;
+  padding-top: 4mm;
+  border-top: 1px solid #cfcfcf;
+  text-align: center;
+  color: #666;
+  font-size: 11px;
+}
+

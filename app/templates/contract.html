@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Contrat de location</title>
+  <link rel="stylesheet" href="static/css/contract.css">
+</head>
+<body>
+
+  <!-- =========================
+       HEADER (top)
+  ========================== -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-name">{{ payload.company_name or "Zohir Location Auto" }}</div>
+      <div class="brand-sub">
+        {{ payload.company_phone or "+213 ..." }}
+        {% if payload.company_email %} • {{ payload.company_email }}{% endif %}
+        {% if payload.company_city %} • {{ payload.company_city }}{% endif %}
+      </div>
+    </div>
+
+    <div class="meta">
+      <div><strong>Réf :</strong> {{ payload.contract_ref or "-" }}</div>
+      <div><strong>Date :</strong> {{ payload.contract_date or "" }}</div>
+    </div>
+  </div>
+
+  <h1 class="title">CONTRAT DE LOCATION VÉHICULE</h1>
+
+  <!-- =========================
+       PAGE 1 : FORMULAIRE
+  ========================== -->
+  <div class="section">
+    <div class="section-title">Coordonnées du conducteur principal</div>
+    <table class="grid">
+      <tr>
+        <td class="k">Nom</td><td class="v">{{ payload.client_lastname or "" }}</td>
+        <td class="k">Prénom</td><td class="v">{{ payload.client_firstname or payload.client_name or "" }}</td>
+      </tr>
+      <tr>
+        <td class="k">Téléphone</td><td class="v">{{ payload.client_phone or "" }}</td>
+        <td class="k">Adresse</td><td class="v">{{ payload.client_address or "" }}</td>
+      </tr>
+      <tr>
+        <td class="k">Document (CNI/Passeport)</td><td class="v">{{ payload.doc_id or "" }}</td>
+        <td class="k">Permis</td><td class="v">{{ payload.driver_license or "" }}</td>
+      </tr>
+      <tr>
+        <td class="k">Date / Lieu naissance</td><td class="v">{{ payload.client_birth or "" }}</td>
+        <td class="k">Délivré le / à</td><td class="v">{{ payload.license_issued or "" }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Coordonnées du deuxième conducteur (si existant)</div>
+    <table class="grid">
+      <tr>
+        <td class="k">Nom</td><td class="v">{{ payload.second_driver_lastname or "" }}</td>
+        <td class="k">Prénom</td><td class="v">{{ payload.second_driver_firstname or "" }}</td>
+      </tr>
+      <tr>
+        <td class="k">Date / Lieu naissance</td><td class="v">{{ payload.second_driver_birth or "" }}</td>
+        <td class="k">Permis</td><td class="v">{{ payload.second_driver_license or "" }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Descriptif du véhicule de location</div>
+    <table class="grid">
+      <tr>
+        <td class="k">Marque / Modèle</td><td class="v">{{ payload.vehicle_name or "" }}</td>
+        <td class="k">Immatriculation</td><td class="v">{{ payload.vehicle_plate or "" }}</td>
+      </tr>
+      <tr>
+        <td class="k">VIN</td><td class="v">{{ payload.vehicle_vin or "" }}</td>
+        <td class="k">Détails</td><td class="v">{{ payload.vehicle_model or "" }}</td>
+      </tr>
+      <tr>
+        <td class="k">Date début</td><td class="v">{{ payload.start_date or "" }}</td>
+        <td class="k">Date fin</td><td class="v">{{ payload.end_date or "" }}</td>
+      </tr>
+      <tr>
+        <td class="k">Livraison</td><td class="v">{{ payload.pickup_location or "" }}</td>
+        <td class="k">Restitution</td><td class="v">{{ payload.return_location or "" }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">État du véhicule</div>
+    <table class="grid two-col">
+      <tr>
+        <th>Départ</th>
+        <th>Retour</th>
+      </tr>
+      <tr>
+        <td>
+          <div class="mini">
+            <div><strong>Km :</strong> {{ payload.mileage.km_out if payload.mileage else "" }}</div>
+            <div><strong>Carburant :</strong> {{ payload.fuel.out if payload.fuel else "" }}</div>
+            <div><strong>Divers :</strong> {{ payload.state_out_note or "" }}</div>
+          </div>
+        </td>
+        <td>
+          <div class="mini">
+            <div><strong>Km :</strong> {{ payload.mileage.km_in if payload.mileage else "" }}</div>
+            <div><strong>Carburant :</strong> {{ payload.fuel.in if payload.fuel else "" }}</div>
+            <div><strong>Divers :</strong> {{ payload.state_in_note or "" }}</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Paiement</div>
+    <table class="grid">
+      <tr>
+        <td class="k">Prix / jour</td>
+        <td class="v">{{ payload.pricing.daily_price if payload.pricing else "" }} {{ payload.pricing.currency if payload.pricing else "" }}</td>
+        <td class="k">Caution</td>
+        <td class="v">{{ payload.pricing.deposit if payload.pricing else "" }} {{ payload.pricing.currency if payload.pricing else "" }}</td>
+      </tr>
+      <tr>
+        <td class="k">Total</td>
+        <td class="v" colspan="3">{{ payload.pricing.total if payload.pricing else "" }} {{ payload.pricing.currency if payload.pricing else "" }}</td>
+      </tr>
+    </table>
+  </div>
+
+  {% if payload.notes %}
+  <div class="section">
+    <div class="section-title">Notes</div>
+    <div class="notes">{{ payload.notes }}</div>
+  </div>
+  {% endif %}
+
+  <!-- =========================
+       PAGE 2
+  ========================== -->
+  <div class="page-break"></div>
+
+  <h2 class="page-title">CONDITIONS GÉNÉRALES (FR / EN / AR)</h2>
+
+  <div class="conditions">
+    <h3>🇫🇷 Français</h3>
+    <ol>
+      <li>Le locataire s’engage à restituer le véhicule dans le même état qu’au départ (hors usure normale).</li>
+      <li>Une pièce d’identité + permis valides sont obligatoires (originaux).</li>
+      <li>Seuls les conducteurs déclarés sur le contrat sont autorisés à conduire.</li>
+      <li>Interdiction : usage illégal, course, off-road, remorquage sans accord, transport dangereux.</li>
+      <li>Carburant : restitution au niveau convenu, sinon facturation du complément.</li>
+      <li>Retard : toute heure/jour supplémentaire est facturable selon tarif en vigueur.</li>
+      <li>Amendes, stationnement, péages : à la charge du locataire.</li>
+      <li>Accident/incident : déclaration immédiate + photos + constat si possible.</li>
+      <li>Dommages : tout dommage non déclaré au départ est présumé survenu pendant la location.</li>
+      <li>Caution : peut être retenue en cas de dommages, retard, nettoyage, contraventions.</li>
+      <li>Assurance : le locataire respecte les conditions d’assurance (alcool/drogues = exclusion).</li>
+      <li>Nettoyage : le véhicule doit être rendu propre (sinon frais).</li>
+      <li>Interdiction de fumer (sinon frais de désodorisation/nettoyage).</li>
+      <li>Perte de clés / documents : facturation des frais de remplacement.</li>
+      <li>Litiges : priorité à l’amiable ; juridiction selon le lieu du loueur.</li>
+    </ol>
+
+    <h3>🇬🇧 English</h3>
+    <ol>
+      <li>The renter must return the vehicle in the same condition as at departure (normal wear excluded).</li>
+      <li>Valid original ID + driving license are required.</li>
+      <li>Only declared drivers are allowed to drive the vehicle.</li>
+      <li>Forbidden: illegal use, racing, off-road, towing without consent, dangerous transport.</li>
+      <li>Fuel: return with the agreed fuel level, otherwise fuel cost is charged.</li>
+      <li>Late return: extra hours/days may be charged.</li>
+      <li>Fines, parking, tolls are the renter’s responsibility.</li>
+      <li>Accident/incident must be reported immediately (photos + report if possible).</li>
+      <li>Any damage not declared at departure is presumed to occur during the rental.</li>
+      <li>Deposit may be kept for damages, late return, cleaning, fines.</li>
+      <li>Insurance: renter must comply with insurance terms (alcohol/drugs = exclusion).</li>
+      <li>Cleaning: vehicle must be returned clean, otherwise fees apply.</li>
+      <li>No smoking allowed (deodorizing/cleaning fees).</li>
+      <li>Lost keys/documents will be charged.</li>
+      <li>Disputes: amicable first, jurisdiction based on owner location.</li>
+    </ol>
+
+    <h3 class="rtl">🇩🇿 العربية</h3>
+    <ol class="rtl">
+      <li>يلتزم المستأجر بإرجاع السيارة بنفس الحالة عند الاستلام (باستثناء الاستهلاك العادي).</li>
+      <li>بطاقة هوية ورخصة سياقة ساريتان (الأصول) إلزامية.</li>
+      <li>يسمح فقط للسائقين المصرح بهم بقيادة السيارة.</li>
+      <li>ممنوع: الاستعمال غير القانوني، السباق، الطرق الوعرة، السحب دون موافقة.</li>
+      <li>الوقود: تُرجع السيارة بمستوى الوقود المتفق عليه وإلا تُحسب التكلفة.</li>
+      <li>التأخير: يمكن احتساب ساعات/أيام إضافية.</li>
+      <li>المخالفات والرسوم والتوقف على عاتق المستأجر.</li>
+      <li>الحادث/الواقعة: يجب الإبلاغ فورًا (صور + محضر إن أمكن).</li>
+      <li>أي ضرر غير مصرح به عند الانطلاق يعتبر حدث أثناء مدة الإيجار.</li>
+      <li>يمكن اقتطاع التأمين (الكفالة) لتغطية الأضرار/التأخير/التنظيف/المخالفات.</li>
+      <li>التأمين: يجب احترام شروط التأمين (الكحول/المخدرات = إلغاء التغطية).</li>
+      <li>التنظيف: يجب إرجاع السيارة نظيفة وإلا تُفرض رسوم.</li>
+      <li>ممنوع التدخين داخل السيارة (رسوم تنظيف/تعطير).</li>
+      <li>ضياع المفاتيح/الوثائق يتم احتساب تكاليف الاستبدال.</li>
+      <li>النزاعات: الحل الودي أولاً ثم الاختصاص حسب مقر المؤجر.</li>
+    </ol>
+  </div>
+
+  <!-- SIGNATURES (always 2 blocks, never breaks) -->
+  <div class="signatures">
+    <div class="section-title">Signatures</div>
+
+    <div class="signature-grid">
+      <div class="signature-cell">
+        <div class="signature-sub">Lu et approuvé</div>
+        <div class="signature-title">Loueur</div>
+        <div class="signature-line"></div>
+      </div>
+
+      <div class="signature-cell">
+        <div class="signature-sub">Lu et approuvé</div>
+        <div class="signature-title">Locataire</div>
+        <div class="signature-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    {{ payload.company_name or "Zohir Location Auto" }} — Contrat de location
+  </div>
+
+</body>
+</html>
+
