@@ -32,6 +32,11 @@
 
   <div class="kpi"><div class="kpi-title">Factures ouvertes</div><div class="kpi-value">{{stats.invoices_open}}</div></div>
   <div class="kpi"><div class="kpi-title">Factures payées</div><div class="kpi-value">{{stats.invoices_paid}}</div></div>
+
+  <div class="kpi kpi-green"><div class="kpi-title">💰 Revenu encaissé</div><div class="kpi-value">{{stats.revenue_paid}} €</div></div>
+  <div class="kpi kpi-yellow"><div class="kpi-title">🧾 En attente de paiement</div><div class="kpi-value">{{stats.revenue_open}} €</div></div>
+  <div class="kpi kpi-orange"><div class="kpi-title">💸 Dépenses</div><div class="kpi-value">{{stats.expenses}} €</div></div>
+  <div class="kpi kpi-violet"><div class="kpi-title">📈 Bénéfice estimé</div><div class="kpi-value">{{stats.estimated_profit}} €</div></div>
 </div>
 
 <div class="columns" style="margin-top:16px;">
@@ -83,6 +88,67 @@
     {% endif %}
   </section>
 </div>
+
+<!-- Graphiques -->
+<div class="columns" style="margin-top:32px;">
+  <section class="col">
+    <div class="col-head"><h3>📊 Répartition des réservations</h3></div>
+    <canvas id="bookingsChart"></canvas>
+  </section>
+
+  <section class="col">
+    <div class="col-head"><h3>💰 Finances</h3></div>
+    <canvas id="financeChart"></canvas>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const bookingsData = {
+    labels: ['Demandes', 'Réservées', 'En cours', 'Terminées', 'Annulées'],
+    datasets: [{
+      label: 'Réservations',
+      data: [
+        {{ stats.demandes }},
+        {{ stats.reserved }},
+        {{ stats.ongoing }},
+        {{ stats.done }},
+        {{ stats.canceled }}
+      ],
+      backgroundColor: ['#36A2EB', '#9B59B6', '#2ECC71', '#1ABC9C', '#E74C3C']
+    }]
+  };
+
+  new Chart(document.getElementById('bookingsChart'), {
+    type: 'pie',
+    data: bookingsData
+  });
+
+  const financeData = {
+    labels: ['Revenu', 'Dépenses', 'Profit'],
+    datasets: [{
+      label: 'Montant (€)',
+      data: [
+        {{ stats.revenue_paid }},
+        {{ stats.expenses }},
+        {{ stats.estimated_profit }}
+      ],
+      backgroundColor: ['#2ECC71', '#E67E22', '#3498DB']
+    }]
+  };
+
+  new Chart(document.getElementById('financeChart'), {
+    type: 'bar',
+    data: financeData,
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
 
 {% endblock %}
 
