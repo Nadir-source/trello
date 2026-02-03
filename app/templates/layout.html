@@ -5,148 +5,110 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>{% block title %}Zohir Location Auto{% endblock %}</title>
 
+  <!-- ✅ Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ✅ Style custom si besoin -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
-  <div class="app-shell">
+<body class="bg-[#070a12] text-white font-sans">
+  <div class="flex min-h-screen">
 
     <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">Z</div>
-        <div class="brand-text">
-          <div class="brand-title">Zohir Location Auto</div>
-          <div class="brand-sub">Trello-only • DZD • Contrat FR/EN/AR</div>
+    <aside class="w-72 p-5 bg-[#0a0e1a]/70 border-r border-white/10 flex flex-col justify-between">
+      <div>
+        <!-- BRAND -->
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center font-bold bg-gradient-to-br from-blue-500 to-purple-500">Z</div>
+          <div>
+            <div class="font-bold text-lg">Zohir Location Auto</div>
+            <div class="text-xs text-white/60">Trello-only • DZD • Contrat FR/EN/AR</div>
+          </div>
         </div>
+
+        <!-- NAV -->
+        <nav class="flex flex-col gap-2">
+          <a href="{{ url_for('dashboard.index') }}"
+             class="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-blue-500/10 {% if request.path.startswith('/dashboard') %}ring-2 ring-blue-400/40{% endif %}">
+            🏠 <span>Dashboard</span>
+          </a>
+          <a href="{{ url_for('bookings.index') }}"
+             class="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-blue-500/10 {% if request.path.startswith('/bookings') %}ring-2 ring-blue-400/40{% endif %}">
+            🗓️ <span>Réservations</span>
+          </a>
+          <a href="{{ url_for('clients.index') }}"
+             class="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-blue-500/10 {% if request.path.startswith('/clients') %}ring-2 ring-blue-400/40{% endif %}">
+            👥 <span>Clients</span>
+          </a>
+          <a href="{{ url_for('vehicles.index') }}"
+             class="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-blue-500/10 {% if request.path.startswith('/vehicles') %}ring-2 ring-blue-400/40{% endif %}">
+            🚗 <span>Véhicules</span>
+          </a>
+          <a href="{{ url_for('finance.index') }}"
+             class="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-blue-500/10 {% if request.path.startswith('/finance') %}ring-2 ring-blue-400/40{% endif %}">
+            💰 <span>Finance</span>
+          </a>
+        </nav>
       </div>
 
-      <nav class="nav">
-        <!-- Dashboard -->
-        <a class="nav-item {% if request.path.startswith('/dashboard') %}active{% endif %}"
-           href="{{ url_for('dashboard.index') }}">
-          <span class="ico">🏠</span>
-          <span>Dashboard</span>
+      <!-- FOOTER -->
+      <div class="mt-8 space-y-4">
+        <a href="{{ url_for('auth.logout') }}"
+           class="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-red-500/20">
+          ⛔ <span>Logout</span>
         </a>
-
-        <!-- Réservations -->
-        <a class="nav-item {% if request.path.startswith('/bookings') %}active{% endif %}"
-           href="{{ url_for('bookings.index') }}">
-          <span class="ico">🗓️</span>
-          <span>Réservations</span>
-        </a>
-
-        <!-- Clients -->
-        <a class="nav-item {% if request.path.startswith('/clients') %}active{% endif %}"
-           href="{{ url_for('clients.index') }}">
-          <span class="ico">👥</span>
-          <span>Clients</span>
-        </a>
-
-        <!-- Véhicules -->
-        <a class="nav-item {% if request.path.startswith('/vehicles') %}active{% endif %}"
-           href="{{ url_for('vehicles.index') }}">
-          <span class="ico">🚗</span>
-          <span>Véhicules</span>
-        </a>
-
-        <!-- Finance -->
-        <a class="nav-item {% if request.path.startswith('/finance') %}active{% endif %}"
-           href="{{ url_for('finance.index') }}">
-          <span class="ico">💰</span>
-          <span>Finance</span>
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <a class="nav-item logout" href="{{ url_for('auth.logout') }}">
-          <span class="ico">⛔</span>
-          <span>Logout</span>
-        </a>
-
-        <div class="tips">
-          <div class="tips-title">Tips</div>
-          <ul>
+        <div class="text-sm text-white/70 border border-white/10 p-3 rounded-lg">
+          <div class="font-semibold mb-1 text-white">Tips</div>
+          <ul class="list-disc list-inside space-y-1">
             <li>Crée Clients/Véhicules depuis le site</li>
-            <li>Tout se fait dans le site (ton ami touche que le site)</li>
+            <li>Ton ami utilise uniquement le site</li>
           </ul>
         </div>
       </div>
     </aside>
 
     <!-- MAIN -->
-    <main class="main">
-      <!-- TOPBAR -->
-      <header class="topbar">
-        <div class="topbar-left">
-          {% block header_left %}{% endblock %}
-        </div>
+    <div class="flex-1 flex flex-col">
 
-        <div class="topbar-right">
-          <div class="user-pill">
-            <span class="ico">👤</span>
-            <span>{{ session.get("user_name", "User") }}</span>
+      <!-- TOPBAR -->
+      <header class="flex justify-between items-center px-6 py-4 border-b border-white/10">
+        <div>{% block header_left %}{% endblock %}</div>
+        <div class="flex gap-3">
+          <div class="bg-white/5 px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
+            👤 <span>{{ session.get("user_name", "User") }}</span>
           </div>
-          <div class="role-pill">
-            <span class="ico">🔒</span>
-            <span>{{ session.get("user_role", "user") }}</span>
+          <div class="bg-white/5 px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
+            🔒 <span>{{ session.get("user_role", "user") }}</span>
           </div>
         </div>
       </header>
 
       <!-- FLASH -->
-      <section class="flash-wrap">
+      <section class="p-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="flash flash-{{ category }}">{{ message }}</div>
+              <div class="p-3 mb-2 rounded border-l-4 text-sm
+                {% if category == 'success' %} border-green-500 bg-green-500/10
+                {% elif category == 'error' %} border-red-500 bg-red-500/10
+                {% else %} border-gray-500 bg-white/5 {% endif %}">
+                {{ message }}
+              </div>
             {% endfor %}
           {% endif %}
         {% endwith %}
       </section>
 
       <!-- CONTENT -->
-      <section class="content">
+      <main class="p-6 flex-1">
         {% block content %}{% endblock %}
-      </section>
-    </main>
-
+      </main>
+    </div>
   </div>
 
-  <!-- ✅ JS global -->
+  <!-- Scripts -->
   <script src="{{ url_for('static', filename='app.js') }}"></script>
-
-  <!-- CSS minimal de secours -->
-  <style>
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#070a12; color:#e9eefc; }
-    .app-shell { display:flex; min-height:100vh; }
-    .sidebar { width:280px; padding:18px 16px; border-right:1px solid rgba(255,255,255,.08); background:rgba(10,14,26,.7); }
-    .brand { display:flex; gap:12px; align-items:center; padding:10px 10px 18px; }
-    .logo { width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center;
-            background:linear-gradient(135deg, #3b82f6, #a855f7); font-weight:800; }
-    .brand-title { font-weight:800; font-size:16px; }
-    .brand-sub { opacity:.7; font-size:12px; margin-top:2px; }
-    .nav { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
-    .nav-item { display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:12px;
-                text-decoration:none; color:inherit; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
-    .nav-item:hover { background:rgba(255,255,255,.06); }
-    .nav-item.active { outline:2px solid rgba(59,130,246,.35); background:rgba(59,130,246,.08); }
-    .ico { width:22px; text-align:center; opacity:.9; }
-    .sidebar-footer { margin-top:18px; display:flex; flex-direction:column; gap:14px; }
-    .tips { padding:12px; border-radius:14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
-    .tips-title { font-weight:700; margin-bottom:6px; opacity:.9; }
-    .tips ul { margin:0; padding-left:18px; opacity:.75; }
-    .main { flex:1; display:flex; flex-direction:column; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.08); }
-    .topbar-right { display:flex; gap:10px; align-items:center; }
-    .user-pill, .role-pill { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px;
-      background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
-    .flash-wrap { padding:10px 22px; }
-    .flash { padding:10px 12px; border-radius:12px; margin-bottom:8px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); }
-    .flash-success { border-color: rgba(34,197,94,.35); }
-    .flash-error { border-color: rgba(239,68,68,.35); }
-    .content { padding:18px 22px 28px; }
-  </style>
 </body>
 </html>
 

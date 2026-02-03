@@ -1,105 +1,87 @@
 {% extends "layout.html" %}
 {% block content %}
+<div class="px-6 py-6 text-white">
 
-<div class="page-head">
-  <div>
-    <h1>Dashboard</h1>
-    <div class="muted">KPIs • aperçu business • actions rapides</div>
-    <div class="muted" style="margin-top:6px;">
-      Connecté: <b>{{name}}</b> ({{role}})
-      {% if board %}
-        — Board: <a href="{{board.url}}" target="_blank">{{board.name}}</a>
-      {% endif %}
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <div class="mb-8">
+    <div>
+      <h1 class="text-3xl font-bold flex items-center gap-2">📊 Dashboard</h1>
+      <p class="text-gray-400 mt-1">KPIs • aperçu business • actions rapides</p>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mt-4">
+      <a href="/bookings" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">➕ Nouvelle réservation</a>
+      <a href="/clients" class="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded">👤 Clients</a>
+      <a href="/vehicles" class="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded">🚗 Véhicules</a>
+      <a href="/finance" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">💰 Finance</a>
     </div>
   </div>
 
-  <div class="row">
-    <a class="btn" href="/bookings">➕ Nouvelle réservation</a>
-    <a class="btn" href="/clients">👤 Clients</a>
-    <a class="btn" href="/vehicles">🚗 Véhicules</a>
-    <a class="btn" href="/finance">💰 Finance</a>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-blue-500">
+      <p class="text-gray-400 text-sm">📥 Demandes</p>
+      <p class="text-2xl font-bold text-white">{{ stats.demandes }}</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-purple-500">
+      <p class="text-gray-400 text-sm">📅 Réservées</p>
+      <p class="text-2xl font-bold text-white">{{ stats.reserved }}</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-cyan-500">
+      <p class="text-gray-400 text-sm">🔑 En cours</p>
+      <p class="text-2xl font-bold text-white">{{ stats.ongoing }}</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-green-500">
+      <p class="text-gray-400 text-sm">✅ Terminées</p>
+      <p class="text-2xl font-bold text-white">{{ stats.done }}</p>
+    </div>
+
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-yellow-400">
+      <p class="text-gray-400 text-sm">👤 Clients</p>
+      <p class="text-2xl font-bold text-white">{{ stats.clients }}</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-pink-500">
+      <p class="text-gray-400 text-sm">🚗 Véhicules</p>
+      <p class="text-2xl font-bold text-white">{{ stats.vehicles }}</p>
+    </div>
+
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-orange-400">
+      <p class="text-gray-400 text-sm">🧾 Factures ouvertes</p>
+      <p class="text-2xl font-bold text-white">{{ stats.invoices_open }}</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-green-400">
+      <p class="text-gray-400 text-sm">✅ Factures payées</p>
+      <p class="text-2xl font-bold text-white">{{ stats.invoices_paid }}</p>
+    </div>
+
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-green-500">
+      <p class="text-gray-400 text-sm">💰 Revenu encaissé</p>
+      <p class="text-2xl font-bold text-white">{{ stats.revenue_paid }} €</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-yellow-300">
+      <p class="text-gray-400 text-sm">🕒 En attente de paiement</p>
+      <p class="text-2xl font-bold text-white">{{ stats.revenue_open }} €</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-red-400">
+      <p class="text-gray-400 text-sm">💸 Dépenses</p>
+      <p class="text-2xl font-bold text-white">{{ stats.expenses }} €</p>
+    </div>
+    <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-indigo-500">
+      <p class="text-gray-400 text-sm">📈 Bénéfice estimé</p>
+      <p class="text-2xl font-bold text-white">{{ stats.estimated_profit }} €</p>
+    </div>
   </div>
-</div>
 
-<div class="kpi-grid">
-  <div class="kpi kpi-blue"><div class="kpi-title">Demandes</div><div class="kpi-value">{{stats.demandes}}</div></div>
-  <div class="kpi kpi-violet"><div class="kpi-title">Réservées</div><div class="kpi-value">{{stats.reserved}}</div></div>
-  <div class="kpi kpi-cyan"><div class="kpi-title">En cours</div><div class="kpi-value">{{stats.ongoing}}</div></div>
-  <div class="kpi kpi-green"><div class="kpi-title">Terminées</div><div class="kpi-value">{{stats.done}}</div></div>
-
-  <div class="kpi kpi-orange"><div class="kpi-title">Clients</div><div class="kpi-value">{{stats.clients}}</div></div>
-  <div class="kpi kpi-pink"><div class="kpi-title">Véhicules</div><div class="kpi-value">{{stats.vehicles}}</div></div>
-
-  <div class="kpi"><div class="kpi-title">Factures ouvertes</div><div class="kpi-value">{{stats.invoices_open}}</div></div>
-  <div class="kpi"><div class="kpi-title">Factures payées</div><div class="kpi-value">{{stats.invoices_paid}}</div></div>
-
-  <div class="kpi kpi-green"><div class="kpi-title">💰 Revenu encaissé</div><div class="kpi-value">{{stats.revenue_paid}} €</div></div>
-  <div class="kpi kpi-yellow"><div class="kpi-title">🧾 En attente de paiement</div><div class="kpi-value">{{stats.revenue_open}} €</div></div>
-  <div class="kpi kpi-orange"><div class="kpi-title">💸 Dépenses</div><div class="kpi-value">{{stats.expenses}} €</div></div>
-  <div class="kpi kpi-violet"><div class="kpi-title">📈 Bénéfice estimé</div><div class="kpi-value">{{stats.estimated_profit}} €</div></div>
-</div>
-
-<div class="columns" style="margin-top:16px;">
-  <section class="col">
-    <div class="col-head"><h3>📥 Dernières demandes</h3><span class="pill">{{stats.demandes}}</span></div>
-    {% if demandes %}
-      {% for c in demandes %}
-        <div class="card item">
-          <div class="title">{{c.name}}</div>
-          <div class="muted small">ID: {{c.id}}</div>
-          <div class="row" style="margin-top:10px;">
-            <a class="btn" href="/bookings">Ouvrir</a>
-          </div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="card item"><div class="muted">Aucune demande.</div></div>
-    {% endif %}
-  </section>
-
-  <section class="col">
-    <div class="col-head"><h3>📅 Réservées</h3><span class="pill">{{stats.reserved}}</span></div>
-    {% if reserved_cards %}
-      {% for c in reserved_cards %}
-        <div class="card item">
-          <div class="title">{{c.name}}</div>
-          <div class="muted small">ID: {{c.id}}</div>
-          <div class="row" style="margin-top:10px;">
-            <a class="btn primary" href="/bookings">Voir</a>
-          </div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="card item"><div class="muted">Aucune réservation.</div></div>
-    {% endif %}
-  </section>
-
-  <section class="col">
-    <div class="col-head"><h3>🔑 En cours</h3><span class="pill">{{stats.ongoing}}</span></div>
-    {% if ongoing_cards %}
-      {% for c in ongoing_cards %}
-        <div class="card item">
-          <div class="title">{{c.name}}</div>
-          <div class="muted small">ID: {{c.id}}</div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="card item"><div class="muted">Aucune location en cours.</div></div>
-    {% endif %}
-  </section>
-</div>
-
-<!-- Graphiques -->
-<div class="columns" style="margin-top:32px;">
-  <section class="col">
-    <div class="col-head"><h3>📊 Répartition des réservations</h3></div>
-    <canvas id="bookingsChart"></canvas>
-  </section>
-
-  <section class="col">
-    <div class="col-head"><h3>💰 Finances</h3></div>
-    <canvas id="financeChart"></canvas>
-  </section>
+  <div class="grid md:grid-cols-2 gap-6 mt-10">
+    <div class="bg-gray-900 p-6 rounded-lg">
+      <h3 class="text-white text-lg font-semibold mb-4">📊 Répartition des réservations</h3>
+      <canvas id="bookingsChart" height="200"></canvas>
+    </div>
+    <div class="bg-gray-900 p-6 rounded-lg">
+      <h3 class="text-white text-lg font-semibold mb-4">💰 Finances</h3>
+      <canvas id="financeChart" height="200"></canvas>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -115,10 +97,9 @@
         {{ stats.done }},
         {{ stats.canceled }}
       ],
-      backgroundColor: ['#36A2EB', '#9B59B6', '#2ECC71', '#1ABC9C', '#E74C3C']
+      backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981', '#22D3EE', '#EF4444']
     }]
   };
-
   new Chart(document.getElementById('bookingsChart'), {
     type: 'pie',
     data: bookingsData
@@ -133,22 +114,14 @@
         {{ stats.expenses }},
         {{ stats.estimated_profit }}
       ],
-      backgroundColor: ['#2ECC71', '#E67E22', '#3498DB']
+      backgroundColor: ['#10B981', '#F97316', '#6366F1']
     }]
   };
-
   new Chart(document.getElementById('financeChart'), {
     type: 'bar',
     data: financeData,
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
+    options: { scales: { y: { beginAtZero: true } } }
   });
 </script>
-
 {% endblock %}
 
