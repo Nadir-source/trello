@@ -1,120 +1,118 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Contrat de location</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/contract_fr.css') }}">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 3cm 2cm; color: #333; }
+    h1 { color: #003366; text-align: center; }
+    .header, .footer { text-align: center; margin-bottom: 30px; }
+    .footer { font-size: 0.8em; color: #888; }
+    .section { margin-top: 30px; }
+    .section h2 { font-size: 1.1em; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    td { padding: 5px 10px; vertical-align: top; }
+    .label { font-weight: bold; width: 30%; }
+    .value { width: 70%; }
+    .signature-zone { display: flex; justify-content: space-between; margin-top: 60px; }
+    .signature-box { width: 45%; text-align: center; }
+    .signature-line { margin-top: 60px; border-top: 1px solid #000; }
+  </style>
 </head>
 <body>
 
   <div class="header">
-    <div>
-      <div class="brand">{{ company.name }}</div>
-      <div class="meta">
-        {% if company.email %} • {{ company.email }} • {% endif %}
-      </div>
-    </div>
-    <div class="meta">
-      <div><strong>Référence :</strong> {{ ref or "—" }}</div>
-      <div><strong>Date :</strong> {{ now_date or "—" }}</div>
+    <h1>ZOHIR LOCATION AUTO</h1>
+    <div>contact@email.dz</div>
+    <div style="margin-top:10px;">
+      <strong>Référence :</strong> {{ payload.trello_card_id or "—" }}<br>
+      <strong>Date :</strong> {{ current_date }}
     </div>
   </div>
 
-  <div class="title">Contrat de location de véhicule</div>
-  <div class="subtitle">Document contractuel — à conserver</div>
+  <p style="text-align:center; font-weight:bold;">Document contractuel — à conserver</p>
 
-  <div class="grid2">
-    <div class="card">
-      <div class="section-title">Locataire</div>
-      <div class="kv">
-        <div class="k">Nom</div><div class="v">{{ client.name or "—" }}</div>
-        <div class="k">Téléphone</div><div class="v">{{ client.phone or "—" }}</div>
-        <div class="k">Adresse</div><div class="v">{{ client.address or "—" }}</div>
-        <div class="k">Document</div><div class="v">{{ client.doc_id or "—" }}</div>
-        <div class="k">Permis</div><div class="v">{{ client.permit or "—" }}</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">Véhicule</div>
-      <div class="kv">
-        <div class="k">Modèle</div><div class="v">{{ vehicle.model or "—" }}</div>
-        <div class="k">Détails</div><div class="v">{{ vehicle.name or "—" }}</div>
-        <div class="k">Immatriculation</div><div class="v">{{ vehicle.plate or "—" }}</div>
-        <div class="k">VIN</div><div class="v">{{ vehicle.vin or "—" }}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid2">
-    <div class="card">
-      <div class="section-title">Période & Lieux</div>
-      <div class="kv">
-        <div class="k">Du</div><div class="v">{{ rental.from or "—" }}</div>
-        <div class="k">Au</div><div class="v">{{ rental.to or "—" }}</div>
-        <div class="k">Livraison</div><div class="v">{{ rental.pickup or "—" }}</div>
-        <div class="k">Restitution</div><div class="v">{{ rental.return or "—" }}</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">Tarifs / Caution</div>
-      <div class="kv">
-        <div class="k">Prix / jour</div><div class="v">{{ pricing.daily_price or "—" }} {{ pricing.currency }}</div>
-        <div class="k">Caution</div><div class="v">{{ pricing.deposit or "—" }} {{ pricing.currency }}</div>
-        <div class="k">Total estimé</div><div class="v">{{ pricing.total or "—" }} {{ pricing.currency }}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="section-title">Options</div>
-    <div class="badges">
-      <span class="badge">GPS : {{ "Oui" if options.gps else "Non" }}</span>
-      <span class="badge">Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</span>
-      <span class="badge">Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="section-title">État du véhicule</div>
-    <table class="table">
-      <tr>
-        <th>Élément</th>
-        <th>Départ</th>
-        <th>Retour</th>
-      </tr>
-      <tr>
-        <td>Kilométrage</td>
-        <td>{{ mileage.km_out or "—" }}</td>
-        <td>{{ mileage.km_in or "—" }}</td>
-      </tr>
-      <tr>
-        <td>Carburant</td>
-        <td>{{ fuel.out or "—" }}</td>
-        <td>{{ fuel.in or "—" }}</td>
-      </tr>
+  <div class="section">
+    <h2>Informations client</h2>
+    <table>
+      <tr><td class="label">Nom</td><td class="value">{{ payload.client_name or "—" }}</td></tr>
+      <tr><td class="label">Téléphone</td><td class="value">{{ payload.client_phone or "—" }}</td></tr>
+      <tr><td class="label">Adresse</td><td class="value">{{ payload.client_address or "—" }}</td></tr>
+      <tr><td class="label">Document (CNI/passeport)</td><td class="value">{{ payload.doc_id or "—" }}</td></tr>
+      <tr><td class="label">Permis</td><td class="value">{{ payload.driver_license or "—" }}</td></tr>
     </table>
   </div>
 
-  {% if notes %}
-  <div class="card note">
-    <strong>Remarques :</strong><br />
-    {{ notes }}
+  <div class="section">
+    <h2>Véhicule</h2>
+    <table>
+      <tr><td class="label">Modèle</td><td class="value">{{ payload.vehicle_model or "—" }}</td></tr>
+      <tr><td class="label">Détails</td><td class="value">{{ payload.vehicle_name or "—" }}</td></tr>
+      <tr><td class="label">Immatriculation</td><td class="value">{{ payload.vehicle_plate or "—" }}</td></tr>
+      <tr><td class="label">N° VIN</td><td class="value">{{ payload.vehicle_vin or "—" }}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Location</h2>
+    <table>
+      <tr><td class="label">Départ</td><td class="value">{{ payload.start_date or "—" }}</td></tr>
+      <tr><td class="label">Retour</td><td class="value">{{ payload.end_date or "—" }}</td></tr>
+      <tr><td class="label">Lieu de livraison</td><td class="value">{{ payload.pickup_location or "—" }}</td></tr>
+      <tr><td class="label">Lieu de restitution</td><td class="value">{{ payload.return_location or "—" }}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Tarifs</h2>
+    <table>
+      <tr><td class="label">Prix / jour</td><td class="value">{{ payload.daily_price or "—" }} DA</td></tr>
+      <tr><td class="label">Dépôt</td><td class="value">{{ payload.deposit or "—" }} DA</td></tr>
+      <tr><td class="label">Total</td><td class="value">{{ payload.total_price or "—" }} DA</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>État du véhicule</h2>
+    <table>
+      <tr><td class="label">Km départ</td><td class="value">{{ payload.km_out or "—" }} km</td></tr>
+      <tr><td class="label">Km retour</td><td class="value">{{ payload.km_in or "—" }} km</td></tr>
+      <tr><td class="label">Carburant départ</td><td class="value">{{ payload.fuel_out or "—" }}</td></tr>
+      <tr><td class="label">Carburant retour</td><td class="value">{{ payload.fuel_in or "—" }}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Options</h2>
+    <ul>
+      {% if payload.options.gps %}<li>GPS</li>{% endif %}
+      {% if payload.options.chauffeur %}<li>Chauffeur</li>{% endif %}
+      {% if payload.options.baby_seat %}<li>Siège bébé</li>{% endif %}
+      {% if not (payload.options.gps or payload.options.chauffeur or payload.options.baby_seat) %}
+        <li>—</li>
+      {% endif %}
+    </ul>
+  </div>
+
+  {% if payload.notes %}
+  <div class="section">
+    <h2>Remarques</h2>
+    <p>{{ payload.notes }}</p>
   </div>
   {% endif %}
 
-  <div class="sig">
-    <div class="sigbox">
-      <div class="line"></div>
-      <div class="small">Signature du client</div>
+  <div class="signature-zone">
+    <div class="signature-box">
+      Client<br><br><div class="signature-line"></div>
     </div>
-    <div class="sigbox">
-      <div class="line"></div>
-      <div class="small">Signature de l’agence</div>
+    <div class="signature-box">
+      Loueur<br><br><div class="signature-line"></div>
     </div>
   </div>
 
+  <div class="footer">
+    Document généré automatiquement — {{ current_date }}
+  </div>
 </body>
 </html>
 

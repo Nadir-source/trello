@@ -2,22 +2,25 @@
 from __future__ import annotations
 
 from typing import Any, Dict
+from datetime import datetime
 
 from app.contract_renderer import render_contract_pdf
 
 
 def build_contract_pdf(payload: dict, lang: str = "fr") -> bytes:
     """
-    Génère le PDF du contrat de location.
-    Utilisé par bookings.py
+    Génère le PDF du contrat de location avec données enrichies.
     """
+    payload = payload.copy()
+    payload["now_date"] = datetime.now().strftime("%Y-%m-%d")
+
+    # Ajoute d'autres enrichissements ici si nécessaire
     return render_contract_pdf(payload, lang=lang)
 
 
 def build_month_report_pdf(payload: dict) -> bytes:
     """
-    Compatibilité: certaines routes (finance.py) importent build_month_report_pdf.
-    Si tu n'utilises pas ce report pour le moment, on renvoie un PDF simple.
+    Compatibilité avec les rapports mensuels.
     """
     from reportlab.pdfgen import canvas
     from io import BytesIO
