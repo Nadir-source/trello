@@ -6,219 +6,136 @@
     <h1>Réservations</h1>
     <div class="muted">Créer une demande, suivre les statuts, générer un contrat FR + AR.</div>
   </div>
-
-  <div class="kpis">
-    <div class="kpi">
-      <div class="kpi-n">{{stats.demandes}}</div>
-      <div class="kpi-l">Demandes</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-n">{{stats.reserved}}</div>
-      <div class="kpi-l">Réservées</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-n">{{stats.ongoing}}</div>
-      <div class="kpi-l">En cours</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-n">{{stats.done}}</div>
-      <div class="kpi-l">Terminées</div>
-    </div>
-  </div>
 </div>
 
 <div class="panel">
   <div class="panel-head">
     <div>
       <div class="panel-title">Créer une demande</div>
-      <div class="panel-sub">Tout est stocké dans Trello. Clients/Véhicules doivent exister dans leurs listes.</div>
+      <div class="panel-sub">Formulaire de création d'une nouvelle réservation.</div>
     </div>
     <div class="panel-badge">DZD • CNI/Passeport</div>
   </div>
 
   <form method="post" action="/bookings/create" class="form-grid">
+    <div class="field span-6">
+      <label>Nom du client</label>
+      <input name="client_name" placeholder="Ex: Zohir B." />
+    </div>
+
+    <div class="field span-6">
+      <label>Téléphone</label>
+      <input name="client_phone" placeholder="Ex: 06 XX XX XX XX" />
+    </div>
 
     <div class="field span-12">
-      <label>Titre</label>
-      <input name="title" placeholder="Ex: Location Clio 10-12" />
+      <label>Adresse</label>
+      <input name="client_address" placeholder="Adresse complète du client" />
     </div>
 
     <div class="field span-6">
-      <label>Client</label>
-      <select name="client_id">
-        <option value="">— choisir —</option>
-        {% for c in clients %}
-          <option value="{{c.id}}">{{c.name}}</option>
-        {% endfor %}
-      </select>
-      <div class="hint">Si vide : crée une carte dans la liste “Clients”.</div>
+      <label>Document ID</label>
+      <input name="doc_id" placeholder="CNI / Passeport" />
     </div>
 
     <div class="field span-6">
-      <label>Véhicule</label>
-      <select name="vehicle_id">
-        <option value="">— choisir —</option>
-        {% for v in vehicles %}
-          <option value="{{v.id}}">{{v.name}}</option>
-        {% endfor %}
-      </select>
-      <div class="hint">Si vide : crée une carte dans la liste “Véhicules”.</div>
+      <label>Permis</label>
+      <input name="driver_license" placeholder="N° de permis" />
     </div>
 
-    <div class="field span-3">
-      <label>Début</label>
-      <input name="start" placeholder="YYYY-MM-DD" />
+    <div class="field span-6">
+      <label>Véhicule (Nom)</label>
+      <input name="vehicle_name" placeholder="Ex: Clio 4" />
     </div>
 
-    <div class="field span-3">
-      <label>Fin</label>
-      <input name="end" placeholder="YYYY-MM-DD" />
+    <div class="field span-6">
+      <label>Immatriculation</label>
+      <input name="vehicle_plate" placeholder="Ex: 123 456 789" />
     </div>
 
-    <div class="field span-3">
-      <label>Prix / jour (DZD)</label>
-      <input name="ppd" placeholder="Ex: 8500" />
+    <div class="field span-6">
+      <label>Modèle</label>
+      <input name="vehicle_model" placeholder="Ex: Clio IV Diesel" />
     </div>
 
-    <div class="field span-3">
-      <label>Dépôt (DZD)</label>
-      <input name="deposit" placeholder="Ex: 20000" />
+    <div class="field span-6">
+      <label>VIN</label>
+      <input name="vehicle_vin" placeholder="Ex: VF1XXXXXXXXXXXXXX" />
     </div>
 
-    <div class="field span-3">
-      <label>Déjà payé (DZD)</label>
-      <input name="paid" placeholder="Ex: 17000" />
+    <div class="field span-6">
+      <label>Date début</label>
+      <input name="start_date" type="date" />
     </div>
 
-    <div class="field span-3">
-      <label>Méthode</label>
-      <select name="method">
-        <option value="Cash">Cash</option>
-        <option value="Virement">Virement</option>
-        <option value="Carte">Carte</option>
-      </select>
-    </div>
-
-    <div class="field span-3">
-      <label>Document</label>
-      <select name="doc">
-        <option value="">—</option>
-        <option value="CNI">Carte Nationale</option>
-        <option value="PASSPORT">Passeport</option>
-      </select>
+    <div class="field span-6">
+      <label>Date fin</label>
+      <input name="end_date" type="date" />
     </div>
 
     <div class="field span-6">
       <label>Lieu remise</label>
-      <input name="pickup" placeholder="Ex: Aéroport" />
+      <input name="pickup_location" placeholder="Ex: Aéroport" />
     </div>
 
     <div class="field span-6">
       <label>Lieu retour</label>
-      <input name="return_place" placeholder="Ex: Centre ville" />
+      <input name="return_location" placeholder="Ex: Centre-ville" />
+    </div>
+
+    <div class="field span-4">
+      <label>Prix par jour (DA)</label>
+      <input name="daily_price" placeholder="Ex: 8500" />
+    </div>
+
+    <div class="field span-4">
+      <label>Dépôt (DA)</label>
+      <input name="deposit" placeholder="Ex: 20000" />
+    </div>
+
+    <div class="field span-4">
+      <label>Total (DA)</label>
+      <input name="total_price" placeholder="Ex: 25500" />
+    </div>
+
+    <div class="field span-6">
+      <label>KM sortie</label>
+      <input name="km_out" />
+    </div>
+
+    <div class="field span-6">
+      <label>KM retour</label>
+      <input name="km_in" />
+    </div>
+
+    <div class="field span-6">
+      <label>Carburant sortie</label>
+      <input name="fuel_out" placeholder="Ex: Plein" />
+    </div>
+
+    <div class="field span-6">
+      <label>Carburant retour</label>
+      <input name="fuel_in" placeholder="Ex: 3/4" />
     </div>
 
     <div class="field span-12">
       <label>Options</label>
       <div class="chips">
-        <label class="chip"><input type="checkbox" name="extra_driver"> Chauffeur</label>
-        <label class="chip"><input type="checkbox" name="extra_gps"> GPS</label>
-        <label class="chip"><input type="checkbox" name="extra_baby"> Siège bébé</label>
+        <label class="chip"><input type="checkbox" name="opt_driver"> Chauffeur</label>
+        <label class="chip"><input type="checkbox" name="opt_gps"> GPS</label>
+        <label class="chip"><input type="checkbox" name="opt_baby_seat"> Siège bébé</label>
       </div>
     </div>
 
     <div class="field span-12">
       <label>Notes</label>
-      <textarea name="notes" placeholder="Remarques..."></textarea>
+      <textarea name="notes" placeholder="Remarques ou conditions..."></textarea>
     </div>
 
     <div class="actions span-12">
       <button class="btn primary">Créer demande</button>
-      <div class="muted small">Une fois créée : passe Demande → Réservée → En cours → Terminée.</div>
     </div>
   </form>
-</div>
-
-<div class="board">
-  <section class="lane">
-    <div class="lane-head">
-      <h3>Demandes</h3>
-      <span class="count">{{ demandes|length }}</span>
-    </div>
-
-    {% for c in demandes %}
-      <div class="card">
-        <div class="card-title">{{c.name}}</div>
-        <div class="card-meta">
-          <div class="meta-row"><span class="dot"></span><b>Client:</b> {{c.client}}</div>
-          <div class="meta-row"><span class="dot"></span><b>Véhicule:</b> {{c.vehicle}}</div>
-          <div class="meta-row"><span class="dot"></span><b>Dates:</b> {{c.start}} → {{c.end}}</div>
-        </div>
-        <div class="card-actions">
-          <form method="post" action="/bookings/move/{{c.id}}/reserved">
-            <button class="btn">Confirmer</button>
-          </form>
-          <form method="post" action="/bookings/move/{{c.id}}/cancel">
-            <button class="btn ghost danger">Annuler</button>
-          </form>
-        </div>
-      </div>
-    {% else %}
-      <div class="empty">Aucune demande</div>
-    {% endfor %}
-  </section>
-
-  <section class="lane">
-    <div class="lane-head">
-      <h3>Réservées</h3>
-      <span class="count">{{ reserved|length }}</span>
-    </div>
-
-    {% for c in reserved %}
-      <div class="card">
-        <div class="card-title">{{c.name}}</div>
-        <div class="card-meta">
-          <div class="meta-row"><span class="dot"></span><b>Client:</b> {{c.client}}</div>
-          <div class="meta-row"><span class="dot"></span><b>Véhicule:</b> {{c.vehicle}}</div>
-          <div class="meta-row"><span class="dot"></span><b>Dates:</b> {{c.start}} → {{c.end}}</div>
-        </div>
-        <div class="card-actions">
-          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">Contrat FR+AR</a>
-          <form method="post" action="/bookings/move/{{c.id}}/ongoing">
-            <button class="btn ok">Mettre “En cours”</button>
-          </form>
-        </div>
-      </div>
-    {% else %}
-      <div class="empty">Aucune réservation</div>
-    {% endfor %}
-  </section>
-
-  <section class="lane">
-    <div class="lane-head">
-      <h3>En cours</h3>
-      <span class="count">{{ ongoing|length }}</span>
-    </div>
-
-    {% for c in ongoing %}
-      <div class="card">
-        <div class="card-title">{{c.name}}</div>
-        <div class="card-meta">
-          <div class="meta-row"><span class="dot"></span><b>Client:</b> {{c.client}}</div>
-          <div class="meta-row"><span class="dot"></span><b>Véhicule:</b> {{c.vehicle}}</div>
-          <div class="meta-row"><span class="dot"></span><b>Dates:</b> {{c.start}} → {{c.end}}</div>
-        </div>
-        <div class="card-actions">
-          <a class="btn" href="/bookings/contract.pdf/{{c.id}}">Contrat</a>
-          <form method="post" action="/bookings/move/{{c.id}}/done">
-            <button class="btn primary">Terminer</button>
-          </form>
-        </div>
-      </div>
-    {% else %}
-      <div class="empty">Aucune location en cours</div>
-    {% endfor %}
-  </section>
 </div>
 
 {% endblock %}
