@@ -42,7 +42,7 @@ def create_app():
 
     @app.get("/")
     def home():
-        return redirect(url_for("dashboard.index"))
+        return redirect(url_for("dashboard.dashboard"))
 
     @app.get("/health")
     def health():
