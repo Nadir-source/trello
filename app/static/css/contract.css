@@ -1,48 +1,45 @@
-/* =========================================================
-   CONTRAT PDF — DESIGN PREMIUM
-   Compatible WeasyPrint
-   ========================================================= */
+/* =======================================
+   CONTRAT DESIGN PREMIUM+ — WeasyPrint
+   ======================================= */
 
-/* -------- PAGE SETUP -------- */
 @page {
   size: A4;
   margin: 14mm;
 }
 
-/* -------- COLORS -------- */
 :root {
-  --primary: #0f2f45;
-  --primary-soft: #e8eef4;
-  --secondary: #1f3a52;
-  --muted: #6b7280;
-  --border: #d9e0e8;
-  --light: #f7f9fc;
+  --primary: #1e3a8a;
+  --secondary: #2563eb;
+  --accent: #06b6d4;
+  --light-bg: #f8fafc;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --shadow: rgba(0, 0, 0, 0.04);
 }
 
-/* -------- GLOBAL -------- */
 * {
   box-sizing: border-box;
 }
 
-html, body {
-  font-family: Arial, Helvetica, sans-serif;
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
   font-size: 12.5px;
   color: #111;
-  line-height: 1.45;
+  line-height: 1.6;
+  background: #fff;
 }
 
-/* -------- HEADER -------- */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 4px solid var(--primary);
-  padding-bottom: 10px;
-  margin-bottom: 14px;
+  border-bottom: 3px solid var(--primary);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .brand {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 900;
   color: var(--primary);
   line-height: 1.2;
@@ -51,9 +48,8 @@ html, body {
 .brand small {
   display: block;
   font-size: 11px;
-  font-weight: 600;
   color: var(--muted);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .meta {
@@ -62,165 +58,145 @@ html, body {
 }
 
 .meta .refline {
-  font-weight: 800;
+  font-weight: bold;
 }
 
-.meta .muted {
-  color: var(--muted);
-}
-
-/* -------- MAIN TITLE -------- */
 .title {
   text-align: center;
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 900;
-  letter-spacing: 0.5px;
-  margin: 18px 0 16px;
-  color: var(--primary);
+  color: var(--secondary);
   text-transform: uppercase;
+  padding: 6px 0;
+  border-top: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  margin: 22px 0 16px;
+  background: var(--light-bg);
 }
 
-/* -------- SECTION CARD -------- */
 .section {
   border: 1px solid var(--border);
   border-radius: 12px;
-  margin-bottom: 14px;
-  overflow: hidden;
+  margin-bottom: 16px;
   background: #fff;
+  box-shadow: 0 1px 2px var(--shadow);
+  overflow: hidden;
 }
 
 .section-h {
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
-  color: #fff;
-  padding: 10px 12px;
-  font-weight: 900;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  color: white;
+  padding: 10px 14px;
   font-size: 13px;
-  letter-spacing: 0.2px;
+  font-weight: bold;
+  letter-spacing: 0.3px;
 }
 
 .section-b {
-  padding: 12px;
+  padding: 14px;
 }
 
-/* -------- TABLES -------- */
 .tbl {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.tbl td, .tbl th {
-  border: 1px solid var(--border);
-  padding: 7px 9px;
-  vertical-align: top;
+  margin-top: 10px;
 }
 
 .tbl th {
-  background: var(--primary-soft);
-  font-weight: 900;
+  background: var(--light-bg);
+  font-weight: 700;
+  color: var(--primary);
+  padding: 8px;
+  border: 1px solid var(--border);
+}
+
+.tbl td {
+  padding: 8px;
+  border: 1px solid var(--border);
 }
 
 .tbl tr:nth-child(even) {
-  background: var(--light);
+  background-color: #f1f5f9;
 }
 
 .key {
-  width: 28%;
-  font-weight: 700;
   color: var(--muted);
+  font-weight: bold;
+  width: 30%;
 }
 
 .val {
-  width: 22%;
-  font-weight: 900;
+  font-weight: 700;
+  width: 20%;
 }
 
-/* -------- GRID -------- */
-.grid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-/* -------- BADGES -------- */
 .badge {
   display: inline-block;
-  padding: 3px 10px;
-  margin-right: 6px;
-  margin-top: 6px;
-  border-radius: 999px;
-  background: var(--primary-soft);
+  background: var(--light-bg);
   border: 1px solid var(--border);
-  font-size: 11px;
-  font-weight: 900;
   color: var(--primary);
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  margin: 4px 6px 0 0;
 }
 
-/* -------- NOTES -------- */
 .notes {
-  border: 1px dashed var(--border);
-  background: var(--light);
-  padding: 10px;
-  border-radius: 10px;
-  min-height: 50px;
+  background: var(--light-bg);
+  border-left: 4px solid var(--secondary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 12px;
 }
 
-/* -------- PAGE 2 -------- */
 .page2 {
   break-before: page;
 }
 
 .conditions-wrap {
   display: grid;
-  grid-template-columns: 1fr;
   gap: 14px;
 }
 
 .cond-block {
   border: 1px solid var(--border);
   border-radius: 12px;
-  overflow: hidden;
+  box-shadow: 0 1px 2px var(--shadow);
 }
 
 .cond-h {
   background: var(--primary);
   color: #fff;
-  padding: 10px 12px;
-  font-weight: 900;
+  padding: 10px 14px;
+  font-weight: bold;
 }
 
 .cond-b {
-  padding: 12px;
-  line-height: 1.5;
-}
-
-.cond-b ol {
-  margin: 0;
-  padding-left: 18px;
+  padding: 14px;
 }
 
 .cond-b li {
-  margin: 4px 0;
+  margin-bottom: 5px;
 }
 
-/* -------- SIGNATURES -------- */
 .signatures {
-  margin-top: 16px;
+  margin-top: 20px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  break-inside: avoid;
 }
 
 .sign-h {
   background: var(--primary);
-  color: #fff;
-  padding: 10px 12px;
-  font-weight: 900;
+  color: white;
+  padding: 10px 14px;
+  font-weight: bold;
 }
 
 .sign-b {
-  padding: 14px;
+  padding: 16px;
 }
 
 .sign-row {
@@ -231,23 +207,18 @@ html, body {
 
 .sign-box {
   border: 2px dashed var(--border);
-  border-radius: 12px;
-  height: 95px;
-  padding: 10px;
+  border-radius: 8px;
+  height: 100px;
+  padding: 12px;
   position: relative;
 }
 
-.sign-role {
-  font-weight: 900;
-  font-size: 12px;
-}
-
 .sign-line {
+  border-top: 2px solid #111;
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: 26px;
-  border-top: 2px solid #111;
+  bottom: 28px;
 }
 
 .sign-hint {
@@ -256,14 +227,18 @@ html, body {
   left: 12px;
   font-size: 10px;
   color: var(--muted);
-  font-weight: 700;
 }
 
-/* -------- FOOTER -------- */
+.sign-role {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
 .footer {
-  margin-top: 12px;
-  font-size: 10.5px;
   text-align: center;
+  font-size: 10.5px;
   color: var(--muted);
+  margin-top: 20px;
 }
 
