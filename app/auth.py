@@ -62,12 +62,12 @@ def login_post():
     if role == "admin" and password == ADMIN_PASSWORD:
         session["user_role"] = "admin"
         session["user_name"] = name
-        return redirect(url_for("dashboard.index"))
+        return redirect(url_for("dashboard.dashboard"))
 
     if role == "agent" and password == AGENT_PASSWORD:
         session["user_role"] = "agent"
         session["user_name"] = name
-        return redirect(url_for("dashboard.index"))
+        return redirect(url_for("dashboard.dashboard"))
 
     flash("Login incorrect", "error")
     return redirect(url_for("auth.login"))
