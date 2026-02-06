@@ -1,29 +1,31 @@
-<!doctype html>
-<html lang="fr" dir="ltr">
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <link rel="stylesheet" href="/static/css/contract.css">
+  <meta charset="UTF-8" />
+  <title>Contrat de location</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/contract_fr.css') }}">
 </head>
-<body style="string-set: footer_left '{{ company.name }} • Réf: {{ ref }}';">
+<body>
+
   <div class="header">
-    <div class="brand">
-      <div class="company">{{ company.name }}</div>
+    <div>
+      <div class="brand">{{ company.name }}</div>
       <div class="meta">
-        {{ company.phone }}{% if company.email %} • {{ company.email }}{% endif %} • {{ company.city }}
+        {% if company.email %} • {{ company.email }} • {% endif %}
       </div>
     </div>
-    <div class="refbox">
-      <div class="pill">Référence : <b>{{ ref }}</b></div>
-      <div class="pill">Date : <b>{{ now_date }}</b></div>
+    <div class="meta">
+      <div><strong>Référence :</strong> {{ ref or "—" }}</div>
+      <div><strong>Date :</strong> {{ now_date or "—" }}</div>
     </div>
   </div>
 
-  <h1 class="title">CONTRAT DE LOCATION DE VÉHICULE</h1>
-  <p class="subtitle">Document contractuel — à conserver</p>
+  <div class="title">Contrat de location de véhicule</div>
+  <div class="subtitle">Document contractuel — à conserver</div>
 
   <div class="grid2">
     <div class="card">
-      <h2 class="section-title">LOCATAIRE (Client)</h2>
+      <div class="section-title">Locataire</div>
       <div class="kv">
         <div class="k">Nom</div><div class="v">{{ client.name or "—" }}</div>
         <div class="k">Téléphone</div><div class="v">{{ client.phone or "—" }}</div>
@@ -34,21 +36,19 @@
     </div>
 
     <div class="card">
-      <h2 class="section-title">VÉHICULE</h2>
+      <div class="section-title">Véhicule</div>
       <div class="kv">
-        <div class="k">Modèle</div><div class="v">{{ vehicle.name or vehicle.model or "—" }}</div>
-        <div class="k">Détails</div><div class="v">{{ vehicle.model or "—" }}</div>
+        <div class="k">Modèle</div><div class="v">{{ vehicle.model or "—" }}</div>
+        <div class="k">Détails</div><div class="v">{{ vehicle.name or "—" }}</div>
         <div class="k">Immatriculation</div><div class="v">{{ vehicle.plate or "—" }}</div>
         <div class="k">VIN</div><div class="v">{{ vehicle.vin or "—" }}</div>
       </div>
     </div>
   </div>
 
-  <div class="hr"></div>
-
   <div class="grid2">
     <div class="card">
-      <h2 class="section-title">PÉRIODE & LIEUX</h2>
+      <div class="section-title">Période & Lieux</div>
       <div class="kv">
         <div class="k">Du</div><div class="v">{{ rental.from or "—" }}</div>
         <div class="k">Au</div><div class="v">{{ rental.to or "—" }}</div>
@@ -58,7 +58,7 @@
     </div>
 
     <div class="card">
-      <h2 class="section-title">TARIFS / CAUTION</h2>
+      <div class="section-title">Tarifs / Caution</div>
       <div class="kv">
         <div class="k">Prix / jour</div><div class="v">{{ pricing.daily_price or "—" }} {{ pricing.currency }}</div>
         <div class="k">Caution</div><div class="v">{{ pricing.deposit or "—" }} {{ pricing.currency }}</div>
@@ -67,66 +67,54 @@
     </div>
   </div>
 
-  <div class="hr"></div>
-
-  <div class="grid2">
-    <div class="card">
-      <h2 class="section-title">OPTIONS</h2>
-      <div class="badges">
-        <div class="badge">GPS : <b>{{ "Oui" if options.gps else "Non" }}</b></div>
-        <div class="badge">Chauffeur : <b>{{ "Oui" if options.chauffeur else "Non" }}</b></div>
-        <div class="badge">Siège bébé : <b>{{ "Oui" if options.baby_seat else "Non" }}</b></div>
-      </div>
-
-      <div class="hr"></div>
-
-      <h2 class="section-title">KM / CARBURANT</h2>
-      <table class="table">
-        <tr><th></th><th>Départ</th><th>Retour</th></tr>
-        <tr><td>KM</td><td><b>{{ mileage.km_out or "—" }}</b></td><td><b>{{ mileage.km_in or "—" }}</b></td></tr>
-        <tr><td>Carburant</td><td><b>{{ fuel.out or "—" }}</b></td><td><b>{{ fuel.in or "—" }}</b></td></tr>
-      </table>
-    </div>
-
-    <div class="card">
-      <h2 class="section-title">ÉTAT DU VÉHICULE</h2>
-      <table class="table">
-        <tr><td>☑ Carte grise / assurance</td></tr>
-        <tr><td>☑ Triangle + gilet + cric</td></tr>
-        <tr><td>☑ Pneus OK</td></tr>
-        <tr><td>☑ Rayures/dommages notés</td></tr>
-        <tr><td>☑ Niveau carburant noté</td></tr>
-        <tr><td>☑ Accessoires (GPS / siège bébé)</td></tr>
-      </table>
+  <div class="card">
+    <div class="section-title">Options</div>
+    <div class="badges">
+      <span class="badge">GPS : {{ "Oui" if options.gps else "Non" }}</span>
+      <span class="badge">Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</span>
+      <span class="badge">Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</span>
     </div>
   </div>
-
-  <div class="hr"></div>
 
   <div class="card">
-    <h2 class="section-title">NOTES</h2>
-    <div class="note">{{ notes or "—" }}</div>
+    <div class="section-title">État du véhicule</div>
+    <table class="table">
+      <tr>
+        <th>Élément</th>
+        <th>Départ</th>
+        <th>Retour</th>
+      </tr>
+      <tr>
+        <td>Kilométrage</td>
+        <td>{{ mileage.km_out or "—" }}</td>
+        <td>{{ mileage.km_in or "—" }}</td>
+      </tr>
+      <tr>
+        <td>Carburant</td>
+        <td>{{ fuel.out or "—" }}</td>
+        <td>{{ fuel.in or "—" }}</td>
+      </tr>
+    </table>
   </div>
 
-  <div class="hr"></div>
+  {% if notes %}
+  <div class="card note">
+    <strong>Remarques :</strong><br />
+    {{ notes }}
+  </div>
+  {% endif %}
 
   <div class="sig">
     <div class="sigbox">
-      <b>Loueur</b><div class="small">Lu et approuvé</div>
-      <div class="small">Lieu : {{ sign.place }}</div>
-      <div class="small">Date : {{ sign.date }}</div>
       <div class="line"></div>
+      <div class="small">Signature du client</div>
     </div>
     <div class="sigbox">
-      <b>Locataire</b><div class="small">Lu et approuvé</div>
-      <div class="small">Lieu : {{ sign.place }}</div>
-      <div class="small">Date : {{ sign.date }}</div>
       <div class="line"></div>
+      <div class="small">Signature de l’agence</div>
     </div>
   </div>
 
-  <p class="small" style="margin-top:6mm;">
-    Conditions générales : le locataire est responsable des amendes, retards, dommages et usage non conforme.
-  </p>
 </body>
 </html>
+
