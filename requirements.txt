@@ -8,3 +8,4 @@ arabic-reshaper
 python-bidi
 jinja2==3.1.4
 weasyprint==59.0
+pydyf==0.8.0
