@@ -14,7 +14,6 @@ from app import config as C
 
 bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
 
-
 # =========================================================
 # Helpers
 # =========================================================
@@ -35,10 +34,6 @@ def _as_booking(card: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _parse_start_date(payload: dict) -> datetime:
-    """
-    Utilisé pour trier les cartes par date.
-    Les cartes sans date passent à la fin.
-    """
     s = (payload.get("start_date") or "").strip()
     try:
         return datetime.fromisoformat(s)
@@ -47,11 +42,6 @@ def _parse_start_date(payload: dict) -> datetime:
 
 
 def _sort_bookings(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Ordre d'affichage :
-    1) date de début (croissante)
-    2) nom du client
-    """
     return sorted(
         items,
         key=lambda b: (
@@ -59,7 +49,6 @@ def _sort_bookings(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             (b.get("payload", {}).get("client_name") or "").lower(),
         ),
     )
-
 
 # =========================================================
 # Pages
@@ -100,7 +89,6 @@ def index():
 def calendar_page():
     return render_template("calendar.html")
 
-
 # =========================================================
 # API
 # =========================================================
@@ -132,15 +120,13 @@ def api_calendar():
             vehicle = (p.get("vehicle_name") or p.get("vehicle_model") or "").strip()
             title = f"{client} — {vehicle}".strip(" —") or card.get("name", "")
 
-            events.append(
-                {
-                    "id": card.get("id"),
-                    "title": title,
-                    "start": start,
-                    "end": end,
-                    "status": status,
-                }
-            )
+            events.append({
+                "id": card.get("id"),
+                "title": title,
+                "start": start,
+                "end": end,
+                "status": status,
+            })
 
     return jsonify(events)
 
@@ -151,15 +137,12 @@ def api_card(card_id: str):
     t = Trello()
     card = t.get_card(card_id)
     p = parse_payload(card.get("desc", "") or "")
-    return jsonify(
-        {
-            "id": card.get("id"),
-            "name": card.get("name", ""),
-            "url": card.get("url", ""),
-            "payload": p,
-        }
-    )
-
+    return jsonify({
+        "id": card.get("id"),
+        "name": card.get("name", ""),
+        "url": card.get("url", ""),
+        "payload": p,
+    })
 
 # =========================================================
 # Actions
@@ -190,6 +173,13 @@ def create():
         "pickup_location": request.form.get("pickup_location", "").strip(),
         "return_location": request.form.get("return_location", "").strip(),
         "notes": request.form.get("notes", "").strip(),
+        "daily_price": request.form.get("daily_price", "").strip(),
+        "deposit": request.form.get("deposit", "").strip(),
+        "total_price": request.form.get("total_price", "").strip(),
+        "km_out": request.form.get("km_out", "").strip(),
+        "km_in": request.form.get("km_in", "").strip(),
+        "fuel_out": request.form.get("fuel_out", "").strip(),
+        "fuel_in": request.form.get("fuel_in", "").strip(),
         "options": {
             "gps": bool(request.form.get("opt_gps")),
             "chauffeur": bool(request.form.get("opt_driver")),
@@ -239,9 +229,6 @@ def move(card_id: str, action: str):
 @login_required
 @admin_required
 def delete(card_id: str):
-    """
-    Supprimer = archiver la carte Trello
-    """
     t = Trello()
     try:
         t.archive_card(card_id)
