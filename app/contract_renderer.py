@@ -76,4 +76,3 @@ def _map_payload(p: dict) -> dict:
         }
     }
 
-(.venv) nadir@N-GK5DL34:~/012026/trello-car-rental/trello-car-rental-v2/app$
