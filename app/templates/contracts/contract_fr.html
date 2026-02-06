@@ -1,14 +1,15 @@
 <!doctype html>
 <html lang="fr" dir="ltr">
-<head><meta charset="utf-8"></head>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="/static/css/contract.css">
+</head>
 <body style="string-set: footer_left '{{ company.name }} • Réf: {{ ref }}';">
   <div class="header">
     <div class="brand">
       <div class="company">{{ company.name }}</div>
       <div class="meta">
-        {{ company.phone1 }}{% if company.phone2 %} • {{ company.phone2 }}{% endif %}
-        {% if company.email %} • {{ company.email }}{% endif %}
-        {% if company.address %} • {{ company.address }}{% endif %}
+        {{ company.phone }}{% if company.email %} • {{ company.email }}{% endif %} • {{ company.city }}
       </div>
     </div>
     <div class="refbox">
@@ -90,12 +91,12 @@
     <div class="card">
       <h2 class="section-title">ÉTAT DU VÉHICULE</h2>
       <table class="table">
-        <tr><td>☐ Carte grise / assurance</td></tr>
-        <tr><td>☐ Triangle + gilet + cric</td></tr>
-        <tr><td>☐ Pneus OK</td></tr>
-        <tr><td>☐ Rayures/dommages notés</td></tr>
-        <tr><td>☐ Niveau carburant noté</td></tr>
-        <tr><td>☐ Accessoires (GPS / siège bébé)</td></tr>
+        <tr><td>☑ Carte grise / assurance</td></tr>
+        <tr><td>☑ Triangle + gilet + cric</td></tr>
+        <tr><td>☑ Pneus OK</td></tr>
+        <tr><td>☑ Rayures/dommages notés</td></tr>
+        <tr><td>☑ Niveau carburant noté</td></tr>
+        <tr><td>☑ Accessoires (GPS / siège bébé)</td></tr>
       </table>
     </div>
   </div>
@@ -129,4 +130,3 @@
   </p>
 </body>
 </html>
-
