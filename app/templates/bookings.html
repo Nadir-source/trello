@@ -5,113 +5,195 @@
 <div class="page-head">
   <div>
     <h1>Réservations</h1>
-    <div class="muted">Trello = source unique • Actions rapides • Modal détails • PDF FR/EN/AR</div>
+    <div class="muted">
+      Trello = source unique • Génération contrat PDF FR / EN / AR
+    </div>
   </div>
 
   <div class="stats">
     <div class="stat"><div class="stat-n">{{ stats.demandes }}</div><div class="stat-l">Demandes</div></div>
-    <div class="stat"><div class="stat-n">{{ stats.reserved }}</div><div class="stat-l">Réservé</div></div>
+    <div class="stat"><div class="stat-n">{{ stats.reserved }}</div><div class="stat-l">Réservées</div></div>
     <div class="stat"><div class="stat-n">{{ stats.ongoing }}</div><div class="stat-l">En cours</div></div>
-    <div class="stat"><div class="stat-n">{{ stats.done }}</div><div class="stat-l">Terminé</div></div>
-    <div class="stat"><div class="stat-n">{{ stats.canceled }}</div><div class="stat-l">Annulé</div></div>
+    <div class="stat"><div class="stat-n">{{ stats.done }}</div><div class="stat-l">Terminées</div></div>
+    <div class="stat"><div class="stat-n">{{ stats.canceled }}</div><div class="stat-l">Annulées</div></div>
   </div>
 </div>
 
-<!-- Toolbar -->
-<div class="toolbar">
-  <div class="toolbar-left">
-    <div class="searchbox">
-      <span class="ico">🔎</span>
-      <input id="q" type="search" placeholder="Rechercher: client, véhicule, téléphone, plaque..." />
+<hr>
+
+<!-- ========================= -->
+<!-- CRÉATION RÉSERVATION -->
+<!-- ========================= -->
+
+<div class="card">
+  <h2>Nouvelle réservation</h2>
+
+  <form method="post" action="{{ url_for('bookings.create') }}" class="form-grid">
+
+    <label>Nom client
+      <input name="client_name" required>
+    </label>
+
+    <label>Téléphone
+      <input name="client_phone">
+    </label>
+
+    <label>Adresse
+      <input name="client_address">
+    </label>
+
+    <label>Document ID
+      <input name="doc_id">
+    </label>
+
+    <label>Permis
+      <input name="driver_license">
+    </label>
+
+    <label>Véhicule
+      <input name="vehicle_name" required>
+    </label>
+
+    <label>Plaque
+      <input name="vehicle_plate">
+    </label>
+
+    <label>Modèle
+      <input name="vehicle_model">
+    </label>
+
+    <label>VIN
+      <input name="vehicle_vin">
+    </label>
+
+    <label>Date début
+      <input type="datetime-local" name="start_date">
+    </label>
+
+    <label>Date fin
+      <input type="datetime-local" name="end_date">
+    </label>
+
+    <label>Lieu livraison
+      <input name="pickup_location">
+    </label>
+
+    <label>Lieu restitution
+      <input name="return_location">
+    </label>
+
+    <label>Prix / jour (DA)
+      <input type="number" name="daily_price">
+    </label>
+
+    <label>Dépôt (DA)
+      <input type="number" name="deposit">
+    </label>
+
+    <label>Total (DA)
+      <input type="number" name="total_price">
+    </label>
+
+    <label>Km départ
+      <input type="number" name="km_out">
+    </label>
+
+    <label>Km retour
+      <input type="number" name="km_in">
+    </label>
+
+    <label>Carburant départ
+      <input name="fuel_out">
+    </label>
+
+    <label>Carburant retour
+      <input name="fuel_in">
+    </label>
+
+    <label style="grid-column: span 2;">
+      Remarques
+      <textarea name="notes"></textarea>
+    </label>
+
+    <div style="grid-column: span 2;">
+      <label><input type="checkbox" name="opt_gps"> GPS</label>
+      <label><input type="checkbox" name="opt_driver"> Chauffeur</label>
+      <label><input type="checkbox" name="opt_baby_seat"> Siège bébé</label>
     </div>
 
-    <select id="statusFilter" class="select">
-      <option value="">Tous statuts</option>
-      <option value="demandes">Demandes</option>
-      <option value="reserved">Réservé</option>
-      <option value="ongoing">En cours</option>
-      <option value="done">Terminé</option>
-      <option value="canceled">Annulé</option>
-    </select>
-
-    <button class="btn btn-ghost" id="btnCompact" type="button">Vue compacte</button>
-
-    <div class="tabs">
-      <button class="tab active" data-tab="kanban" type="button">Kanban</button>
-      <button class="tab" data-tab="calendar" type="button">Calendrier</button>
+    <div style="grid-column: span 2;">
+      <button class="btn primary">Créer la demande</button>
     </div>
-  </div>
 
-  <div class="toolbar-right">
-    <button class="btn btn-primary" type="button" data-open="createPanel">+ Nouvelle réservation</button>
-    <button class="btn btn-ghost" type="button" data-open="tipsPanel">ℹ️ Aide</button>
-  </div>
+  </form>
 </div>
 
-<!-- Panels -->
-<div class="grid2">
-  <section class="card panel" id="createPanel">
-    <div class="card-h">
-      <h2>Nouvelle réservation</h2>
-      <button class="btn btn-ghost btn-icon" type="button" data-close="createPanel">✕</button>
-    </div>
+<hr>
 
-    <form class="form" method="post" action="{{ url_for('bookings.create') }}">
-      <div class="form-grid">
-        <label>Client <input name="client_name" required /></label>
-        <label>Téléphone <input name="client_phone" /></label>
-        <label>Adresse <input name="client_address" /></label>
-        <label>Document ID <input name="doc_id" /></label>
-        <label>Permis <input name="driver_license" /></label>
+<!-- ========================= -->
+<!-- LISTES -->
+<!-- ========================= -->
 
-        <label>Véhicule <input name="vehicle_name" required /></label>
-        <label>Plaque <input name="vehicle_plate" /></label>
-        <label>Modèle <input name="vehicle_model" /></label>
-        <label>VIN <input name="vehicle_vin" /></label>
+{% macro lane(title, items, status) %}
+<div class="card">
+  <h2>{{ title }} ({{ items|length }})</h2>
 
-        <label>Date début <input name="start_date" type="datetime-local" /></label>
-        <label>Date fin <input name="end_date" type="datetime-local" /></label>
+  {% for it in items %}
+    {% set p = it.payload %}
+    <div class="card-line">
 
-        <label>Lieu de livraison <input name="pickup_location" /></label>
-        <label>Lieu de restitution <input name="return_location" /></label>
+      <b>{{ it.name }}</b><br>
+      Client : {{ p.client_name or "—" }}<br>
+      Véhicule : {{ p.vehicle_name or p.vehicle_model or "—" }}<br>
+      Dates : {{ p.start_date }} → {{ p.end_date }}
 
-        <label>Prix / jour (DA) <input name="daily_price" type="number" /></label>
-        <label>Dépôt (DA) <input name="deposit" type="number" /></label>
-        <label>Total (DA) <input name="total_price" type="number" /></label>
+      <div style="margin-top:6px;">
 
-        <label>Km départ <input name="km_out" type="number" /></label>
-        <label>Km retour <input name="km_in" type="number" /></label>
+        {% if status == "demandes" %}
+          <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='reserved') }}">
+            <button class="btn">Confirmer</button>
+          </form>
+        {% endif %}
 
-        <label>Carburant départ <input name="fuel_out" /></label>
-        <label>Carburant retour <input name="fuel_in" /></label>
+        {% if status == "reserved" %}
+          <form method="post" action="{{ url_for('bookings.contract_and_move') }}">
+            <input type="hidden" name="card_id" value="{{ it.id }}">
+            <select name="lang">
+              <option value="fr">FR</option>
+              <option value="en">EN</option>
+              <option value="ar">AR</option>
+            </select>
+            <button class="btn primary">Contrat + En cours</button>
+          </form>
+        {% endif %}
 
-        <label class="span2">Remarques <textarea name="notes"></textarea></label>
+        {% if status == "ongoing" %}
+          <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='done') }}">
+            <button class="btn">Terminer</button>
+          </form>
+        {% endif %}
+
+        <a class="btn ghost" target="_blank"
+           href="/contracts/{{ it.id }}.pdf?lang=fr">PDF FR</a>
+        <a class="btn ghost" target="_blank"
+           href="/contracts/{{ it.id }}.pdf?lang=en">PDF EN</a>
+        <a class="btn ghost" target="_blank"
+           href="/contracts/{{ it.id }}.pdf?lang=ar">PDF AR</a>
+
       </div>
-
-      <div class="opts">
-        <label><input type="checkbox" name="opt_gps" /> GPS</label>
-        <label><input type="checkbox" name="opt_driver" /> Chauffeur</label>
-        <label><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
-      </div>
-
-      <button class="btn primary" type="submit">Créer</button>
-    </form>
-  </section>
-
-  <section class="card panel" id="tipsPanel">
-    <div class="card-h">
-      <h2>Raccourcis</h2>
-      <button class="btn btn-ghost btn-icon" type="button" data-close="tipsPanel">✕</button>
     </div>
-    <div class="help">
-      <p>✅ Clique sur une carte → <b>modal détails</b>.</p>
-      <p>✅ Actions rapides (réservé / annuler / terminer).</p>
-      <p>✅ Supprimer = <b>archive</b> Trello.</p>
-      <p>✅ Recherche + filtre + mode compact.</p>
-    </div>
-  </section>
+    <hr>
+  {% else %}
+    <div class="muted">Aucune carte</div>
+  {% endfor %}
 </div>
+{% endmacro %}
 
-<!-- (Kanban, Calendrier, etc. restent identiques...) -->
+{{ lane("Demandes", demandes, "demandes") }}
+{{ lane("Réservées", reserved, "reserved") }}
+{{ lane("En cours", ongoing, "ongoing") }}
+{{ lane("Terminées", done, "done") }}
+{{ lane("Annulées", canceled, "canceled") }}
 
 {% endblock %}
+
