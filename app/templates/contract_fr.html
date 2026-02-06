@@ -1,198 +1,89 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Contrat de location</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/contract_fr.css') }}">
 </head>
 <body>
 
   <div class="header">
-    <div class="brand">
-      {{ payload.get('agency_name','Zohir Location Auto') }}
-      <small>{{ payload.get('agency_city','Alger') }}</small>
-    </div>
-
+    <div class="brand">Zohir Location Auto<br><small>Algérie</small></div>
     <div class="meta">
-      <div class="refline">Réf : {{ payload.get('contract_ref','—') }}</div>
-      <div class="muted">Date : {{ payload.get('contract_date','—') }}</div>
-      <div style="margin-top:4px;">
-        {{ payload.get('agency_phone','+213 ...') }} • {{ payload.get('agency_email','contact@...') }}
-      </div>
+      Référence : {{ contract.ref }}<br>
+      Date : {{ contract.date }}<br>
+      +213... contact@
     </div>
   </div>
 
-  <div class="title">CONTRAT DE LOCATION VÉHICULE</div>
+  <h1 class="title">Contrat de Location de Véhicule</h1>
 
-  <div class="section">
-    <div class="section-h">Coordonnées du conducteur principal</div>
-    <div class="section-b">
-      <table class="tbl">
-        <tr>
-          <td class="key">Nom</td><td class="val">{{ payload.get('client_last_name','') }}</td>
-          <td class="key">Prénom</td><td class="val">{{ payload.get('client_first_name','') }}</td>
-        </tr>
-        <tr>
-          <td class="key">Téléphone</td><td class="val">{{ payload.get('client_phone','') }}</td>
-          <td class="key">Adresse</td><td class="val">{{ payload.get('client_address','') }}</td>
-        </tr>
-        <tr>
-          <td class="key">Document (CNI/Passeport)</td><td class="val">{{ payload.get('doc_id','') }}</td>
-          <td class="key">Permis</td><td class="val">{{ payload.get('driver_license','') }}</td>
-        </tr>
-        <tr>
-          <td class="key">Date / Lieu naissance</td><td class="val">{{ payload.get('birth_info','—') }}</td>
-          <td class="key">Délivré le / à</td><td class="val">{{ payload.get('license_issued','—') }}</td>
-        </tr>
-      </table>
-    </div>
+  <div class="form-section">
+    <div class="form-section-title">Informations personnelles</div>
+    <table class="contract-table">
+      <tr>
+        <th>Nom</th>
+        <td>{{ renter.last_name }}</td>
+        <th>Prénom</th>
+        <td>{{ renter.first_name }}</td>
+      </tr>
+      <tr>
+        <th>Adresse</th>
+        <td colspan="3">{{ renter.address }}</td>
+      </tr>
+      <tr>
+        <th>Permis</th>
+        <td>{{ renter.license_number }}</td>
+        <th>Pièce (CNI / Passeport)</th>
+        <td>{{ renter.id_number }}</td>
+      </tr>
+    </table>
   </div>
 
-  <div class="section">
-    <div class="section-h">Coordonnées du deuxième conducteur (si existant)</div>
-    <div class="section-b">
-      <table class="tbl">
-        <tr>
-          <td class="key">Nom</td><td class="val">{{ payload.get('second_driver_last_name','') }}</td>
-          <td class="key">Prénom</td><td class="val">{{ payload.get('second_driver_first_name','') }}</td>
-        </tr>
-        <tr>
-          <td class="key">Date / Lieu naissance</td><td class="val">{{ payload.get('second_driver_birth','') }}</td>
-          <td class="key">Permis</td><td class="val">{{ payload.get('second_driver_license','') }}</td>
-        </tr>
-      </table>
-    </div>
+  <div class="form-section">
+    <div class="form-section-title">Détails du véhicule</div>
+    <table class="contract-table">
+      <tr>
+        <th>Marque</th>
+        <td>{{ vehicle.brand }}</td>
+        <th>Modèle</th>
+        <td>{{ vehicle.model }}</td>
+      </tr>
+      <tr>
+        <th>Immatriculation</th>
+        <td>{{ vehicle.plate }}</td>
+        <th>Carburant</th>
+        <td>{{ vehicle.fuel_type }}</td>
+      </tr>
+    </table>
   </div>
 
-  <div class="section">
-    <div class="section-h">Descriptif du véhicule de location</div>
-    <div class="section-b">
-      <table class="tbl">
-        <tr>
-          <td class="key">Marque / Modèle</td><td class="val">{{ payload.get('vehicle_name','') }}</td>
-          <td class="key">Immatriculation</td><td class="val">{{ payload.get('vehicle_plate','') }}</td>
-        </tr>
-        <tr>
-          <td class="key">VIN</td><td class="val">{{ payload.get('vehicle_vin','') }}</td>
-          <td class="key">Détails</td><td class="val">{{ payload.get('vehicle_model','') }}</td>
-        </tr>
-        <tr>
-          <td class="key">Date début</td><td class="val">{{ payload.get('start_date','') }}</td>
-          <td class="key">Date fin</td><td class="val">{{ payload.get('end_date','') }}</td>
-        </tr>
-        <tr>
-          <td class="key">Livraison</td><td class="val">{{ payload.get('pickup_location','') }}</td>
-          <td class="key">Restitution</td><td class="val">{{ payload.get('return_location','') }}</td>
-        </tr>
-      </table>
-      <div style="margin-top:6px;">
-        <span class="badge">Options : GPS {{ '✓' if payload.get('options',{}).get('gps') else '—' }}</span>
-        <span class="badge">Siège bébé {{ '✓' if payload.get('options',{}).get('baby_seat') else '—' }}</span>
-        <span class="badge">Chauffeur {{ '✓' if payload.get('options',{}).get('chauffeur') else '—' }}</span>
-      </div>
-    </div>
+  <div class="form-section">
+    <div class="form-section-title">Durée et tarif</div>
+    <table class="contract-table">
+      <tr>
+        <th>Début</th>
+        <td>{{ contract.start_date }}</td>
+        <th>Fin</th>
+        <td>{{ contract.end_date }}</td>
+      </tr>
+      <tr>
+        <th>Prix par jour</th>
+        <td>{{ contract.daily_price }} DZD</td>
+        <th>Total</th>
+        <td>{{ contract.total_price }} DZD</td>
+      </tr>
+    </table>
   </div>
 
-  <div class="grid2">
-    <div class="section">
-      <div class="section-h">État du véhicule — Départ</div>
-      <div class="section-b">
-        <table class="tbl">
-          <tr><td class="key">Km</td><td class="val">{{ payload.get('mileage',{}).get('km_out','') }}</td></tr>
-          <tr><td class="key">Carburant</td><td class="val">{{ payload.get('fuel',{}).get('out','') }}</td></tr>
-          <tr><td class="key">Divers</td><td class="val">{{ payload.get('vehicle_out_notes','') }}</td></tr>
-        </table>
-      </div>
+  <div class="signatures">
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div class="sign-role">Le Loueur</div>
     </div>
-
-    <div class="section">
-      <div class="section-h">État du véhicule — Retour</div>
-      <div class="section-b">
-        <table class="tbl">
-          <tr><td class="key">Km</td><td class="val">{{ payload.get('mileage',{}).get('km_in','') }}</td></tr>
-          <tr><td class="key">Carburant</td><td class="val">{{ payload.get('fuel',{}).get('in','') }}</td></tr>
-          <tr><td class="key">Divers</td><td class="val">{{ payload.get('vehicle_in_notes','') }}</td></tr>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-h">Paiement</div>
-    <div class="section-b">
-      <table class="tbl">
-        <tr>
-          <td class="key">Prix / jour</td>
-          <td class="val">{{ payload.get('pricing',{}).get('daily_price','') }} {{ payload.get('pricing',{}).get('currency','') }}</td>
-          <td class="key">Caution</td>
-          <td class="val">{{ payload.get('pricing',{}).get('deposit','') }} {{ payload.get('pricing',{}).get('currency','') }}</td>
-        </tr>
-        <tr>
-          <td class="key">Total</td>
-          <td class="val" colspan="3">{{ payload.get('pricing',{}).get('total','') }} {{ payload.get('pricing',{}).get('currency','') }}</td>
-        </tr>
-      </table>
-
-      <div class="notes">
-        <strong>Notes :</strong><br>
-        {{ payload.get('notes','') }}
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">
-    {{ payload.get('agency_name','Zohir Location Auto') }} — Contrat de location
-  </div>
-
-  <!-- PAGE 2 -->
-  <div class="page2">
-    <div class="title">CONDITIONS GÉNÉRALES</div>
-
-    <div class="conditions-wrap">
-      <div class="cond-block">
-        <div class="cond-h">🇫🇷 Conditions en Français</div>
-        <div class="cond-b">
-          <ol>
-            <li>Restitution du véhicule dans le même état (hors usure normale) + niveau carburant identique.</li>
-            <li>Pièce d’identité + permis valides (originaux) obligatoires. Copies interdites.</li>
-            <li>Seuls les conducteurs déclarés au contrat sont autorisés à conduire.</li>
-            <li>Interdits : usage illégal, course, off-road, remorquage sans accord, transport dangereux.</li>
-            <li>Retard : toute heure/jour supplémentaire peut être facturé au tarif en vigueur.</li>
-            <li>Amendes, stationnement, péages, fourrière : à la charge du locataire.</li>
-            <li>Accident/incident : déclaration immédiate + photos + constat si possible.</li>
-            <li>Dommages non déclarés au départ présumés survenus pendant la location.</li>
-            <li>Caution retenable : dommages, retard, nettoyage, carburant, contraventions.</li>
-            <li>Assurance : alcool/drogues, conduite dangereuse = exclusion de garantie.</li>
-            <li>Nettoyage : véhicule rendu propre sinon frais.</li>
-            <li>Interdiction de fumer : frais de désodorisation/nettoyage.</li>
-            <li>Perte clés/documents : frais de remplacement facturés.</li>
-            <li>Interdiction de sortir du territoire sans accord écrit du loueur.</li>
-            <li>Litiges : tentative amiable puis juridiction compétente au lieu du loueur.</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-
-    <div class="signatures">
-      <div class="sign-h">Signatures</div>
-      <div class="sign-b">
-        <div style="margin-bottom:6px; color: var(--muted); font-weight:700;">Lu et approuvé</div>
-        <div class="sign-row">
-          <div class="sign-box">
-            <div class="sign-role">Loueur</div>
-            <div class="sign-line"></div>
-            <div class="sign-hint">{{ payload.get('agency_name','') }}</div>
-          </div>
-          <div class="sign-box">
-            <div class="sign-role">Locataire</div>
-            <div class="sign-line"></div>
-            <div class="sign-hint">{{ payload.get('client_first_name','') }} {{ payload.get('client_last_name','') }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="footer">
-      {{ payload.get('agency_name','Zohir Location Auto') }} — Contrat de location
+    <div class="sign-box">
+      <div class="sign-line"></div>
+      <div class="sign-role">Le Client</div>
     </div>
   </div>
 

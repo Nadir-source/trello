@@ -8,16 +8,18 @@ from flask import render_template
 from weasyprint import HTML, CSS
 
 
-def render_contract_pdf(payload: Dict[str, Any], lang: str) -> bytes:
-    lang = (lang or "fr").lower().strip()
-    if lang not in ("fr", "en", "ar"):
-        lang = "fr"
+def render_contract_pdf(payload, lang="fr"):
+    base_url = os.path.abspath("app/static")
 
-    template_map = {
-        "fr": "contract_fr.html",
-        "en": "contract_en.html",
-        "ar": "contract_ar.html",
-    }
+    template_name = f"contracts/contract_{lang}.html"
+    css_path = f"static/css/contract_{lang}.css"
+
+    html_str = render_template(template_name, **payload)
+    stylesheet = CSS(filename=css_path)
+
+    return HTML(string=html_str, base_url=base_url).write_pdf(stylesheets=[stylesheet])
+
+
 
     # Render HTML (requires Flask app context)
     html_str = render_template(template_map[lang], payload=payload)

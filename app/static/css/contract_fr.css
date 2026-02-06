@@ -1,0 +1,210 @@
+/* app/static/css/contract_fr.css */
+
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+:root {
+  --primary: #1e3a8a;
+  --secondary: #2563eb;
+  --accent: #06b6d4;
+  --light-bg: #f8fafc;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --shadow: rgba(0, 0, 0, 0.04);
+  --text: #111827;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-size: 12.5px;
+  color: var(--text);
+  background: #fff;
+  line-height: 1.6;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 3px solid var(--primary);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.brand small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.meta {
+  text-align: right;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.title {
+  text-align: center;
+  font-size: 21px;
+  font-weight: 900;
+  color: var(--secondary);
+  text-transform: uppercase;
+  padding: 6px 0;
+  border-top: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  margin: 22px 0 16px;
+  background: var(--light-bg);
+}
+
+.section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px var(--shadow);
+  overflow: hidden;
+}
+
+.section-h {
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  color: white;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.section-b {
+  padding: 14px;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.tbl th, .tbl td {
+  border: 1px solid var(--border);
+  padding: 8px;
+}
+
+.tbl th {
+  background: var(--light-bg);
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.tbl tr:nth-child(even) {
+  background-color: #f1f5f9;
+}
+
+.badge {
+  display: inline-block;
+  background: var(--light-bg);
+  border: 1px solid var(--border);
+  color: var(--primary);
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  margin: 4px 6px 0 0;
+}
+
+.notes {
+  background: var(--light-bg);
+  border-left: 4px solid var(--secondary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.page2 {
+  break-before: page;
+}
+
+.conditions-wrap {
+  display: grid;
+  gap: 14px;
+}
+
+.cond-block {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.cond-h {
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: bold;
+}
+
+.cond-b {
+  padding: 14px;
+}
+
+.signatures {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sign-h {
+  background: var(--primary);
+  color: white;
+  padding: 10px 14px;
+  font-weight: bold;
+}
+
+.sign-b {
+  padding: 16px;
+}
+
+.sign-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.sign-box {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  height: 100px;
+  padding: 12px;
+  position: relative;
+}
+
+.sign-line {
+  border-top: 2px solid #111;
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 28px;
+}
+
+.sign-role {
+  font-weight: bold;
+  font-size: 12px;
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  color: var(--muted);
+}
+
+.footer {
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 20px;
+}
