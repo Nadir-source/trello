@@ -5,6 +5,15 @@ from typing import Any, Dict
 
 from app.contract_renderer import render_contract_pdf
 
+
+def build_contract_pdf(payload: dict, lang: str = "fr") -> bytes:
+    """
+    Génère le PDF du contrat de location.
+    Utilisé par bookings.py
+    """
+    return render_contract_pdf(payload, lang=lang)
+
+
 def build_month_report_pdf(payload: dict) -> bytes:
     """
     Compatibilité: certaines routes (finance.py) importent build_month_report_pdf.
