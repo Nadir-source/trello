@@ -5,7 +5,8 @@ from weasyprint import HTML, CSS
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = BASE_DIR / "templates/contracts"
-STATIC_DIR = BASE_DIR / "static/css"
+STATIC_DIR = BASE_DIR / "app/static/css"
+
 
 def render_contract_pdf(payload: dict, lang: str = "fr") -> bytes:
     template_name = f"contracts/contract_{lang}.html"
