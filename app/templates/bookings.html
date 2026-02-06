@@ -17,6 +17,7 @@
   </div>
 </div>
 
+<!-- Toolbar -->
 <div class="toolbar">
   <div class="toolbar-left">
     <div class="searchbox">
@@ -47,6 +48,7 @@
   </div>
 </div>
 
+<!-- Panels -->
 <div class="grid2">
   <section class="card panel" id="createPanel">
     <div class="card-h">
@@ -56,33 +58,33 @@
 
     <form class="form" method="post" action="{{ url_for('bookings.create') }}">
       <div class="form-grid">
-        <label>Client <input name="client_name" required /></label>
-        <label>Véhicule <input name="vehicle_name" required /></label>
-        <label>Téléphone <input name="client_phone" /></label>
-        <label>Adresse <input name="client_address" /></label>
-        <label>Document ID <input name="doc_id" /></label>
+        <label>Client <input name="client_name" placeholder="Nom client" required /></label>
+        <label>Véhicule <input name="vehicle_name" placeholder="Nom véhicule" required /></label>
+
+        <label>Téléphone <input name="client_phone" placeholder="+213..." /></label>
+        <label>Adresse <input name="client_address" placeholder="Adresse..." /></label>
+
+        <label>Document (CNI/Passeport) <input name="doc_id" /></label>
         <label>Permis <input name="driver_license" /></label>
+
+        <label>Départ (YYYY-MM-DDTHH:MM) <input name="start_date" placeholder="2026-02-20T10:00" /></label>
+        <label>Retour (YYYY-MM-DDTHH:MM) <input name="end_date" placeholder="2026-02-26T10:00" /></label>
+
+        <label>Lieu livraison <input name="pickup_location" /></label>
+        <label>Lieu restitution <input name="return_location" /></label>
+
         <label>Plaque <input name="vehicle_plate" /></label>
         <label>Modèle <input name="vehicle_model" /></label>
-        <label>VIN <input name="vehicle_vin" /></label>
-        <label>Début <input name="start_date" placeholder="2026-02-20T10:00" /></label>
-        <label>Fin <input name="end_date" placeholder="2026-02-26T10:00" /></label>
-        <label>Lieu livraison <input name="pickup_location" /></label>
-        <label>Lieu retour <input name="return_location" /></label>
-        <label>Prix / jour (DA) <input name="daily_price" /></label>
-        <label>Dépôt (DA) <input name="deposit" /></label>
-        <label>Total (DA) <input name="total_price" /></label>
-        <label>KM départ <input name="km_out" /></label>
-        <label>KM retour <input name="km_in" /></label>
-        <label>Carburant départ <input name="fuel_out" /></label>
-        <label>Carburant retour <input name="fuel_in" /></label>
+
         <label class="span2">Notes <textarea name="notes" rows="3"></textarea></label>
       </div>
+
       <div class="opts">
         <label><input type="checkbox" name="opt_gps" /> GPS</label>
         <label><input type="checkbox" name="opt_driver" /> Chauffeur</label>
         <label><input type="checkbox" name="opt_baby_seat" /> Siège bébé</label>
       </div>
+
       <button class="btn btn-primary" type="submit">Créer (Demande)</button>
     </form>
   </section>
@@ -101,7 +103,130 @@
   </section>
 </div>
 
-<!-- Tu peux garder les lanes etc. ici -->
+<!-- TAB: KANBAN -->
+<div class="tab-panel" data-panel="kanban">
+  <div class="board" id="board" data-mode="normal">
+    {% macro lane(title, items, status, badge_class) %}
+    <section class="lane" data-lane="{{ status }}">
+      <header class="lane-h">
+        <div class="lane-title">
+          <span class="badge {{ badge_class }}">{{ title }}</span>
+          <span class="lane-count">{{ items|length }}</span>
+        </div>
+        <div class="lane-sub muted">Clique pour détails • Actions rapides</div>
+      </header>
+
+      <div class="lane-b">
+        {% for it in items %}
+          {% set p = it.payload %}
+          {% set client = (p.client_name or '') %}
+          {% set vehicle = (p.vehicle_name or p.vehicle_model or '') %}
+          {% set phone = (p.client_phone or '') %}
+          {% set plate = (p.vehicle_plate or '') %}
+          {% set start = (p.start_date or '') %}
+          {% set end = (p.end_date or '') %}
+
+          <article class="cardx js-card js-open-modal"
+                   data-card-id="{{ it.id }}"
+                   data-status="{{ status }}"
+                   data-search="{{ (it.name or '')|lower }} {{ client|lower }} {{ vehicle|lower }} {{ phone|lower }} {{ plate|lower }}">
+            <div class="cardx-top">
+              <div class="cardx-title" title="{{ it.name }}">{{ it.name }}</div>
+              <span class="chip chip-status chip-{{ status }}">{{ status }}</span>
+            </div>
+
+            <div class="cardx-mid">
+              <div class="meta">
+                <span class="chip chip-main">👤 {{ client or "—" }}</span>
+                <span class="chip chip-main">🚗 {{ vehicle or "—" }}</span>
+                {% if plate %}<span class="chip chip-sub"># {{ plate }}</span>{% endif %}
+              </div>
+              <div class="meta" style="margin-top:8px;">
+                <span class="chip chip-date">🕒 {{ start }} → {{ end }}</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="cardx-actions" onclick="event.stopPropagation();">
+              {% if status == 'demandes' %}
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='reserved') }}">
+                  <button class="iconbtn ok" title="Passer en Réservé" type="submit">✅</button>
+                </form>
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
+                  <button class="iconbtn danger" title="Annuler" type="submit">✖</button>
+                </form>
+
+              {% elif status == 'reserved' %}
+                <form method="post" action="{{ url_for('bookings.contract_and_move') }}" class="inline">
+                  <input type="hidden" name="card_id" value="{{ it.id }}" />
+                  <select name="lang" class="select select-mini" title="Langue PDF">
+                    <option value="fr">FR</option>
+                    <option value="en">EN</option>
+                    <option value="ar">AR</option>
+                  </select>
+                  <button class="iconbtn primary" title="Générer + En location" type="submit">🚀</button>
+                </form>
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='canceled') }}">
+                  <button class="iconbtn danger" title="Annuler" type="submit">✖</button>
+                </form>
+
+              {% elif status == 'ongoing' %}
+                <form method="post" action="{{ url_for('bookings.move', card_id=it.id, action='done') }}">
+                  <button class="iconbtn ok" title="Terminer" type="submit">🏁</button>
+                </form>
+              {% endif %}
+
+              <a class="iconbtn ghost" title="PDF FR" href="/contracts/{{ it.id }}.pdf?lang=fr" target="_blank">FR</a>
+              <a class="iconbtn ghost" title="PDF EN" href="/contracts/{{ it.id }}.pdf?lang=en" target="_blank">EN</a>
+              <a class="iconbtn ghost" title="PDF AR" href="/contracts/{{ it.id }}.pdf?lang=ar" target="_blank">AR</a>
+
+              <form method="post" action="{{ url_for('bookings.delete', card_id=it.id) }}" class="js-confirm-delete">
+                <button class="iconbtn outline" title="Archiver (Supprimer)" type="submit">🗑</button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endmacro %}
+
+    {{ lane("📥 Demandes", demandes, "demandes", "b-blue") }}
+    {{ lane("📅 Réservé", reserved, "reserved", "b-violet") }}
+    {{ lane("🔑 En cours", ongoing, "ongoing", "b-cyan") }}
+    {{ lane("✅ Terminé", done, "done", "b-green") }}
+    {{ lane("❌ Annulé", canceled, "canceled", "b-red") }}
+  </div>
+</div>
+
+<!-- TAB: CALENDAR -->
+<div class="tab-panel" data-panel="calendar" style="display:none;">
+  <div class="card">
+    <div class="card-h" style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>Calendrier</h2>
+      <button class="btn btn-ghost" id="calRefresh" type="button">↻ Rafraîchir</button>
+    </div>
+    <div id="calendarList"></div>
+  </div>
+</div>
+
+<!-- MODAL (tu gardes le même HTML modal) -->
+<div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-h">
+      <div>
+        <div class="modal-title" id="modalTitle">Détails</div>
+        <div class="modal-sub" id="modalSub"></div>
+      </div>
+      <button class="btn btn-ghost" id="modalClose" type="button">✕</button>
+    </div>
+
+    <div class="modal-b" id="modalBody">
+      <div class="skeleton">Chargement…</div>
+    </div>
+
+    <div class="modal-f" id="modalFooter"></div>
+  </div>
+</div>
 
 {% endblock %}
 
