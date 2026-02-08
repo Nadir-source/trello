@@ -3,6 +3,7 @@ import os
 import re
 import json
 import requests
+from app import config as C
 
 BASE = "https://api.trello.com/1"
 
