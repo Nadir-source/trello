@@ -1,115 +1,81 @@
-<!doctype html>
+<!-- app/templates/contracts/contract_fr.html -->
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>Contrat de location</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/contract_fr.css') }}">
 </head>
-
 <body>
+  <h1>CONTRAT DE LOCATION DE VÉHICULE</h1>
 
-<h1 style="text-align:center;">CONTRAT DE LOCATION DE VÉHICULE</h1>
+  <p><strong>Référence :</strong> {{ ref or "—" }}</p>
+  <p><strong>Date :</strong> {{ now_date or "—" }}</p>
 
-<p>
-<strong>Référence :</strong> {{ ref }}<br>
-<strong>Date :</strong> {{ now_date }}
-</p>
+  <h2>Loueur</h2>
+  <p>{{ company.name }}<br>
+     {{ company.address }}<br>
+     {{ company.phone1 }}<br>
+     {% if company.phone2 %}{{ company.phone2 }}<br>{% endif %}
+     ✉ {{ company.email }}
+  </p>
 
-<hr>
+  <h2>Locataire</h2>
+  <p>Nom : {{ client.name or "—" }}<br>
+     Téléphone : {{ client.phone or "—" }}<br>
+     Adresse : {{ client.address or "—" }}<br>
+     Document : {{ client.doc_id or "—" }}<br>
+     Permis : {{ client.permit or "—" }}
+  </p>
 
-<h2>Loueur</h2>
-<p>
-<strong>{{ company.name }}</strong><br>
-{{ company.address }}<br>
-📞 {{ company.phone }}<br>
-✉️ {{ company.email }}
-</p>
+  <h2>Véhicule</h2>
+  <p>Véhicule : {{ vehicle.name or "—" }}<br>
+     Modèle : {{ vehicle.model or "—" }}<br>
+     Immatriculation : {{ vehicle.plate or "—" }}<br>
+     VIN : {{ vehicle.vin or "—" }}
+  </p>
 
-<hr>
+  <h2>Période de location</h2>
+  <p>Du : {{ rental.from or "—" }}<br>
+     Au : {{ rental.to or "—" }}<br>
+     Lieu remise : {{ rental.pickup or "—" }}<br>
+     Lieu retour : {{ rental.return or "—" }}
+  </p>
 
-<h2>Locataire</h2>
-<p>
-<strong>Nom :</strong> {{ client.name }}<br>
-<strong>Téléphone :</strong> {{ client.phone }}<br>
-<strong>Adresse :</strong> {{ client.address }}<br>
-<strong>Document :</strong> {{ client.doc_id }}<br>
-<strong>Permis :</strong> {{ client.permit }}
-</p>
+  <h2>Tarifs</h2>
+  <p>Prix / jour : {{ pricing.daily_price or "—" }} {{ pricing.currency }}<br>
+     Caution : {{ pricing.deposit or "—" }} {{ pricing.currency }}<br>
+     Total : {{ pricing.total or "—" }} {{ pricing.currency }}
+  </p>
 
-<hr>
+  <h2>Options</h2>
+  <ul>
+    <li>GPS : {{ "Oui" if options.gps else "Non" }}</li>
+    <li>Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</li>
+    <li>Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</li>
+  </ul>
 
-<h2>Véhicule</h2>
-<p>
-<strong>Véhicule :</strong> {{ vehicle.name }}<br>
-<strong>Modèle :</strong> {{ vehicle.model }}<br>
-<strong>Immatriculation :</strong> {{ vehicle.plate }}<br>
-<strong>VIN :</strong> {{ vehicle.vin }}
-</p>
+  <h2>Kilométrage & Carburant</h2>
+  <p>Km départ : {{ mileage.km_out or "—" }}<br>
+     Km retour : {{ mileage.km_in or "—" }}<br>
+     Carburant départ : {{ fuel.out or "—" }}<br>
+     Carburant retour : {{ fuel.in or "—" }}
+  </p>
 
-<hr>
+  <h2>Observations</h2>
+  <p>{{ notes or "—" }}</p>
 
-<h2>Période de location</h2>
-<p>
-<strong>Du :</strong> {{ rental.from }}<br>
-<strong>Au :</strong> {{ rental.to }}<br>
-<strong>Lieu remise :</strong> {{ rental.pickup }}<br>
-<strong>Lieu retour :</strong> {{ rental.return }}
-</p>
+  <h2>Signatures</h2>
+  <p>Loueur<br>
+     Lieu : {{ sign.place }}<br>
+     Date : {{ sign.date }}
+  </p>
+  <p>Locataire<br>
+     Lieu : {{ sign.place }}<br>
+     Date : {{ sign.date }}
+  </p>
 
-<hr>
-
-<h2>Tarifs</h2>
-<p>
-<strong>Prix / jour :</strong> {{ pricing.daily }} {{ pricing.currency }}<br>
-<strong>Caution :</strong> {{ pricing.deposit }} {{ pricing.currency }}<br>
-<strong>Total :</strong> {{ pricing.total }} {{ pricing.currency }}
-</p>
-
-<hr>
-
-<h2>Options</h2>
-<ul>
-  <li>GPS : {{ "Oui" if options.gps else "Non" }}</li>
-  <li>Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</li>
-  <li>Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</li>
-</ul>
-
-<hr>
-
-<h2>Kilométrage & Carburant</h2>
-<p>
-<strong>Km départ :</strong> {{ mileage.out }}<br>
-<strong>Km retour :</strong> {{ mileage.in }}<br>
-<strong>Carburant départ :</strong> {{ fuel.out }}<br>
-<strong>Carburant retour :</strong> {{ fuel.in }}
-</p>
-
-<hr>
-
-<h2>Observations</h2>
-<p>{{ notes }}</p>
-
-<hr>
-
-<h2>Signatures</h2>
-<table width="100%">
-<tr>
-<td>
-<strong>Loueur</strong><br>
-Lieu : {{ sign.place }}<br>
-Date : {{ sign.date }}
-</td>
-<td>
-<strong>Locataire</strong><br>
-Lieu : {{ sign.place }}<br>
-Date : {{ sign.date }}
-</td>
-</tr>
-</table>
-
-<p style="margin-top:30px;font-size:12px;">
-Le locataire est responsable du véhicule durant toute la période de location.
-</p>
-
+  <small>Le locataire est responsable du véhicule durant toute la période de location.</small>
 </body>
 </html>
 
