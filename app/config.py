@@ -76,4 +76,4 @@ LIST_RENTED = _env("LIST_RENTED", "")
 LIST_TO_COLLECT = _env("LIST_TO_COLLECT", "")
 
 
-LIST_CONFIG = "id_de_la_liste_config"
+LIST_CONFIG = "69887e5ce183bf02e4160177"
