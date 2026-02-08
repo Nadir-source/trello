@@ -2,96 +2,142 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Contrat de location</title>
+  <title>Contrat de location de véhicule</title>
   <style>
-    body { font-family: Arial, sans-serif; font-size: 12px; color: #111; }
-    h1 { text-align: center; font-size: 20px; }
-    h2 { margin-top: 25px; font-size: 15px; border-bottom: 1px solid #ccc; }
-    p { margin: 4px 0; }
-    .block { margin-bottom: 12px; }
-    .small { font-size: 10px; color: #555; margin-top: 40px; }
+    @page {
+      size: A4;
+      margin: 2cm;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: #111;
+      line-height: 1.6;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+    .info {
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-top: 30px;
+    }
+    .section h2 {
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+      font-size: 14px;
+    }
+    footer {
+      position: fixed;
+      bottom: 1cm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 10px;
+      color: #777;
+    }
+    .conditions p {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
-
 <body>
+  <header>
+    <h1>CONTRAT DE LOCATION DE VÉHICULE</h1>
+    <p><strong>{{ company.name }}</strong><br>
+    {{ company.address }}<br>
+    {{ company.phone1 }}{% if company.phone2 %} / {{ company.phone2 }}{% endif %}<br>
+    {{ company.email }}</p>
+  </header>
 
-<h1>CONTRAT DE LOCATION DE VÉHICULE</h1>
+  <div class="info">
+    <p><strong>Référence :</strong> {{ ref or "—" }}</p>
+    <p><strong>Date :</strong> {{ now_date or "—" }}</p>
+  </div>
 
-<p><strong>Référence :</strong> {{ ref }}</p>
-<p><strong>Date :</strong> {{ now_date }}</p>
+  <div class="section">
+    <h2>Locataire</h2>
+    <p>Nom : {{ client.name or "—" }}<br>
+       Téléphone : {{ client.phone or "—" }}<br>
+       Adresse : {{ client.address or "—" }}<br>
+       Document : {{ client.doc_id or "—" }}<br>
+       Permis : {{ client.permit or "—" }}</p>
+  </div>
 
-<h2>Loueur</h2>
-<div class="block">
-  <p><strong>{{ company.name }}</strong></p>
-  <p>{{ company.address }}</p>
-  <p>{{ company.phone1 }}{% if company.phone2 %} / {{ company.phone2 }}{% endif %}</p>
-  <p>{{ company.email }}</p>
-</div>
+  <div class="section">
+    <h2>Véhicule</h2>
+    <p>Véhicule : {{ vehicle.name or "—" }}<br>
+       Modèle : {{ vehicle.model or "—" }}<br>
+       Immatriculation : {{ vehicle.plate or "—" }}<br>
+       VIN : {{ vehicle.vin or "—" }}</p>
+  </div>
 
-<h2>Locataire</h2>
-<div class="block">
-  <p>Nom : {{ client.name }}</p>
-  <p>Téléphone : {{ client.phone }}</p>
-  <p>Adresse : {{ client.address }}</p>
-  <p>Document : {{ client.doc_id }}</p>
-  <p>Permis : {{ client.permit }}</p>
-</div>
+  <div class="section">
+    <h2>Période de location</h2>
+    <p>Du : {{ rental.from or "—" }}<br>
+       Au : {{ rental.to or "—" }}<br>
+       Lieu de remise : {{ rental.pickup or "—" }}<br>
+       Lieu de retour : {{ rental.return or "—" }}</p>
+  </div>
 
-<h2>Véhicule</h2>
-<div class="block">
-  <p>Véhicule : {{ vehicle.name }}</p>
-  <p>Modèle : {{ vehicle.model }}</p>
-  <p>Immatriculation : {{ vehicle.plate }}</p>
-  <p>VIN : {{ vehicle.vin }}</p>
-</div>
+  <div class="section">
+    <h2>Tarifs</h2>
+    <p>Prix / jour : {{ pricing.daily_price or "—" }} {{ pricing.currency }}<br>
+       Caution : {{ pricing.deposit or "—" }} {{ pricing.currency }}<br>
+       Total : {{ pricing.total or "—" }} {{ pricing.currency }}</p>
+  </div>
 
-<h2>Période de location</h2>
-<div class="block">
-  <p>Du : {{ rental.from }}</p>
-  <p>Au : {{ rental.to }}</p>
-  <p>Lieu remise : {{ rental.pickup }}</p>
-  <p>Lieu retour : {{ rental.return }}</p>
-</div>
+  <div class="section">
+    <h2>Options</h2>
+    <ul>
+      <li>GPS : {{ "Oui" if options.gps else "Non" }}</li>
+      <li>Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</li>
+      <li>Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</li>
+    </ul>
+  </div>
 
-<h2>Tarification</h2>
-<div class="block">
-  <p>Prix / jour : {{ pricing.daily_price }} {{ pricing.currency }}</p>
-  <p>Caution : {{ pricing.deposit }} {{ pricing.currency }}</p>
-  <p><strong>Total : {{ pricing.total }} {{ pricing.currency }}</strong></p>
-</div>
+  <div class="section">
+    <h2>Kilométrage & Carburant</h2>
+    <p>Km départ : {{ mileage.km_out or "—" }}<br>
+       Km retour : {{ mileage.km_in or "—" }}<br>
+       Carburant départ : {{ fuel.out or "—" }}<br>
+       Carburant retour : {{ fuel.in or "—" }}</p>
+  </div>
 
-<h2>Options</h2>
-<div class="block">
-  <p>GPS : {{ "Oui" if options.gps else "Non" }}</p>
-  <p>Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</p>
-  <p>Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</p>
-</div>
+  <div class="section">
+    <h2>Observations</h2>
+    <p>{{ notes or "—" }}</p>
+  </div>
 
-<h2>Kilométrage & carburant</h2>
-<div class="block">
-  <p>Km départ : {{ mileage.km_out }}</p>
-  <p>Km retour : {{ mileage.km_in }}</p>
-  <p>Carburant départ : {{ fuel.out }}</p>
-  <p>Carburant retour : {{ fuel.in }}</p>
-</div>
+  <div class="section">
+    <h2>Signatures</h2>
+    <p>Loueur : .....................................<br>
+       Date : {{ sign.date }} - Lieu : {{ sign.place }}</p>
+    <p>Locataire : .....................................<br>
+       Date : {{ sign.date }} - Lieu : {{ sign.place }}</p>
+  </div>
 
-<h2>Observations</h2>
-<p>{{ notes }}</p>
+  <div class="section conditions">
+    <h2>Conditions générales</h2>
+    <p>1. Le locataire est responsable de toute dégradation non mentionnée dans le constat de départ.</p>
+    <p>2. Le véhicule ne peut être utilisé hors du territoire sans autorisation écrite du loueur.</p>
+    <p>3. Toute infraction est sous la responsabilité du locataire.</p>
+    <p>4. Le carburant est à la charge du locataire.</p>
+    <p>5. La caution peut être conservée en cas de dommages, retards ou infractions.</p>
+    <p>6. Le véhicule doit être restitué propre et en bon état.</p>
+    <p>7. Le non-respect du contrat entraîne des pénalités.</p>
+    <p>8. Le loueur décline toute responsabilité en cas d'accident hors des conditions prévues.</p>
+    <p>9. En cas de litige, seul le tribunal de [VILLE] est compétent.</p>
+  </div>
 
-<h2>Signatures</h2>
-<div class="block">
-  <p>Fait à {{ sign.place }}, le {{ sign.date }}</p>
-  <br><br>
-  <p>Signature du loueur : _______________________</p>
-  <br><br>
-  <p>Signature du locataire : ____________________</p>
-</div>
-
-<p class="small">
-  Le locataire reconnaît avoir pris connaissance des conditions générales
-  et s'engage à restituer le véhicule dans l'état initial.
-</p>
-
+  <footer>
+    Contrat de location &mdash; Page <span class="pageNumber"></span>
+  </footer>
 </body>
 </html>
-
