@@ -2,155 +2,107 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Contrat de location - ZOHIR LOCATION AUTO</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 30px;
-      background: #f5f5f5;
-      color: #333;
-    }
-    .header, .footer {
-      background-color: #002e5b;
-      color: white;
-      padding: 10px 20px;
-      text-align: center;
-    }
-    h1 {
-      font-size: 20px;
-      margin: 0;
-    }
-    .content {
-      background: white;
-      padding: 20px;
-      margin-top: 20px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    .section {
-      margin-bottom: 20px;
-    }
-    .section h2 {
-      font-size: 16px;
-      border-bottom: 2px solid #002e5b;
-      padding-bottom: 5px;
-      color: #002e5b;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background: #f0f0f0;
-    }
-    .notice {
-      font-size: 12px;
-      color: #555;
-      margin-top: 40px;
-    }
-  </style>
+  <title>Contrat de location - {{ company.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/contract_fr.css') }}">
 </head>
 <body>
-  <div class="header">
-    <h1>CONTRAT DE LOCATION DE VÉHICULE</h1>
-  </div>
-  <div class="content">
-    <div class="section">
-      <strong>Référence :</strong> {{ ref or "—" }}<br>
-      <strong>Date :</strong> {{ now_date or "—" }}
+  <header>
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+    <div class="header-text">
+      <h1>{{ company.name }}</h1>
+      <p>{{ company.address }}</p>
+      <p>{{ company.phone1 }}{% if company.phone2 %} / {{ company.phone2 }}{% endif %}</p>
+      <p>{{ company.email }}</p>
     </div>
+  </header>
 
-    <div class="section">
-      <h2>Loueur</h2>
-      <p><strong>{{ company.name }}</strong><br>
-      {{ company.address }}<br>
-      {{ company.phone1 }} {% if company.phone2 %}/ {{ company.phone2 }}{% endif %}<br>
-      ✉ {{ company.email }}</p>
-    </div>
+  <hr>
 
-    <div class="section">
-      <h2>Locataire</h2>
-      <table>
-        <tr><th>Nom</th><td>{{ client.name or "—" }}</td></tr>
-        <tr><th>Téléphone</th><td>{{ client.phone or "—" }}</td></tr>
-        <tr><th>Adresse</th><td>{{ client.address or "—" }}</td></tr>
-        <tr><th>Document</th><td>{{ client.doc_id or "—" }}</td></tr>
-        <tr><th>Permis</th><td>{{ client.permit or "—" }}</td></tr>
-      </table>
-    </div>
+  <h2>Contrat de location de véhicule</h2>
+  <p><strong>Référence :</strong> {{ ref or "—" }}</p>
+  <p><strong>Date :</strong> {{ now_date or "—" }}</p>
 
-    <div class="section">
-      <h2>Véhicule</h2>
-      <table>
-        <tr><th>Véhicule</th><td>{{ vehicle.name or "—" }}</td></tr>
-        <tr><th>Modèle</th><td>{{ vehicle.model or "—" }}</td></tr>
-        <tr><th>Immatriculation</th><td>{{ vehicle.plate or "—" }}</td></tr>
-        <tr><th>VIN</th><td>{{ vehicle.vin or "—" }}</td></tr>
-      </table>
-    </div>
+  <section>
+    <h3>Informations sur le locataire</h3>
+    <table>
+      <tr><th>Nom</th><td>{{ client.name or "—" }}</td></tr>
+      <tr><th>Téléphone</th><td>{{ client.phone or "—" }}</td></tr>
+      <tr><th>Adresse</th><td>{{ client.address or "—" }}</td></tr>
+      <tr><th>Document</th><td>{{ client.doc_id or "—" }}</td></tr>
+      <tr><th>Permis</th><td>{{ client.permit or "—" }}</td></tr>
+    </table>
+  </section>
 
-    <div class="section">
-      <h2>Période de location</h2>
-      <table>
-        <tr><th>Du</th><td>{{ rental.from or "—" }}</td></tr>
-        <tr><th>Au</th><td>{{ rental.to or "—" }}</td></tr>
-        <tr><th>Lieu remise</th><td>{{ rental.pickup or "—" }}</td></tr>
-        <tr><th>Lieu retour</th><td>{{ rental.return or "—" }}</td></tr>
-      </table>
-    </div>
+  <section>
+    <h3>Véhicule loué</h3>
+    <table>
+      <tr><th>Nom</th><td>{{ vehicle.name or "—" }}</td></tr>
+      <tr><th>Modèle</th><td>{{ vehicle.model or "—" }}</td></tr>
+      <tr><th>Immatriculation</th><td>{{ vehicle.plate or "—" }}</td></tr>
+      <tr><th>VIN</th><td>{{ vehicle.vin or "—" }}</td></tr>
+    </table>
+  </section>
 
-    <div class="section">
-      <h2>Tarifs</h2>
-      <table>
-        <tr><th>Prix / jour</th><td>{{ pricing.daily_price or "—" }} {{ pricing.currency }}</td></tr>
-        <tr><th>Caution</th><td>{{ pricing.deposit or "—" }} {{ pricing.currency }}</td></tr>
-        <tr><th>Total</th><td>{{ pricing.total or "—" }} {{ pricing.currency }}</td></tr>
-      </table>
-    </div>
+  <section>
+    <h3>Période de location</h3>
+    <table>
+      <tr><th>Du</th><td>{{ rental.from or "—" }}</td></tr>
+      <tr><th>Au</th><td>{{ rental.to or "—" }}</td></tr>
+      <tr><th>Lieu de prise</th><td>{{ rental.pickup or "—" }}</td></tr>
+      <tr><th>Lieu de retour</th><td>{{ rental.return or "—" }}</td></tr>
+    </table>
+  </section>
 
-    <div class="section">
-      <h2>Options</h2>
-      <ul>
-        <li>GPS : {{ "Oui" if options.gps else "Non" }}</li>
-        <li>Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</li>
-        <li>Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</li>
-      </ul>
-    </div>
+  <section>
+    <h3>Tarification</h3>
+    <table>
+      <tr><th>Prix journalier</th><td>{{ pricing.daily_price or "—" }} {{ pricing.currency }}</td></tr>
+      <tr><th>Caution</th><td>{{ pricing.deposit or "—" }} {{ pricing.currency }}</td></tr>
+      <tr><th>Total</th><td>{{ pricing.total or "—" }} {{ pricing.currency }}</td></tr>
+    </table>
+  </section>
 
-    <div class="section">
-      <h2>Kilométrage & Carburant</h2>
-      <table>
-        <tr><th>Km départ</th><td>{{ mileage.km_out or "—" }}</td></tr>
-        <tr><th>Km retour</th><td>{{ mileage.km_in or "—" }}</td></tr>
-        <tr><th>Carburant départ</th><td>{{ fuel.out or "—" }}</td></tr>
-        <tr><th>Carburant retour</th><td>{{ fuel.in or "—" }}</td></tr>
-      </table>
-    </div>
+  <section>
+    <h3>Options</h3>
+    <ul>
+      <li>GPS : {{ "Oui" if options.gps else "Non" }}</li>
+      <li>Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</li>
+      <li>Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</li>
+    </ul>
+  </section>
 
-    <div class="section">
-      <h2>Observations</h2>
-      <p>{{ notes or "Aucune remarque" }}</p>
-    </div>
+  <section>
+    <h3>État du véhicule</h3>
+    <table>
+      <tr><th>Kilométrage départ</th><td>{{ mileage.km_out or "—" }}</td></tr>
+      <tr><th>Kilométrage retour</th><td>{{ mileage.km_in or "—" }}</td></tr>
+      <tr><th>Carburant départ</th><td>{{ fuel.out or "—" }}</td></tr>
+      <tr><th>Carburant retour</th><td>{{ fuel.in or "—" }}</td></tr>
+    </table>
+  </section>
 
-    <div class="section">
-      <h2>Signatures</h2>
-      <table>
-        <tr><th>Loueur</th><td>Lieu : {{ sign.place }}, Date : {{ sign.date }}</td></tr>
-        <tr><th>Locataire</th><td>Lieu : {{ sign.place }}, Date : {{ sign.date }}</td></tr>
-      </table>
-    </div>
+  <section>
+    <h3>Observations</h3>
+    <p>{{ notes or "—" }}</p>
+  </section>
 
-    <div class="notice">
-      Le locataire est responsable de toutes les infractions, dégradations ou vols du véhicule pendant la durée de location. Toute restitution avec dommages ou retard peut entraîner des frais supplémentaires. Le carburant et les contraventions sont à la charge du locataire. Le non-respect des conditions entraînera la facturation selon les CGV.
+  <section class="signatures">
+    <div>
+      <p><strong>Signature du loueur</strong></p>
+      <p>Fait à {{ sign.place }}, le {{ sign.date }}</p>
     </div>
-  </div>
-  <div class="footer">
-    <small>ZOHIR LOCATION AUTO - Contrat généré automatiquement</small>
-  </div>
+    <div>
+      <p><strong>Signature du locataire</strong></p>
+      <p>Fait à {{ sign.place }}, le {{ sign.date }}</p>
+    </div>
+  </section>
+
+  <footer>
+    <p><small>
+      Ce contrat engage les deux parties. Le locataire s'engage à respecter les conditions de location. Toute infraction, dommage ou usage abusif du véhicule pourra entraîner des frais supplémentaires. 
+      En signant, vous reconnaissez avoir pris connaissance et accepté l'ensemble des conditions générales.
+    </small></p>
+  </footer>
 </body>
 </html>
+
