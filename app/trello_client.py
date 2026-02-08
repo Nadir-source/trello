@@ -174,3 +174,10 @@ class Trello:
         r.raise_for_status()
         return r.json()
 
+def get_company_config() -> dict:
+    for card in Trello().list_cards(C.LIST_CONFIG):  # Assure-toi d’avoir une constante LIST_CONFIG
+        if card.get("name") == "CONFIG_COMPANY":
+            from app.trello_schema import parse_payload
+            return parse_payload(card.get("desc", "") or "")
+    return {}
+

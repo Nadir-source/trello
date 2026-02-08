@@ -2,22 +2,33 @@
 from pathlib import Path
 from flask import render_template
 from weasyprint import HTML, CSS
+from app.trello_client import get_company_config
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = BASE_DIR / "templates/contracts"
 STATIC_DIR = BASE_DIR.parent / "static/css"
 
+
 def render_contract_pdf(payload: dict, lang: str = "fr") -> bytes:
+    from weasyprint import HTML, CSS
+    from flask import render_template
+    from pathlib import Path
+
     template_name = f"contracts/contract_{lang}.html"
-    css_path = STATIC_DIR / f"contract_{lang}.css"
+    css_path = Path("static/css") / f"contract_{lang}.css"
 
-    # Passer le payload complet pour pouvoir l'utiliser comme "payload.xxx" dans le template
-    html_str = render_template(template_name, payload=_map_payload(payload))
+    context = {
+        "payload": _map_payload(payload),
+        "company": get_company_config(),
+    }
 
-    stylesheet = CSS(filename=str(css_path))  # chemin absolu important ici
-    pdf = HTML(string=html_str).write_pdf(stylesheets=[stylesheet])
+    html_str = render_template(template_name, **context)
+    html = HTML(string=html_str)
+    stylesheet = CSS(filename=str(css_path))
+    return html.write_pdf(stylesheets=[stylesheet])
 
-    return pdf
+
+
 
 def _map_payload(p: dict) -> dict:
     return {

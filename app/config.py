@@ -75,3 +75,5 @@ LIST_TO_CONFIRM = _env("LIST_TO_CONFIRM", "")
 LIST_RENTED = _env("LIST_RENTED", "")
 LIST_TO_COLLECT = _env("LIST_TO_COLLECT", "")
 
+
+LIST_CONFIG = "id_de_la_liste_config"
