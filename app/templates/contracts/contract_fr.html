@@ -1,81 +1,97 @@
-<!-- app/templates/contracts/contract_fr.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <title>Contrat de location</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/contract_fr.css') }}">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #111; }
+    h1 { text-align: center; font-size: 20px; }
+    h2 { margin-top: 25px; font-size: 15px; border-bottom: 1px solid #ccc; }
+    p { margin: 4px 0; }
+    .block { margin-bottom: 12px; }
+    .small { font-size: 10px; color: #555; margin-top: 40px; }
+  </style>
 </head>
+
 <body>
-  <h1>CONTRAT DE LOCATION DE VÉHICULE</h1>
 
-  <p><strong>Référence :</strong> {{ ref or "—" }}</p>
-  <p><strong>Date :</strong> {{ now_date or "—" }}</p>
+<h1>CONTRAT DE LOCATION DE VÉHICULE</h1>
 
-  <h2>Loueur</h2>
-  <p>{{ company.name }}<br>
-     {{ company.address }}<br>
-     {{ company.phone1 }}<br>
-     {% if company.phone2 %}{{ company.phone2 }}<br>{% endif %}
-     ✉ {{ company.email }}
-  </p>
+<p><strong>Référence :</strong> {{ ref }}</p>
+<p><strong>Date :</strong> {{ now_date }}</p>
 
-  <h2>Locataire</h2>
-  <p>Nom : {{ client.name or "—" }}<br>
-     Téléphone : {{ client.phone or "—" }}<br>
-     Adresse : {{ client.address or "—" }}<br>
-     Document : {{ client.doc_id or "—" }}<br>
-     Permis : {{ client.permit or "—" }}
-  </p>
+<h2>Loueur</h2>
+<div class="block">
+  <p><strong>{{ company.name }}</strong></p>
+  <p>{{ company.address }}</p>
+  <p>{{ company.phone1 }}{% if company.phone2 %} / {{ company.phone2 }}{% endif %}</p>
+  <p>{{ company.email }}</p>
+</div>
 
-  <h2>Véhicule</h2>
-  <p>Véhicule : {{ vehicle.name or "—" }}<br>
-     Modèle : {{ vehicle.model or "—" }}<br>
-     Immatriculation : {{ vehicle.plate or "—" }}<br>
-     VIN : {{ vehicle.vin or "—" }}
-  </p>
+<h2>Locataire</h2>
+<div class="block">
+  <p>Nom : {{ client.name }}</p>
+  <p>Téléphone : {{ client.phone }}</p>
+  <p>Adresse : {{ client.address }}</p>
+  <p>Document : {{ client.doc_id }}</p>
+  <p>Permis : {{ client.permit }}</p>
+</div>
 
-  <h2>Période de location</h2>
-  <p>Du : {{ rental.from or "—" }}<br>
-     Au : {{ rental.to or "—" }}<br>
-     Lieu remise : {{ rental.pickup or "—" }}<br>
-     Lieu retour : {{ rental.return or "—" }}
-  </p>
+<h2>Véhicule</h2>
+<div class="block">
+  <p>Véhicule : {{ vehicle.name }}</p>
+  <p>Modèle : {{ vehicle.model }}</p>
+  <p>Immatriculation : {{ vehicle.plate }}</p>
+  <p>VIN : {{ vehicle.vin }}</p>
+</div>
 
-  <h2>Tarifs</h2>
-  <p>Prix / jour : {{ pricing.daily_price or "—" }} {{ pricing.currency }}<br>
-     Caution : {{ pricing.deposit or "—" }} {{ pricing.currency }}<br>
-     Total : {{ pricing.total or "—" }} {{ pricing.currency }}
-  </p>
+<h2>Période de location</h2>
+<div class="block">
+  <p>Du : {{ rental.from }}</p>
+  <p>Au : {{ rental.to }}</p>
+  <p>Lieu remise : {{ rental.pickup }}</p>
+  <p>Lieu retour : {{ rental.return }}</p>
+</div>
 
-  <h2>Options</h2>
-  <ul>
-    <li>GPS : {{ "Oui" if options.gps else "Non" }}</li>
-    <li>Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</li>
-    <li>Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</li>
-  </ul>
+<h2>Tarification</h2>
+<div class="block">
+  <p>Prix / jour : {{ pricing.daily_price }} {{ pricing.currency }}</p>
+  <p>Caution : {{ pricing.deposit }} {{ pricing.currency }}</p>
+  <p><strong>Total : {{ pricing.total }} {{ pricing.currency }}</strong></p>
+</div>
 
-  <h2>Kilométrage & Carburant</h2>
-  <p>Km départ : {{ mileage.km_out or "—" }}<br>
-     Km retour : {{ mileage.km_in or "—" }}<br>
-     Carburant départ : {{ fuel.out or "—" }}<br>
-     Carburant retour : {{ fuel.in or "—" }}
-  </p>
+<h2>Options</h2>
+<div class="block">
+  <p>GPS : {{ "Oui" if options.gps else "Non" }}</p>
+  <p>Chauffeur : {{ "Oui" if options.chauffeur else "Non" }}</p>
+  <p>Siège bébé : {{ "Oui" if options.baby_seat else "Non" }}</p>
+</div>
 
-  <h2>Observations</h2>
-  <p>{{ notes or "—" }}</p>
+<h2>Kilométrage & carburant</h2>
+<div class="block">
+  <p>Km départ : {{ mileage.km_out }}</p>
+  <p>Km retour : {{ mileage.km_in }}</p>
+  <p>Carburant départ : {{ fuel.out }}</p>
+  <p>Carburant retour : {{ fuel.in }}</p>
+</div>
 
-  <h2>Signatures</h2>
-  <p>Loueur<br>
-     Lieu : {{ sign.place }}<br>
-     Date : {{ sign.date }}
-  </p>
-  <p>Locataire<br>
-     Lieu : {{ sign.place }}<br>
-     Date : {{ sign.date }}
-  </p>
+<h2>Observations</h2>
+<p>{{ notes }}</p>
 
-  <small>Le locataire est responsable du véhicule durant toute la période de location.</small>
+<h2>Signatures</h2>
+<div class="block">
+  <p>Fait à {{ sign.place }}, le {{ sign.date }}</p>
+  <br><br>
+  <p>Signature du loueur : _______________________</p>
+  <br><br>
+  <p>Signature du locataire : ____________________</p>
+</div>
+
+<p class="small">
+  Le locataire reconnaît avoir pris connaissance des conditions générales
+  et s'engage à restituer le véhicule dans l'état initial.
+</p>
+
 </body>
 </html>
 
