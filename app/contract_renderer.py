@@ -10,17 +10,11 @@ STATIC_DIR = BASE_DIR.parent / "static/css"
 
 
 def render_contract_pdf(payload: dict, lang: str = "fr") -> bytes:
-    from weasyprint import HTML, CSS
-    from flask import render_template
-    from pathlib import Path
-
     template_name = f"contracts/contract_{lang}.html"
     css_path = Path("static/css") / f"contract_{lang}.css"
 
-    context = {
-        "payload": _map_payload(payload),
-        "company": get_company_config(),
-    }
+    context = _map_payload(payload)
+    context["company"] = get_company_config()
 
     html_str = render_template(template_name, **context)
     html = HTML(string=html_str)
@@ -28,19 +22,10 @@ def render_contract_pdf(payload: dict, lang: str = "fr") -> bytes:
     return html.write_pdf(stylesheets=[stylesheet])
 
 
-
-
 def _map_payload(p: dict) -> dict:
     return {
         "ref": p.get("trello_card_id", "—"),
         "now_date": p.get("now_date", "—"),
-        "company": {
-            "name": "ZOHIR LOCATION AUTO",
-            "phone1": "+213 6 00 00 00 00",
-            "phone2": None,
-            "email": "contact@email.dz",
-            "address": "Alger, Algérie"
-        },
         "client": {
             "name": p.get("client_name"),
             "phone": p.get("client_phone"),
